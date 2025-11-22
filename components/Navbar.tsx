@@ -86,8 +86,8 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
             <span className="font-serif text-xl font-bold tracking-wider text-white">Serenity</span>
           </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Desktop Menu (Visible on Large Screens Only) */}
+          <div className="hidden lg:flex items-center space-x-8">
             <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Home</button>
             <button onClick={() => scrollToSection('rooms')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</button>
             <button onClick={() => scrollToSection('about')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">About</button>
@@ -105,8 +105,8 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile/Tablet Menu Button (Visible on md and below) */}
+          <div className="lg:hidden flex items-center">
             <button onClick={() => setIsOpen(!isOpen)} className="text-white hover:text-accent transition-colors p-2">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -114,9 +114,9 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile/Tablet Menu */}
       {isOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-secondary/95 backdrop-blur-xl border-t border-white/10 shadow-2xl animate-slide-down overflow-hidden">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-secondary/95 backdrop-blur-xl border-t border-white/10 shadow-2xl animate-slide-down overflow-hidden">
           <div className="px-4 pt-4 pb-6 space-y-2">
             <button onClick={() => scrollToSection('hero')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">Home</button>
             <button onClick={() => scrollToSection('rooms')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">Rooms</button>

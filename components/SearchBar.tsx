@@ -28,10 +28,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-4 -mt-12 relative z-20 animate-fade-in-up border border-gray-100">
-      <div className="flex flex-col md:flex-row gap-4 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row gap-4 items-center">
         
         {/* Check In */}
-        <div className="w-full md:w-1/3 relative group">
+        <div className="w-full lg:w-1/3 relative group">
           <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Check In</label>
           <div className="relative bg-gray-50 rounded-xl border border-transparent group-hover:border-gray-200 transition-colors">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={20} />
@@ -46,7 +46,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
         </div>
 
         {/* Check Out */}
-        <div className="w-full md:w-1/3 relative group">
+        <div className="w-full lg:w-1/3 relative group">
           <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Check Out</label>
           <div className="relative bg-gray-50 rounded-xl border border-transparent group-hover:border-gray-200 transition-colors">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={20} />
@@ -61,7 +61,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
         </div>
 
         {/* Guests */}
-        <div className="w-full md:w-1/4 relative group">
+        <div className="w-full lg:w-1/4 relative group">
           <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Guests</label>
           <div className="relative bg-gray-50 rounded-xl border border-transparent group-hover:border-gray-200 transition-colors">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={20} />
@@ -78,14 +78,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
         </div>
 
         {/* Search Button */}
-        <div className="w-full md:w-auto mt-5 md:mt-0">
+        <div className="w-full md:w-auto mt-2 md:mt-5 lg:mt-0">
           <button 
             onClick={handleSearchClick}
-            className="w-full bg-accent hover:bg-secondary text-secondary hover:text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center"
+            className="w-full bg-accent hover:bg-secondary text-secondary hover:text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center h-[50px]"
           >
-            <Search size={20} className="md:mr-2" />
-            <span className="md:hidden">Check Availability</span>
-            <span className="hidden md:inline">Check</span>
+            <Search size={20} className="lg:mr-2" />
+            <span className="lg:inline hidden">Check</span>
+            <span className="lg:hidden ml-2">Check Availability</span>
           </button>
         </div>
       </div>

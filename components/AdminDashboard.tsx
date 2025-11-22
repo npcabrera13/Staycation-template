@@ -951,7 +951,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-100">
                     <thead>
                         <tr className="bg-gray-50/50">
@@ -1030,8 +1030,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </table>
                 </div>
 
-                 {/* Mobile Card View */}
-                 <div className="md:hidden p-4 space-y-4">
+                 {/* Mobile/Tablet Card View */}
+                 <div className="lg:hidden p-4 space-y-4">
                     {filteredBookings.map((booking) => {
                         const roomName = rooms.find(r => r.id === booking.roomId)?.name || 'Unknown Room';
                         return (
@@ -1076,737 +1076,321 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     })}
                      {filteredBookings.length === 0 && (
                         <div className="text-center text-gray-400 text-sm py-8">
-                            No bookings found.
+                           No bookings found for the selected criteria.
                         </div>
-                    )}
-                </div>
+                     )}
+                 </div>
             </div>
         </div>
         )}
 
+        {/* Rooms Management Tab */}
         {activeTab === 'rooms' && (
-            <div className="animate-fade-in pb-12">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Manage Rooms</h2>
-                    <button 
-                        onClick={() => setIsAddingRoom(true)}
-                        className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center text-sm shadow hover:bg-teal-700 transition-colors"
-                    >
-                        <Plus size={18} className="mr-2"/> Add Room
-                    </button>
+          <div className="animate-fade-in space-y-6">
+             <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Room Management</h2>
+                  <p className="text-gray-500 text-sm">Add, edit, or remove rooms and amenities</p>
                 </div>
+                {!isAddingRoom && (
+                  <button 
+                    onClick={() => setIsAddingRoom(true)}
+                    className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
+                  >
+                    <Plus size={18} className="mr-2"/> Add Room
+                  </button>
+                )}
+             </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {rooms.map(room => (
-                        <div key={room.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col space-y-4 transition-all hover:shadow-md">
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <div className="relative group w-full md:w-32 h-32 flex-shrink-0">
-                                    <img src={room.image} alt={room.name} className="w-full h-full object-cover rounded-lg" />
-                                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
-                                        +{(room.images?.length || 0)} photos
-                                    </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">{room.name}</h3>
-                                            <p className="text-sm text-gray-500">{room.capacity} Guests • {room.amenities.length} Amenities</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">{room.description}</p>
+             {/* Add/Edit Room Form Wrapper */}
+             {(isAddingRoom || editingRoomId) && (
+                <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 animate-slide-down mb-8">
+                   <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                      <h3 className="text-lg font-bold text-gray-800">
+                         {isAddingRoom ? 'Add New Room' : 'Edit Room'}
+                      </h3>
+                      <button 
+                         onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
+                         className="text-gray-400 hover:text-gray-600 p-1"
+                      >
+                         <X size={20} />
+                      </button>
+                   </div>
+                   
+                   <div className="space-y-6">
+                       {/* Basic Details */}
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
+                             <input 
+                                type="text" 
+                                value={isAddingRoom ? newRoom.name : editForm.name}
+                                onChange={(e) => isAddingRoom ? setNewRoom({...newRoom, name: e.target.value}) : setEditForm({...editForm, name: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                placeholder="e.g. Sunset Villa"
+                             />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
+                                <input 
+                                    type="number" 
+                                    value={isAddingRoom ? newRoom.price : editForm.price}
+                                    onChange={(e) => isAddingRoom ? setNewRoom({...newRoom, price: Number(e.target.value)}) : setEditForm({...editForm, price: Number(e.target.value)})}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                />
+                             </div>
+                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                                <input 
+                                    type="number" 
+                                    value={isAddingRoom ? newRoom.capacity : editForm.capacity}
+                                    onChange={(e) => isAddingRoom ? setNewRoom({...newRoom, capacity: Number(e.target.value)}) : setEditForm({...editForm, capacity: Number(e.target.value)})}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                />
+                             </div>
+                          </div>
+                       </div>
+
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                           <textarea 
+                              value={isAddingRoom ? newRoom.description : editForm.description}
+                              onChange={(e) => isAddingRoom ? setNewRoom({...newRoom, description: e.target.value}) : setEditForm({...editForm, description: e.target.value})}
+                              rows={3}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                           />
+                       </div>
+
+                       {/* Image Handling */}
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Main Image URL</label>
+                           <input 
+                              type="text" 
+                              value={isAddingRoom ? newRoom.image : editForm.image}
+                              onChange={(e) => isAddingRoom ? setNewRoom({...newRoom, image: e.target.value}) : setEditForm({...editForm, image: e.target.value})}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none mb-2"
+                           />
+                           {/* Image Preview */}
+                           {(isAddingRoom ? newRoom.image : editForm.image) && (
+                               <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden relative">
+                                   <img src={isAddingRoom ? newRoom.image : editForm.image} alt="Preview" className="w-full h-full object-cover" />
+                               </div>
+                           )}
+                       </div>
+                       
+                       {/* Gallery Images */}
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-2">Gallery Images</label>
+                           <div className="space-y-2">
+                               {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
+                                   <div key={idx} className="flex gap-2">
+                                       <input 
+                                          type="text" 
+                                          value={img}
+                                          onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
+                                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                          placeholder="Image URL"
+                                       />
+                                       <button onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16}/></button>
+                                   </div>
+                               ))}
+                               <button 
+                                  onClick={() => handleAddGalleryImage(!isAddingRoom)}
+                                  className="text-primary text-sm font-medium hover:underline flex items-center"
+                               >
+                                   <Plus size={14} className="mr-1"/> Add Gallery Image
+                               </button>
+                           </div>
+                       </div>
+
+                       {/* Amenities */}
+                       <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
+                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                               {PREDEFINED_AMENITIES.map(amenity => {
+                                   const currentAmenities = isAddingRoom ? (newRoom.amenities || []) : (editForm.amenities || []);
+                                   const isSelected = currentAmenities.some(a => a.name === amenity.name);
+                                   return (
+                                       <div 
+                                          key={amenity.name}
+                                          onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
+                                          className={`cursor-pointer flex items-center p-2 rounded-lg border text-sm transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 hover:border-gray-300'}`}
+                                       >
+                                           {renderAmenityIcon(amenity.icon)}
+                                           <span className="ml-2">{amenity.name}</span>
+                                       </div>
+                                   );
+                               })}
+                           </div>
+                           
+                           {/* Custom Amenity */}
+                           <div className="flex gap-2 items-end">
+                               <div className="flex-1">
+                                   <input 
+                                      type="text" 
+                                      placeholder="Custom amenity name"
+                                      value={isAddingRoom ? newRoomCustomAmenity : customAmenityInput}
+                                      onChange={(e) => isAddingRoom ? setNewRoomCustomAmenity(e.target.value) : setCustomAmenityInput(e.target.value)}
+                                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                   />
+                               </div>
+                               <div className="relative" ref={isAddingRoom ? newRoomIconPickerRef : iconPickerRef}>
+                                   <button 
+                                      onClick={() => isAddingRoom ? setShowNewRoomIconPicker(!showNewRoomIconPicker) : setShowIconPicker(!showIconPicker)}
+                                      className="border border-gray-300 rounded-lg p-2 text-gray-600 hover:bg-gray-50"
+                                      title="Select Icon"
+                                   >
+                                       {renderAmenityIcon(isAddingRoom ? newRoomCustomIcon : customAmenityIcon)}
+                                   </button>
+                                   {(isAddingRoom ? showNewRoomIconPicker : showIconPicker) && (
+                                       <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 p-2 grid grid-cols-6 gap-2 z-50 max-h-40 overflow-y-auto">
+                                           {ICON_OPTIONS.map(icon => (
+                                               <button 
+                                                  key={icon}
+                                                  onClick={() => {
+                                                      if (isAddingRoom) {
+                                                          setNewRoomCustomIcon(icon);
+                                                          setShowNewRoomIconPicker(false);
+                                                      } else {
+                                                          setCustomAmenityIcon(icon);
+                                                          setShowIconPicker(false);
+                                                      }
+                                                  }}
+                                                  className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                      (isAddingRoom ? newRoomCustomIcon : customAmenityIcon) === icon ? 'bg-primary/20 text-primary' : 'text-gray-500'
+                                                  }`}
+                                               >
+                                                   {renderAmenityIcon(icon)}
+                                               </button>
+                                           ))}
+                                       </div>
+                                   )}
+                               </div>
+                               <button 
+                                  onClick={isAddingRoom ? addNewRoomCustomAmenity : addEditCustomAmenity}
+                                  className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
+                               >
+                                   Add
+                               </button>
+                           </div>
+                           
+                           {/* Amenities List Display for Custom items or all */}
+                           <div className="flex flex-wrap gap-2 mt-3">
+                               {((isAddingRoom ? newRoom.amenities : editForm.amenities) || []).filter(a => !PREDEFINED_AMENITIES.some(p => p.name === a.name)).map((amenity, idx) => (
+                                   <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                       {renderAmenityIcon(amenity.icon)}
+                                       <span className="ml-1.5 mr-1">{amenity.name}</span>
+                                       <button 
+                                          onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
+                                          className="text-gray-400 hover:text-red-500 ml-1"
+                                       >
+                                           <X size={12} />
+                                       </button>
+                                   </span>
+                               ))}
+                           </div>
+                       </div>
+                   </div>
+
+                   <div className="mt-8 flex justify-end space-x-3 border-t border-gray-100 pt-6">
+                       <button 
+                          onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
+                          className="px-5 py-2 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+                       >
+                          Cancel
+                       </button>
+                       <button 
+                          onClick={isAddingRoom ? handleAddRoomSubmit : handleSaveRoom}
+                          className="px-5 py-2 rounded-lg bg-primary text-white font-bold hover:bg-teal-700 transition-colors flex items-center shadow-md"
+                       >
+                          <Save size={18} className="mr-2"/> {isAddingRoom ? 'Create Room' : 'Save Changes'}
+                       </button>
+                   </div>
+                </div>
+             )}
+
+             {/* Room List */}
+             <div className="grid grid-cols-1 gap-6">
+                {rooms.map(room => (
+                   <div key={room.id} className={`bg-white rounded-xl shadow-sm border transition-all ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:shadow-md'}`}>
+                        <div className="flex flex-col md:flex-row">
+                            {/* Image Thumb */}
+                            <div className="w-full md:w-48 h-48 md:h-auto relative bg-gray-100 flex-shrink-0">
+                                <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
+                                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold shadow-sm">
+                                    ₱{room.price.toLocaleString()}
                                 </div>
                             </div>
                             
-                            <div className="mt-4 pt-4 border-t border-gray-100">
-                                {editingRoomId === room.id ? (
-                                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Price (₱)</label>
-                                                <input 
-                                                    type="number" 
-                                                    value={editForm.price} 
-                                                    onChange={(e) => setEditForm({...editForm, price: Number(e.target.value)})}
-                                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                 <label className="block text-xs text-gray-500 mb-1">Capacity</label>
-                                                 <input 
-                                                    type="number" 
-                                                    value={editForm.capacity} 
-                                                    onChange={(e) => setEditForm({...editForm, capacity: Number(e.target.value)})}
-                                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                                                />
+                            {/* Content */}
+                            <div className="p-6 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800">{room.name}</h3>
+                                            <div className="flex items-center text-sm text-gray-500 mt-1">
+                                                <Users size={14} className="mr-1"/> Capacity: {room.capacity} Guests
                                             </div>
                                         </div>
-                                        <div>
-                                             <label className="block text-xs text-gray-500 mb-1">Main Hero Image URL</label>
-                                             <input 
-                                                type="text" 
-                                                value={editForm.image} 
-                                                onChange={(e) => setEditForm({...editForm, image: e.target.value})}
-                                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                                            />
-                                        </div>
-                                        
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-2 flex justify-between items-center">
-                                                <span>Gallery Images</span>
-                                                <button onClick={() => handleAddGalleryImage(true)} className="text-primary hover:text-primary/80 flex items-center text-[10px]">
-                                                    <PlusCircle size={12} className="mr-1"/> Add Image
-                                                </button>
-                                            </label>
-                                            <div className="space-y-2 max-h-32 overflow-y-auto">
-                                                {(editForm.images || []).map((imgUrl, idx) => (
-                                                    <div key={idx} className="flex items-center space-x-2">
-                                                        <input 
-                                                            type="text"
-                                                            value={imgUrl}
-                                                            onChange={(e) => handleGalleryImageChange(idx, e.target.value, true)}
-                                                            className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-xs"
-                                                            placeholder="Image URL..."
-                                                        />
-                                                        <button onClick={() => handleRemoveGalleryImage(idx, true)} className="text-red-400 hover:text-red-600">
-                                                            <MinusCircle size={16} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                {(!editForm.images || editForm.images.length === 0) && (
-                                                     <div className="text-xs text-gray-400 italic text-center py-2">No extra gallery images</div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                             <label className="block text-xs text-gray-500 mb-2">Amenities</label>
-                                             <div className="grid grid-cols-3 gap-2 mb-3">
-                                                {PREDEFINED_AMENITIES.map((amenity) => {
-                                                    const isSelected = editForm.amenities?.some(a => a.name === amenity.name);
-                                                    return (
-                                                        <button
-                                                            key={amenity.name}
-                                                            onClick={() => toggleEditAmenity(amenity)}
-                                                            className={`flex items-center justify-center py-2 px-2 rounded text-xs font-medium border transition-all ${
-                                                                isSelected 
-                                                                ? 'bg-primary/10 border-primary text-primary' 
-                                                                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                                                            }`}
-                                                        >
-                                                            <span className="mr-1.5">{renderAmenityIcon(amenity.icon)}</span>
-                                                            {amenity.name}
-                                                        </button>
-                                                    )
-                                                })}
-                                             </div>
-                                             <div className="flex gap-2 relative" ref={iconPickerRef}>
-                                                <input 
-                                                    type="text" 
-                                                    value={customAmenityInput} 
-                                                    onChange={(e) => setCustomAmenityInput(e.target.value)}
-                                                    className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
-                                                    placeholder="Add custom amenity..."
-                                                />
-                                                <div className="relative">
-                                                    <button 
-                                                        onClick={() => setShowIconPicker(!showIconPicker)}
-                                                        className="h-full px-3 border border-gray-300 rounded bg-white flex items-center text-gray-600 hover:bg-gray-50"
-                                                        title="Select Icon"
-                                                    >
-                                                        {renderAmenityIcon(customAmenityIcon)}
-                                                        <ChevronDown size={12} className="ml-1"/>
-                                                    </button>
-                                                    {showIconPicker && (
-                                                        <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-2 z-50 grid grid-cols-6 gap-2 max-h-48 overflow-y-auto">
-                                                            {ICON_OPTIONS.map(icon => (
-                                                                <button 
-                                                                    key={icon}
-                                                                    onClick={() => {
-                                                                        setCustomAmenityIcon(icon);
-                                                                        setShowIconPicker(false);
-                                                                    }}
-                                                                    className={`p-2 rounded flex justify-center items-center hover:bg-gray-100 ${customAmenityIcon === icon ? 'bg-primary/10 text-primary' : 'text-gray-600'}`}
-                                                                    title={icon}
-                                                                >
-                                                                    {renderAmenityIcon(icon)}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                        {editingRoomId !== room.id && (
+                                            <div className="flex space-x-2">
                                                 <button 
-                                                    onClick={addEditCustomAmenity}
-                                                    className="bg-secondary text-white px-3 py-2 rounded text-xs font-medium"
+                                                    onClick={() => handleEditRoomClick(room)} 
+                                                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                                    title="Edit"
                                                 >
-                                                    Add
+                                                    <Edit size={18} />
                                                 </button>
-                                             </div>
-                                             {/* Display custom/selected amenities */}
-                                             <div className="flex flex-wrap gap-1 mt-2">
-                                                 {editForm.amenities?.map((a, idx) => (
-                                                     <span key={idx} className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 rounded text-[10px] mr-1 mb-1">
-                                                         <span className="mr-1 opacity-70">{renderAmenityIcon(a.icon)}</span>
-                                                         {a.name}
-                                                         <button onClick={() => toggleEditAmenity(a)} className="ml-1 text-gray-500 hover:text-red-500"><X size={10}/></button>
-                                                     </span>
-                                                 ))}
-                                             </div>
-                                        </div>
-
-                                        <div className="flex items-center space-x-2 pt-2">
-                                            <button onClick={handleSaveRoom} className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex justify-center items-center"><Save size={16} className="mr-2"/> Save</button>
-                                            <button onClick={() => setEditingRoomId(null)} className="flex-1 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancel</button>
-                                        </div>
+                                                <button 
+                                                    onClick={() => handleDeleteRoomClick(room.id)}
+                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="flex justify-between items-center">
-                                        <div className="text-2xl font-bold text-secondary">
-                                            ₱{room.price.toLocaleString()} <span className="text-sm text-gray-400 font-normal">/ night</span>
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <button 
-                                                onClick={() => handleEditRoomClick(room)}
-                                                className="flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                                            >
-                                                <Edit size={16} className="mr-2" /> Edit
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteRoomClick(room.id)}
-                                                className="flex items-center px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium text-red-600 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
+                                    
+                                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">{room.description}</p>
+                                    
+                                    <div className="flex flex-wrap gap-2">
+                                        {room.amenities.slice(0, 5).map((am, idx) => (
+                                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 text-gray-600 border border-gray-100">
+                                                {renderAmenityIcon(am.icon)}
+                                                <span className="ml-1.5">{am.name}</span>
+                                            </span>
+                                        ))}
+                                        {room.amenities.length > 5 && (
+                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 text-gray-400">
+                                                +{room.amenities.length - 5} more
+                                            </span>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
+                   </div>
+                ))}
+                
+                {rooms.length === 0 && (
+                    <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                        <BedDouble size={48} className="mx-auto text-gray-300 mb-4"/>
+                        <h3 className="text-lg font-medium text-gray-900">No rooms yet</h3>
+                        <p className="text-gray-500 mb-4">Get started by adding your first room.</p>
+                        <button 
+                           onClick={() => setIsAddingRoom(true)}
+                           className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-teal-700"
+                        >
+                            <Plus size={18} className="mr-2"/> Add Room
+                        </button>
+                    </div>
+                )}
+             </div>
+          </div>
         )}
       </main>
-
-      {/* Add Room Modal */}
-      {isAddingRoom && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 animate-pop max-h-[90vh] overflow-y-auto">
-                  <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                      <h3 className="text-xl font-bold text-gray-800">Add New Room</h3>
-                      <button onClick={() => setIsAddingRoom(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                          <input 
-                            type="text" 
-                            value={newRoom.name}
-                            onChange={(e) => setNewRoom({...newRoom, name: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            placeholder="e.g. Sunset Suite"
-                          />
-                      </div>
-                      
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                          <textarea 
-                            value={newRoom.description}
-                            onChange={(e) => setNewRoom({...newRoom, description: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none h-24"
-                            placeholder="Enter room description..."
-                          />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
-                            <input 
-                                type="number" 
-                                value={newRoom.price}
-                                onChange={(e) => setNewRoom({...newRoom, price: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                             <input 
-                                type="number" 
-                                value={newRoom.capacity}
-                                onChange={(e) => setNewRoom({...newRoom, capacity: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            />
-                        </div>
-                      </div>
-
-                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Main Hero Image URL</label>
-                          <div className="flex">
-                              <div className="bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg px-3 py-2 text-gray-500">
-                                  <ImageIcon size={18} />
-                              </div>
-                              <input 
-                                type="text" 
-                                value={newRoom.image}
-                                onChange={(e) => setNewRoom({...newRoom, image: e.target.value})}
-                                className="w-full border border-gray-300 rounded-r-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                                placeholder="https://..."
-                              />
-                          </div>
-                      </div>
-
-                      <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-2 flex justify-between items-center">
-                                <span>Gallery Images</span>
-                                <button onClick={() => handleAddGalleryImage(false)} className="text-primary hover:text-primary/80 flex items-center text-xs font-semibold">
-                                    <PlusCircle size={14} className="mr-1"/> Add Image
-                                </button>
-                            </label>
-                            <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-100 rounded-lg p-2 bg-gray-50">
-                                {(newRoom.images || []).map((imgUrl, idx) => (
-                                    <div key={idx} className="flex items-center space-x-2">
-                                        <input 
-                                            type="text"
-                                            value={imgUrl}
-                                            onChange={(e) => handleGalleryImageChange(idx, e.target.value, false)}
-                                            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-                                            placeholder="Image URL..."
-                                        />
-                                        <button onClick={() => handleRemoveGalleryImage(idx, false)} className="text-red-400 hover:text-red-600">
-                                            <MinusCircle size={18} />
-                                        </button>
-                                    </div>
-                                ))}
-                                {(!newRoom.images || newRoom.images.length === 0) && (
-                                        <div className="text-sm text-gray-400 italic text-center py-2">No extra gallery images added</div>
-                                )}
-                            </div>
-                      </div>
-
-                      <div>
-                         <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
-                         <div className="grid grid-cols-3 gap-2 mb-3">
-                            {PREDEFINED_AMENITIES.map((amenity) => {
-                                const isSelected = newRoom.amenities?.some(a => a.name === amenity.name);
-                                return (
-                                    <button
-                                        key={amenity.name}
-                                        onClick={() => toggleNewRoomAmenity(amenity)}
-                                        className={`flex items-center justify-center py-2 px-2 rounded text-xs font-medium border transition-all ${
-                                            isSelected 
-                                            ? 'bg-primary/10 border-primary text-primary' 
-                                            : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                                        }`}
-                                    >
-                                        <span className="mr-1.5">{renderAmenityIcon(amenity.icon)}</span>
-                                        {amenity.name}
-                                    </button>
-                                )
-                            })}
-                         </div>
-                         <div className="flex gap-2 relative" ref={newRoomIconPickerRef}>
-                            <input 
-                                type="text" 
-                                value={newRoomCustomAmenity} 
-                                onChange={(e) => setNewRoomCustomAmenity(e.target.value)}
-                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="Add custom amenity..."
-                            />
-                            <div className="relative">
-                                <button 
-                                    onClick={() => setShowNewRoomIconPicker(!showNewRoomIconPicker)}
-                                    className="h-full px-3 border border-gray-300 rounded-lg bg-white flex items-center text-gray-600 hover:bg-gray-50"
-                                    title="Select Icon"
-                                >
-                                    {renderAmenityIcon(newRoomCustomIcon)}
-                                    <ChevronDown size={12} className="ml-1"/>
-                                </button>
-                                {showNewRoomIconPicker && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg p-2 z-50 grid grid-cols-6 gap-2 max-h-48 overflow-y-auto">
-                                        {ICON_OPTIONS.map(icon => (
-                                            <button 
-                                                key={icon}
-                                                onClick={() => {
-                                                    setNewRoomCustomIcon(icon);
-                                                    setShowNewRoomIconPicker(false);
-                                                }}
-                                                className={`p-2 rounded flex justify-center items-center hover:bg-gray-100 ${newRoomCustomIcon === icon ? 'bg-primary/10 text-primary' : 'text-gray-600'}`}
-                                                title={icon}
-                                            >
-                                                {renderAmenityIcon(icon)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <button 
-                                onClick={addNewRoomCustomAmenity}
-                                className="bg-secondary text-white px-3 py-2 rounded-lg text-xs font-medium"
-                            >
-                                Add
-                            </button>
-                         </div>
-                         <div className="flex flex-wrap gap-1 mt-2">
-                             {newRoom.amenities?.map((a, idx) => (
-                                 <span key={idx} className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 rounded text-[10px] mr-1 mb-1">
-                                     <span className="mr-1 opacity-70">{renderAmenityIcon(a.icon)}</span>
-                                     {a.name}
-                                     <button onClick={() => toggleNewRoomAmenity(a)} className="ml-1 text-gray-500 hover:text-red-500"><X size={10}/></button>
-                                 </span>
-                             ))}
-                         </div>
-                      </div>
-                  </div>
-
-                  <div className="mt-8 flex space-x-3">
-                      <button onClick={() => setIsAddingRoom(false)} className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                      <button onClick={handleAddRoomSubmit} className="flex-1 py-3 bg-primary text-white rounded-lg font-bold hover:bg-teal-700 transition-colors shadow-md">Create Room</button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* Add Booking Modal */}
-      {isAddingBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-pop">
-                  <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold text-gray-800">Add Manual Booking</h3>
-                      <button onClick={() => setIsAddingBooking(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
-                          <input 
-                            type="text" 
-                            value={newBookingData.guestName}
-                            onChange={(e) => setNewBookingData({...newBookingData, guestName: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            placeholder="e.g. John Doe"
-                          />
-                      </div>
-                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Guest Email</label>
-                          <input 
-                            type="email" 
-                            value={newBookingData.email}
-                            onChange={(e) => setNewBookingData({...newBookingData, email: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            placeholder="e.g. john@example.com"
-                          />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                            <input 
-                                type="text" 
-                                value={newBookingData.phoneNumber}
-                                onChange={(e) => setNewBookingData({...newBookingData, phoneNumber: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                                placeholder="+63 9xx xxx xxxx"
-                            />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Guests</label>
-                             <input 
-                                type="number" 
-                                min="1"
-                                value={newBookingData.guests}
-                                onChange={(e) => setNewBookingData({...newBookingData, guests: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            />
-                         </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-                          <select
-                             value={newBookingData.roomId}
-                             onChange={(e) => setNewBookingData({...newBookingData, roomId: e.target.value})}
-                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none bg-white"
-                          >
-                              {rooms.map(r => (
-                                  <option key={r.id} value={r.id}>{r.name}</option>
-                              ))}
-                          </select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Check In</label>
-                             <input 
-                                type="date" 
-                                value={newBookingData.checkIn}
-                                onChange={(e) => setNewBookingData({...newBookingData, checkIn: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                             />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Check Out</label>
-                             <input 
-                                type="date" 
-                                value={newBookingData.checkOut}
-                                onChange={(e) => setNewBookingData({...newBookingData, checkOut: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                             />
-                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select 
-                                value={newBookingData.status}
-                                onChange={(e) => setNewBookingData({...newBookingData, status: e.target.value as any})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none bg-white"
-                            >
-                                <option value="confirmed">Confirmed</option>
-                                <option value="pending">Pending</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Total Price (₱)</label>
-                            <input 
-                                type="number" 
-                                value={newBookingData.totalPrice}
-                                onChange={(e) => setNewBookingData({...newBookingData, totalPrice: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            />
-                        </div>
-                      </div>
-                  </div>
-
-                  <div className="mt-8 flex space-x-3">
-                      <button onClick={() => setIsAddingBooking(false)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                      <button onClick={handleAddBookingSubmit} className="flex-1 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-teal-700 transition-colors shadow-md">Add Booking</button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* Booking Edit Modal */}
-      {editingBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-pop">
-                  <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold text-gray-800">Edit Booking</h3>
-                      <button onClick={() => setEditingBooking(null)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
-                          <input 
-                            type="text" 
-                            value={editingBooking.guestName}
-                            onChange={(e) => setEditingBooking({...editingBooking, guestName: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                      </div>
-
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Guest Email</label>
-                          <input 
-                            type="email" 
-                            value={editingBooking.email}
-                            onChange={(e) => setEditingBooking({...editingBooking, email: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                            <input 
-                                type="text" 
-                                value={editingBooking.phoneNumber || ''}
-                                onChange={(e) => setEditingBooking({...editingBooking, phoneNumber: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Guests</label>
-                             <input 
-                                type="number" 
-                                min="1"
-                                value={editingBooking.guests || 1}
-                                onChange={(e) => setEditingBooking({...editingBooking, guests: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                            />
-                         </div>
-                      </div>
-
-                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-                          <select
-                             value={editingBooking.roomId}
-                             onChange={(e) => setEditingBooking({...editingBooking, roomId: e.target.value})}
-                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none bg-white"
-                          >
-                              {rooms.map(r => (
-                                  <option key={r.id} value={r.id}>{r.name}</option>
-                              ))}
-                          </select>
-                      </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Check In</label>
-                             <input 
-                                type="date" 
-                                value={editingBooking.checkIn}
-                                onChange={(e) => setEditingBooking({...editingBooking, checkIn: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                             />
-                         </div>
-                         <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Check Out</label>
-                             <input 
-                                type="date" 
-                                value={editingBooking.checkOut}
-                                onChange={(e) => setEditingBooking({...editingBooking, checkOut: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                             />
-                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select 
-                                value={editingBooking.status}
-                                onChange={(e) => setEditingBooking({...editingBooking, status: e.target.value as any})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none bg-white"
-                            >
-                                <option value="confirmed">Confirmed</option>
-                                <option value="pending">Pending</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Total Price (₱)</label>
-                            <input 
-                                type="number" 
-                                value={editingBooking.totalPrice}
-                                onChange={(e) => setEditingBooking({...editingBooking, totalPrice: Number(e.target.value)})}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                            />
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2">
-                        <p className="text-xs text-gray-500 italic">Note: Updates affect revenue charts immediately.</p>
-                      </div>
-                  </div>
-
-                  <div className="mt-8 flex space-x-3">
-                      <button onClick={() => setEditingBooking(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                      <button onClick={handleSaveBooking} className="flex-1 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-teal-700 transition-colors shadow-md">Save Changes</button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-       {/* Export Report Modal */}
-      {showExportModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-pop">
-                  <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                      <h3 className="text-xl font-bold text-gray-800">Export Report</h3>
-                      <button onClick={() => setShowExportModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                  </div>
-                  
-                  <div className="space-y-5">
-                      {/* Format Selection */}
-                      <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Format</label>
-                          <div className="grid grid-cols-3 gap-3">
-                              <button 
-                                onClick={() => setExportConfig({...exportConfig, format: 'doc'})}
-                                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${exportConfig.format === 'doc' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                              >
-                                  <FileText size={24} className="mb-2" />
-                                  <span className="text-xs font-bold">Word Doc</span>
-                              </button>
-                              <button 
-                                onClick={() => setExportConfig({...exportConfig, format: 'csv'})}
-                                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${exportConfig.format === 'csv' ? 'bg-green-50 border-green-400 text-green-700' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                              >
-                                  <FileSpreadsheet size={24} className="mb-2" />
-                                  <span className="text-xs font-bold">Excel / CSV</span>
-                              </button>
-                              <button 
-                                onClick={() => setExportConfig({...exportConfig, format: 'txt'})}
-                                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${exportConfig.format === 'txt' ? 'bg-gray-100 border-gray-400 text-gray-800' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                              >
-                                  <File size={24} className="mb-2" />
-                                  <span className="text-xs font-bold">Plain Text</span>
-                              </button>
-                          </div>
-                      </div>
-
-                      {/* Report Details */}
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Report Title</label>
-                          <input 
-                            type="text" 
-                            value={exportConfig.title}
-                            onChange={(e) => setExportConfig({...exportConfig, title: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-                          />
-                      </div>
-
-                      <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Custom Notes / Abstract</label>
-                          <textarea 
-                            value={exportConfig.notes}
-                            onChange={(e) => setExportConfig({...exportConfig, notes: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none h-20 resize-none"
-                            placeholder="Add optional notes, executive summary, or comments here..."
-                          />
-                      </div>
-                      
-                      {/* Alterable Stats */}
-                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Summary Overrides (Optional)</label>
-                          <div className="grid grid-cols-2 gap-3">
-                             <div>
-                                 <label className="block text-[10px] text-gray-500 mb-1">Total Revenue Display</label>
-                                 <input 
-                                    type="text" 
-                                    value={exportConfig.overrideRevenue}
-                                    onChange={(e) => setExportConfig({...exportConfig, overrideRevenue: e.target.value})}
-                                    className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs"
-                                    placeholder={`Current: ₱${totalRevenue.toLocaleString()}`}
-                                 />
-                             </div>
-                             <div>
-                                 <label className="block text-[10px] text-gray-500 mb-1">Total Bookings Display</label>
-                                 <input 
-                                    type="text" 
-                                    value={exportConfig.overrideBookings}
-                                    onChange={(e) => setExportConfig({...exportConfig, overrideBookings: e.target.value})}
-                                    className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-xs"
-                                    placeholder={`Current: ${bookings.length}`}
-                                 />
-                             </div>
-                          </div>
-                          <p className="text-[10px] text-gray-400 mt-2 italic">Use these fields to alter the data shown on the report without changing database records.</p>
-                      </div>
-                  </div>
-
-                  <div className="mt-8 flex space-x-3">
-                      <button onClick={() => setShowExportModal(false)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                      <button onClick={processExport} className="flex-1 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-teal-700 transition-colors shadow-md flex justify-center items-center">
-                          <Download size={18} className="mr-2"/> Download {exportConfig.format.toUpperCase()}
-                      </button>
-                  </div>
-              </div>
-          </div>
-      )}
     </div>
   );
 };

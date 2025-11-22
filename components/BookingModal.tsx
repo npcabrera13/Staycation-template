@@ -188,13 +188,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             </button>
           </div>
 
-          <div className="flex flex-col md:flex-row h-full max-h-[90vh] md:max-h-[85vh] overflow-y-auto md:overflow-hidden">
+          <div className="flex flex-col lg:flex-row h-full max-h-[90vh] lg:max-h-[85vh] overflow-y-auto lg:overflow-hidden">
             
             {/* Left Side: Image Carousel & Details (Hidden on Step 3 Success) */}
             {step !== 3 && (
-            <div className="md:w-5/12 bg-gray-50 md:overflow-y-auto border-r border-gray-100">
+            <div className="w-full lg:w-5/12 bg-gray-50 lg:overflow-y-auto border-r border-gray-100">
               <div 
-                className="relative h-48 md:h-64 group bg-gray-200 cursor-zoom-in overflow-hidden"
+                className="relative h-48 md:h-64 lg:h-72 group bg-gray-200 cursor-zoom-in overflow-hidden"
                 onClick={() => setIsImageExpanded(true)}
               >
                   <img 
@@ -239,7 +239,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                   )}
               </div>
               
-              <div className="p-4 md:p-6 space-y-6 hidden md:block">
+              <div className="p-4 md:p-6 space-y-6 block">
                 <div>
                     <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Description</h3>
                     <p className="text-gray-600 text-sm leading-relaxed">{room.description}</p>
@@ -256,15 +256,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                   </div>
                 </div>
               </div>
-              
-              <div className="p-4 block md:hidden">
-                 <p className="text-gray-600 text-sm line-clamp-2">{room.description}</p>
-              </div>
             </div>
             )}
 
             {/* Right Side: Interaction Area */}
-            <div className={`${step === 3 ? 'w-full' : 'md:w-7/12'} p-4 md:p-8 flex flex-col bg-white md:h-[650px]`}>
+            <div className={`${step === 3 ? 'w-full' : 'w-full lg:w-7/12'} p-4 md:p-8 flex flex-col bg-white min-h-[500px] lg:h-[650px]`}>
               
               {/* Progress Steps (Hide on success) */}
               {step !== 3 && (
