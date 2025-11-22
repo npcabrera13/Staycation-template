@@ -1,8 +1,29 @@
 import React from 'react';
 import { Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Footer: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const scrollToSection = (id: string) => {
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <footer className="bg-secondary text-white pt-12 pb-6" id="contact">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,10 +41,18 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold text-accent mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><a href="#" className="hover:text-white">Home</a></li>
-              <li><a href="#rooms" className="hover:text-white">Rooms</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+              <li>
+                <button onClick={() => scrollToSection('hero')} className="hover:text-white transition-colors">Home</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('rooms')} className="hover:text-white transition-colors">Rooms</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('about')} className="hover:text-white transition-colors">About Us</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors">Contact</button>
+              </li>
             </ul>
           </div>
 

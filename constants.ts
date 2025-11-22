@@ -14,9 +14,7 @@ export const MOCK_ROOMS: Room[] = [
       { name: 'Pool', icon: 'waves' },
       { name: 'AC', icon: 'wind' },
       { name: 'Kitchen', icon: 'chef-hat' }
-    ],
-    rating: 4.9,
-    reviews: 128
+    ]
   },
   {
     id: '2',
@@ -31,9 +29,7 @@ export const MOCK_ROOMS: Room[] = [
       { name: 'Fireplace', icon: 'flame' },
       { name: 'Hiking', icon: 'mountain' },
       { name: 'Parking', icon: 'car' }
-    ],
-    rating: 4.7,
-    reviews: 85
+    ]
   },
   {
     id: '3',
@@ -48,9 +44,7 @@ export const MOCK_ROOMS: Room[] = [
       { name: 'Gym', icon: 'dumbbell' },
       { name: 'Workspace', icon: 'monitor' },
       { name: 'Coffee', icon: 'coffee' }
-    ],
-    rating: 4.8,
-    reviews: 210
+    ]
   }
 ];
 

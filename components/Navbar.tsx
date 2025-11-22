@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Using HashRouter in App
-import { Menu, X, Anchor } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, Anchor, Search } from 'lucide-react';
 
 interface NavbarProps {
   onAdminAccess: () => void;
+  onOpenMyBookings: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onAdminAccess }) => {
+const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const clickCountRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,14 +44,30 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess }) => {
       clickCountRef.current = 0;
       onAdminAccess();
     } else {
-      // Navigate to home on single/normal clicks if needed, or just stay
       if (clickCountRef.current === 1) {
-         navigate('/');
+         scrollToSection('hero');
       }
     }
   };
 
-  // Navbar background logic
+  const scrollToSection = (id: string) => {
+    setIsOpen(false);
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   const navClasses = `fixed w-full z-50 transition-all duration-500 ease-in-out ${
     scrolled 
       ? 'bg-secondary/90 backdrop-blur-md shadow-xl py-2' 
@@ -70,11 +88,19 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess }) => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Home</Link>
-            <a href="#rooms" className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</a>
-            <a href="#about" className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">About</a>
-            <a href="#contact" className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Contact</a>
-            <button className="bg-accent text-secondary px-6 py-2.5 rounded-full font-bold hover:bg-white hover:text-primary transition-all duration-300 shadow-lg hover:shadow-accent/50 transform hover:-translate-y-0.5">
+            <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Home</button>
+            <button onClick={() => scrollToSection('rooms')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</button>
+            <button onClick={() => scrollToSection('about')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">About</button>
+            <button onClick={() => scrollToSection('contact')} className="text-gray-300 hover:text-accent transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Contact</button>
+            
+            <button 
+              onClick={onOpenMyBookings}
+              className="flex items-center text-white hover:text-accent transition-colors text-sm font-medium border-l border-gray-600 pl-6"
+            >
+              <Search size={16} className="mr-2" /> My Bookings
+            </button>
+
+            <button onClick={() => scrollToSection('rooms')} className="bg-accent text-secondary px-6 py-2.5 rounded-full font-bold hover:bg-white hover:text-primary transition-all duration-300 shadow-lg hover:shadow-accent/50 transform hover:-translate-y-0.5">
               Book Now
             </button>
           </div>
@@ -92,35 +118,12 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess }) => {
       {isOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-secondary/95 backdrop-blur-xl border-t border-white/10 shadow-2xl animate-slide-down overflow-hidden">
           <div className="px-4 pt-4 pb-6 space-y-2">
-            <Link 
-                to="/" 
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors text-center font-medium"
-            >
-                Home
-            </Link>
-            <a 
-                href="#rooms" 
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors text-center font-medium"
-            >
-                Rooms
-            </a>
-            <a 
-                href="#about" 
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors text-center font-medium"
-            >
-                About
-            </a>
-            <a 
-                href="#contact" 
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors text-center font-medium"
-            >
-                Contact
-            </a>
-             <button className="w-full block px-4 py-3 bg-accent text-secondary font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
+            <button onClick={() => scrollToSection('hero')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">Home</button>
+            <button onClick={() => scrollToSection('rooms')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">Rooms</button>
+            <button onClick={() => scrollToSection('about')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">About</button>
+            <button onClick={() => scrollToSection('contact')} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium">Contact</button>
+            <button onClick={() => { onOpenMyBookings(); setIsOpen(false); }} className="w-full text-left block px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-accent rounded-lg transition-colors font-medium border-t border-white/10 mt-2">Find My Booking</button>
+             <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-accent text-secondary font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
               Book Your Stay
             </button>
           </div>

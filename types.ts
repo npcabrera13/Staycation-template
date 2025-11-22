@@ -12,8 +12,6 @@ export interface Room {
   image: string;
   images: string[];
   amenities: Amenity[];
-  rating: number;
-  reviews: number;
 }
 
 export interface Booking {

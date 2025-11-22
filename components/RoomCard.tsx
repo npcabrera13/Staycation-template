@@ -7,7 +7,7 @@ import {
 
 interface RoomCardProps {
   room: Room;
-  onSelect: (room: Room) => void;
+  onSelect: (room: Room, openGallery?: boolean) => void;
 }
 
 const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
@@ -51,13 +51,23 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
   };
 
   return (
-    <div className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 border border-gray-100 flex flex-col h-full isolation-isolate [mask-image:radial-gradient(white,black)]">
-      <div className="h-56 sm:h-64 overflow-hidden relative bg-gray-200">
+    <div 
+      className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 border border-gray-100 flex flex-col h-full transform-gpu relative isolation-isolate"
+      // This mask-image fixes the safari/chrome bug where border-radius is lost during child transform
+      style={{ maskImage: 'radial-gradient(white, black)', WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+    >
+      <div 
+        className="h-64 overflow-hidden relative bg-gray-200 cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(room, true);
+        }}
+      >
         {/* Image */}
         <img 
           src={room.image} 
           alt={room.name} 
-          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[1.5s] ease-out"
+          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
         />
         
         {/* Overlay Gradient */}
@@ -72,7 +82,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
         </div>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col relative">
+      <div className="p-6 flex-1 flex flex-col relative bg-white">
         <p className="text-gray-600 text-sm mb-6 line-clamp-3 flex-1 leading-relaxed font-light">{room.description}</p>
         
         <div className="mt-auto space-y-5">
@@ -94,8 +104,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
             </div>
 
             <button 
-                onClick={() => onSelect(room)}
-                className="w-full bg-secondary text-white py-3.5 rounded-xl font-semibold flex items-center justify-center group-hover:bg-primary transition-all duration-500 shadow-md hover:shadow-lg text-sm sm:text-base overflow-hidden relative"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(room, false);
+                }}
+                className="w-full bg-secondary text-white py-3.5 rounded-xl font-semibold flex items-center justify-center group-hover:bg-primary transition-all duration-500 shadow-md hover:shadow-lg text-sm sm:text-base overflow-hidden relative cursor-pointer"
             >
                 <span className="relative z-10 flex items-center">
                    View Details & Book <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform duration-300"/>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Room, Booking } from '../types';
 import { 
-  X, Wifi, Wind, Coffee, MapPin, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
+  X, Wifi, Wind, Coffee, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
   Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
-  ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users
+  ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users, Printer, Download, Star,
+  Info, Grid, Image as ImageIcon
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
@@ -13,19 +14,22 @@ interface BookingModalProps {
   onClose: () => void;
   bookings: Booking[];
   onBook: (booking: Booking) => void;
+  initialGalleryOpen?: boolean;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook }) => {
-  const [step, setStep] = useState<1 | 2>(1); // 1 = Details, 2 = Payment
+const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook, initialGalleryOpen = false }) => {
+  const [step, setStep] = useState<1 | 2 | 3>(1); // 1=Details, 2=Payment, 3=Success
   const [selectedStart, setSelectedStart] = useState<Date | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
   const [guestName, setGuestName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [guestCount, setGuestCount] = useState<number>(1);
+  const [newBookingId, setNewBookingId] = useState<string>('');
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isImageExpanded, setIsImageExpanded] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(initialGalleryOpen);
+  const [showGalleryInfo, setShowGalleryInfo] = useState(true);
   
   // Error State
   const [errors, setErrors] = useState<{name?: string, email?: string, phone?: string, guests?: string}>({});
@@ -44,22 +48,24 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
           setErrors({});
           setIsProcessing(false);
           setCurrentImgIndex(0);
-          setIsImageExpanded(false);
+          setIsImageExpanded(initialGalleryOpen);
+          setShowGalleryInfo(true);
+          setNewBookingId('');
       }
-  }, [room]);
+  }, [room, initialGalleryOpen]);
 
   if (!room) return null;
 
   // Combine main image and gallery images, filtering out empty ones
   const allImages = [room.image, ...(room.images || [])].filter(img => img && img.trim().length > 0);
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImgIndex((prev) => (prev + 1) % allImages.length);
   };
 
-  const prevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImgIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
@@ -76,7 +82,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const newErrors: {name?: string, email?: string, phone?: string, guests?: string} = {};
     
     if (!selectedStart || !selectedEnd) {
-        // Technically button disabled, but safety check
         alert("Please select dates first.");
         return;
     }
@@ -112,10 +117,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
   const confirmPayment = () => {
     setIsProcessing(true);
-    // Simulate API call
+    const id = crypto.randomUUID();
+    
     setTimeout(() => {
       const newBooking: Booking = {
-        id: crypto.randomUUID(),
+        id: id,
         roomId: room.id,
         guestName,
         email,
@@ -128,9 +134,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         bookedAt: new Date().toISOString().split('T')[0]
       };
       onBook(newBooking);
+      setNewBookingId(id);
       setIsProcessing(false);
-      onClose();
-      alert("Booking Confirmed! You will receive an email shortly.");
+      setStep(3); // Move to Success Step
     }, 2000);
   };
 
@@ -159,13 +165,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     'bike': <Bike size={18} className="mr-2 text-teal-600" />
   };
 
-  const renderIcons = (amenity: { name: string; icon: string }) => {
-     if (iconMap[amenity.icon]) {
-        return iconMap[amenity.icon];
-     }
-     
-     // Fallback
-     return <Sparkles className="mr-2 text-yellow-400" size={18} />;
+  const renderIcons = (amenity: { name: string; icon: string }, customClass?: string) => {
+     if (iconMap[amenity.icon]) return React.cloneElement(iconMap[amenity.icon] as React.ReactElement<any>, { className: customClass || "mr-2 text-primary" });
+     return <Sparkles className={customClass || "mr-2 text-yellow-400"} size={18} />;
   };
 
   return (
@@ -188,7 +190,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
           <div className="flex flex-col md:flex-row h-full max-h-[90vh] md:max-h-[85vh] overflow-y-auto md:overflow-hidden">
             
-            {/* Left Side: Image Carousel & Details */}
+            {/* Left Side: Image Carousel & Details (Hidden on Step 3 Success) */}
+            {step !== 3 && (
             <div className="md:w-5/12 bg-gray-50 md:overflow-y-auto border-r border-gray-100">
               <div 
                 className="relative h-48 md:h-64 group bg-gray-200 cursor-zoom-in overflow-hidden"
@@ -252,40 +255,27 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                     ))}
                   </div>
                 </div>
-
-                <div>
-                    <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Location</h3>
-                    <div className="h-48 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                        <iframe 
-                          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125181.43388055636!2d119.34637195647923!3d11.224378310234497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33b7accd159567c7%3A0x64464a2a15c2823!2sEl%20Nido%2C%20Palawan!5e0!3m2!1sen!2sph!4v1709536251859!5m2!1sen!2sph" 
-                          width="100%" 
-                          height="100%" 
-                          style={{border:0}} 
-                          allowFullScreen={true} 
-                          loading="lazy" 
-                          referrerPolicy="no-referrer-when-downgrade"
-                          title="Room Location"
-                        ></iframe>
-                    </div>
-                </div>
               </div>
               
-              {/* Mobile only description snippet */}
               <div className="p-4 block md:hidden">
                  <p className="text-gray-600 text-sm line-clamp-2">{room.description}</p>
               </div>
             </div>
+            )}
 
             {/* Right Side: Interaction Area */}
-            <div className="md:w-7/12 p-4 md:p-8 flex flex-col bg-white md:h-[650px]">
-              {/* Progress Steps */}
+            <div className={`${step === 3 ? 'w-full' : 'md:w-7/12'} p-4 md:p-8 flex flex-col bg-white md:h-[650px]`}>
+              
+              {/* Progress Steps (Hide on success) */}
+              {step !== 3 && (
               <div className="flex items-center mb-6 justify-center">
                   <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
                   <div className={`w-16 h-1 mx-2 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`}></div>
                   <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
               </div>
+              )}
 
-              {step === 1 ? (
+              {step === 1 && (
                 <div className="flex flex-col h-full animate-slide-in-right">
                   <h3 className="text-xl md:text-2xl font-serif font-bold text-secondary mb-2">Check Availability</h3>
                   <p className="text-gray-500 text-sm mb-4 md:mb-6">Select your check-in and check-out dates to see pricing.</p>
@@ -386,7 +376,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                     </button>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {step === 2 && (
                 <div className="flex flex-col h-full justify-between animate-slide-in-right">
                    <div>
                         <h3 className="text-xl md:text-2xl font-serif font-bold text-secondary mb-6">Secure Payment</h3>
@@ -458,48 +450,159 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                    </div>
                 </div>
               )}
+
+              {step === 3 && (
+                <div className="flex flex-col items-center justify-center h-full animate-pop text-center px-4">
+                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                        <CheckCircle className="text-green-600 w-12 h-12" />
+                    </div>
+                    <h3 className="text-3xl font-serif font-bold text-secondary mb-2">Booking Confirmed!</h3>
+                    <p className="text-gray-500 max-w-md mb-8">
+                        Thank you, {guestName}! Your stay at {room.name} has been secured. We've sent a confirmation email to {email}.
+                    </p>
+
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 w-full max-w-md mb-8 text-left">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">Booking Reference</p>
+                        <p className="text-xl font-mono font-bold text-primary mb-4 select-all">{newBookingId}</p>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="text-gray-500 text-xs">Check-in</p>
+                                <p className="font-semibold text-gray-800">{selectedStart?.toLocaleDateString()}</p>
+                            </div>
+                             <div>
+                                <p className="text-gray-500 text-xs">Check-out</p>
+                                <p className="font-semibold text-gray-800">{selectedEnd?.toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 w-full max-w-md">
+                         <button onClick={() => alert("Downloading receipt...")} className="flex-1 flex items-center justify-center py-3 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors">
+                             <Download size={18} className="mr-2"/> Receipt
+                         </button>
+                         <button onClick={onClose} className="flex-1 py-3 bg-secondary text-white rounded-lg font-bold hover:bg-primary transition-colors">
+                             Done
+                         </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-6">Use "Find My Booking" in the menu to check status later.</p>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       </div>
 
-      {/* Expanded Image View */}
-      {isImageExpanded && (
-        <div className="fixed inset-0 z-[70] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" onClick={() => setIsImageExpanded(false)}>
-            <button 
-                onClick={(e) => { e.stopPropagation(); setIsImageExpanded(false); }}
-                className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors z-50"
-            >
-                <X size={32} />
-            </button>
-
-            {allImages.length > 1 && (
-                <>
+      {/* Immersive Expanded Image Gallery */}
+      {isImageExpanded && step !== 3 && (
+        <div className="fixed inset-0 z-[70] bg-black text-white flex flex-col animate-fade-in">
+            
+            {/* Toolbar */}
+            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/60 to-transparent">
+                <div className="flex items-center space-x-4">
+                    <span className="bg-white/20 backdrop-blur px-3 py-1 rounded-full text-xs font-medium tracking-wide">
+                        {currentImgIndex + 1} / {allImages.length}
+                    </span>
                     <button 
-                        onClick={prevImage}
-                        className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors z-50"
+                        onClick={() => setShowGalleryInfo(!showGalleryInfo)}
+                        className={`p-2 rounded-full transition-colors ${showGalleryInfo ? 'bg-white text-black' : 'bg-black/40 hover:bg-white/20 text-white'}`}
+                        title={showGalleryInfo ? "Hide Info" : "Show Info"}
                     >
-                        <ChevronLeft size={40} />
+                        <Info size={20} />
                     </button>
-                    <button 
-                        onClick={nextImage}
-                        className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors z-50"
-                    >
-                        <ChevronRight size={40} />
-                    </button>
-                </>
-            )}
-
-            <img 
-                src={allImages[currentImgIndex]} 
-                alt={`${room.name} - Full View`}
-                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg select-none"
-                onClick={(e) => e.stopPropagation()} 
-            />
-
-             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/10">
-                {currentImgIndex + 1} / {allImages.length}
+                </div>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onClose(); }}
+                    className="p-2 rounded-full bg-black/40 hover:bg-white/20 transition-colors"
+                >
+                    <X size={24} />
+                </button>
             </div>
+
+            {/* Main Stage */}
+            <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
+                <img 
+                    src={allImages[currentImgIndex]} 
+                    alt={`${room.name} - Full View`}
+                    className="max-w-full max-h-full object-contain select-none shadow-2xl"
+                />
+
+                {/* Navigation Arrows */}
+                {allImages.length > 1 && (
+                    <>
+                        <button 
+                            onClick={prevImage}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-4 rounded-full hover:bg-white/10 transition-colors z-20 group"
+                        >
+                            <ChevronLeft size={40} className="text-white/70 group-hover:text-white" />
+                        </button>
+                        <button 
+                            onClick={nextImage}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-4 rounded-full hover:bg-white/10 transition-colors z-20 group"
+                        >
+                            <ChevronRight size={40} className="text-white/70 group-hover:text-white" />
+                        </button>
+                    </>
+                )}
+            </div>
+
+            {/* Bottom Info Overlay */}
+            <div className={`relative z-40 bg-gradient-to-t from-black via-black/90 to-transparent pt-16 pb-6 px-6 transition-all duration-500 ${showGalleryInfo ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end justify-between gap-6">
+                    
+                    {/* Text Info */}
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                             <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">{room.name}</h2>
+                        </div>
+                        <p className="text-gray-300 max-w-2xl text-sm md:text-base line-clamp-2 mb-4">{room.description}</p>
+                        
+                        {/* Quick Amenities */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {room.amenities.slice(0, 5).map((a, i) => (
+                                <span key={i} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-200 border border-white/10">
+                                    {renderIcons(a, "mr-1.5 text-white/70")} {a.name}
+                                </span>
+                            ))}
+                             {room.amenities.length > 5 && (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-200 border border-white/10">
+                                    +{room.amenities.length - 5} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Filmstrip & Action */}
+                    <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+                        <div className="flex gap-2 overflow-x-auto pb-2 max-w-[80vw] md:max-w-md scrollbar-hide">
+                            {allImages.map((img, idx) => (
+                                <button 
+                                    key={idx}
+                                    onClick={() => setCurrentImgIndex(idx)}
+                                    className={`relative h-16 w-24 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${idx === currentImgIndex ? 'border-accent scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                >
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            <div className="text-right hidden md:block">
+                                <p className="text-xs text-gray-400 uppercase font-bold">Price per night</p>
+                                <p className="text-2xl font-bold text-accent">₱{room.price.toLocaleString()}</p>
+                            </div>
+                            <button 
+                                onClick={() => setIsImageExpanded(false)}
+                                className="flex-1 md:flex-none bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors"
+                            >
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
       )}
     </div>
