@@ -840,10 +840,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
-                        {/* Scrollable List with Indicator */}
+                        {/* Scrollable List with Indicator - EDITED: INCREASED RIGHT PADDING */}
                         <div className="w-full md:w-1/2 h-32 md:h-56 relative mt-2 md:mt-0">
                             <div 
-                                className="absolute inset-0 overflow-y-auto pr-2 space-y-2 scrollbar-thin"
+                                className="absolute inset-0 overflow-y-auto pr-6 space-y-2 scrollbar-thin"
                                 style={{ scrollbarWidth: 'thin' }}
                             >
                                 {roomPopularity.map((entry, index) => (
