@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Booking, Room, Amenity } from '../types';
-import { format, isValid, differenceInDays, addDays, addMonths, isAfter, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isWithinInterval, startOfWeek, endOfWeek, getDay } from 'date-fns';
+import { format, isValid, differenceInDays, addDays, addMonths, isAfter, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
 import { 
   LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar as CalendarIcon, Plus, Image as ImageIcon, 
   Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
@@ -43,6 +43,10 @@ const ICON_OPTIONS = [
   'sparkles', 'utensils', 'monitor', 'zap', 'sun', 'umbrella', 'music', 'briefcase', 
   'key', 'bell', 'bath', 'armchair', 'bike'
 ];
+
+const startOfMonth = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+};
 
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);

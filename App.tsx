@@ -12,7 +12,6 @@ import SearchBar from './components/SearchBar';
 import { MOCK_ROOMS, INITIAL_BOOKINGS, COMPANY_INFO } from './constants';
 import { Room, Booking } from './types';
 import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader } from 'lucide-react';
-import { isWithinInterval } from 'date-fns';
 
 const LandingPage: React.FC<{
   rooms: Room[];
@@ -406,15 +405,26 @@ function App() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [startInGallery, setStartInGallery] = useState(false);
   
-  // Local State initialization (replaces Firebase loading)
-  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
-  const [rooms, setRooms] = useState<Room[]>(MOCK_ROOMS);
-  const [isLoading, setIsLoading] = useState(false);
+  // Local State
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- Handlers for Local State Management ---
+  // Initialize data locally
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      // Simulate network delay
+      setTimeout(() => {
+          setRooms(MOCK_ROOMS);
+          setBookings(INITIAL_BOOKINGS);
+          setIsLoading(false);
+      }, 500); 
+    };
+    loadData();
+  }, []);
 
   const handleBooking = (newBooking: Booking) => {
-    // Add new booking to local state
     setBookings(prev => [...prev, newBooking]);
   };
 

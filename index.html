@@ -6,6 +6,10 @@
     <title>Serenity Staycation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      // Polyfill process for browser environment to prevent crash
+      window.process = { env: { API_KEY: '' } };
+    </script>
+    <script>
       tailwind.config = {
         theme: {
           extend: {

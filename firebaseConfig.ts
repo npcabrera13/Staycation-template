@@ -1,2 +1,1 @@
-// Firebase configuration removed.
-export const db = {};
+// Firebase configuration removed
