@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -11,7 +11,7 @@ import RevealOnScroll from './components/RevealOnScroll';
 import SearchBar from './components/SearchBar';
 import { MOCK_ROOMS, INITIAL_BOOKINGS, COMPANY_INFO } from './constants';
 import { Room, Booking } from './types';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader } from 'lucide-react';
 import { isWithinInterval } from 'date-fns';
 
 const LandingPage: React.FC<{
@@ -20,7 +20,8 @@ const LandingPage: React.FC<{
   onRoomSelect: (room: Room, openGallery?: boolean) => void;
   onAdminEnter: () => void;
   onOpenMyBookings: () => void;
-}> = ({ rooms, bookings, onRoomSelect, onAdminEnter, onOpenMyBookings }) => {
+  isLoading: boolean;
+}> = ({ rooms, bookings, onRoomSelect, onAdminEnter, onOpenMyBookings, isLoading }) => {
   const [activeRoomIndex, setActiveRoomIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -217,7 +218,12 @@ const LandingPage: React.FC<{
             </div>
           </RevealOnScroll>
           
-          {filteredRooms.length > 0 ? (
+          {isLoading ? (
+             <div className="flex justify-center items-center py-24">
+                <Loader className="animate-spin text-primary mr-2" size={32} />
+                <span className="text-gray-500">Loading rooms...</span>
+             </div>
+          ) : filteredRooms.length > 0 ? (
               <div className="relative group">
                 <button 
                     onClick={() => scroll('left')}
@@ -258,8 +264,12 @@ const LandingPage: React.FC<{
             <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <AlertCircle size={48} className="mx-auto text-gray-300 mb-4" />
                 <h3 className="text-xl font-bold text-gray-800 mb-2">No Rooms Available</h3>
-                <p className="text-gray-500">Try adjusting your dates or guest count to find available options.</p>
-                <button onClick={handleClearSearch} className="mt-4 text-primary font-bold hover:underline">View All Rooms</button>
+                <p className="text-gray-500">
+                    {searchCriteria ? "Try adjusting your dates or guest count." : "Our rooms are currently being updated. Please check back soon!"}
+                </p>
+                {searchCriteria && (
+                    <button onClick={handleClearSearch} className="mt-4 text-primary font-bold hover:underline">View All Rooms</button>
+                )}
             </div>
           )}
           
@@ -395,10 +405,16 @@ function App() {
   const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [startInGallery, setStartInGallery] = useState(false);
+  
+  // Local State initialization (replaces Firebase loading)
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [rooms, setRooms] = useState<Room[]>(MOCK_ROOMS);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // --- Handlers for Local State Management ---
 
   const handleBooking = (newBooking: Booking) => {
+    // Add new booking to local state
     setBookings(prev => [...prev, newBooking]);
   };
 
@@ -459,6 +475,7 @@ function App() {
                   }}
                   onAdminEnter={() => setIsAdminMode(true)} 
                   onOpenMyBookings={() => setIsMyBookingsOpen(true)}
+                  isLoading={isLoading}
                 />
               } />
               <Route path="*" element={<Navigate to="/" replace />} />

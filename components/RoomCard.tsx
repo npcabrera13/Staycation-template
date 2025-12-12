@@ -2,7 +2,8 @@ import React from 'react';
 import { Room } from '../types';
 import { 
   Users, Wifi, Wind, Coffee, ArrowRight, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
-  Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike
+  Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
+  ListPlus
 } from 'lucide-react';
 
 interface RoomCardProps {
@@ -96,11 +97,18 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
                         {renderIcon(am)} <span className="ml-1.5">{am.name}</span>
                     </span>
                 ))}
-                {room.amenities.length > 3 && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-400 border border-gray-100">
-                        +{room.amenities.length - 3} more
-                    </span>
-                )}
+                
+                {/* Always show an option to view amenities if they exist */}
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(room, false);
+                    }}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                    <ListPlus size={12} className="mr-1.5" /> 
+                    {room.amenities.length > 3 ? `+${room.amenities.length - 3} more` : 'Amenities'}
+                </button>
             </div>
 
             <button 
