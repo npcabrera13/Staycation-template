@@ -2,12 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Anchor, Search, BookOpen } from 'lucide-react';
 
+import { Settings } from '../types';
+
 interface NavbarProps {
   onAdminAccess: () => void;
   onOpenMyBookings: () => void;
+  settings?: Settings;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
+const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settings }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const clickCountRef = useRef(0);
@@ -31,13 +34,13 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     const now = Date.now();
-    
+
     if (now - lastClickTimeRef.current < 1000) {
       clickCountRef.current += 1;
     } else {
       clickCountRef.current = 1;
     }
-    
+
     lastClickTimeRef.current = now;
 
     if (clickCountRef.current === 3) {
@@ -45,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
       onAdminAccess();
     } else {
       if (clickCountRef.current === 1) {
-         scrollToSection('hero');
+        scrollToSection('hero');
       }
     }
   };
@@ -69,11 +72,10 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
   };
 
   // Updated to always be white-based
-  const navClasses = `fixed w-full z-50 transition-all duration-500 ease-in-out ${
-    scrolled 
-      ? 'bg-white/90 backdrop-blur-md shadow-xl py-2' 
-      : 'bg-white py-4 shadow-lg'
-  }`;
+  const navClasses = `fixed w-full z-50 transition-all duration-500 ease-in-out ${scrolled
+    ? 'bg-white/90 backdrop-blur-md shadow-xl py-2'
+    : 'bg-white py-4 shadow-lg'
+    }`;
 
   return (
     <nav className={navClasses}>
@@ -81,12 +83,12 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
         <div className="flex justify-between items-center">
           <div className="flex items-center cursor-pointer select-none group" onClick={handleLogoClick}>
             <div className="relative">
-                {/* Changed icon color to primary for visibility on white */}
-                <Anchor className="h-8 w-8 text-primary mr-2 transition-transform duration-700 group-hover:rotate-[360deg]" />
-                <div className="absolute inset-0 bg-primary opacity-20 blur-lg rounded-full animate-pulse"></div>
+              {/* Changed icon color to primary for visibility on white */}
+              <Anchor className="h-8 w-8 text-primary mr-2 transition-transform duration-700 group-hover:rotate-[360deg]" />
+              <div className="absolute inset-0 bg-primary opacity-20 blur-lg rounded-full animate-pulse"></div>
             </div>
             {/* Changed text color to secondary (dark) */}
-            <span className="font-serif text-xl font-bold tracking-wider text-secondary">Serenity</span>
+            <span className="font-serif text-xl font-bold tracking-wider text-secondary">{settings?.siteName || "Serenity"}</span>
           </div>
 
           {/* Desktop Menu (Visible on Large Screens Only) */}
@@ -96,8 +98,8 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
             <button onClick={() => scrollToSection('rooms')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</button>
             <button onClick={() => scrollToSection('about')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">About</button>
             <button onClick={() => scrollToSection('contact')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Contact</button>
-            
-            <button 
+
+            <button
               onClick={onOpenMyBookings}
               className="flex items-center text-gray-600 hover:text-primary transition-colors text-sm font-medium border-l border-gray-300 pl-6"
             >
@@ -128,7 +130,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings }) => {
             <button onClick={() => scrollToSection('about')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">About</button>
             <button onClick={() => scrollToSection('contact')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">Contact</button>
             <button onClick={() => { onOpenMyBookings(); setIsOpen(false); }} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium border-t border-gray-100 mt-2">Find My Booking</button>
-             <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-secondary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
+            <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-secondary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
               Book Your Stay
             </button>
           </div>
