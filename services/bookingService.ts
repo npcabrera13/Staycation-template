@@ -7,18 +7,20 @@ const COLLECTION_NAME = "bookings";
 export const bookingService = {
     async getAll(): Promise<Booking[]> {
         const snapshot = await getDocs(collection(db, COLLECTION_NAME));
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
     },
 
     async getByEmail(email: string): Promise<Booking[]> {
         const q = query(collection(db, COLLECTION_NAME), where("email", "==", email));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
     },
 
     async add(booking: Omit<Booking, 'id'>): Promise<Booking> {
-        const docRef = await addDoc(collection(db, COLLECTION_NAME), booking);
-        return { id: docRef.id, ...booking };
+        // Ensure we don't save the ID field if it somehow leaked into the object
+        const { id, ...bookingData } = booking as any;
+        const docRef = await addDoc(collection(db, COLLECTION_NAME), bookingData);
+        return { id: docRef.id, ...bookingData };
     },
 
     async update(id: string, data: Partial<Booking>): Promise<void> {

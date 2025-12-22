@@ -30,6 +30,7 @@ export interface Booking {
 
 export interface Settings {
   siteName: string;
+  logo?: string;
   description: string;
   heroImage: string; // Kept for backward compatibility or general open graph use
   hero: {
@@ -37,28 +38,69 @@ export interface Settings {
     subtitle: string;
     ctaText: string;
     image: string;
+    images?: string[];
+    slideInterval?: number;
+    overlayOpacity: number;
+    imagePosition: string;
+    textShadow?: 'none' | 'sm' | 'lg';
   };
   features: {
     title: string;
     description: string;
     image: string;
   };
-  map: {
-    embedUrl: string;
-    address: string;
+  about: {
+    title: string;
+    subtitle: string;
+    features: Array<{
+      title: string;
+      description: string;
+    }>;
+    image: string;
   };
   contact: {
     address: string;
     phone: string;
     email: string;
-    socials: {
-      facebook: string;
-      instagram: string;
-    }
+    title?: string;
+    description?: string;
+  };
+  social: {
+    facebook: string;
+    instagram: string;
+    twitter: string;
+    tiktok?: string;
+  };
+  map: {
+    embedUrl: string;
+  };
+  roomsSection?: {
+    title: string;
+    subtitle?: string;
+  };
+  footer?: {
+    copyrightText?: string;
   };
   theme: {
     primaryColor: string;
+    primaryHoverColor?: string;
     secondaryColor: string;
+  };
+  paymentMethods?: {
+    gcash?: {
+      enabled: boolean;
+      accountName?: string;
+      accountNumber?: string;
+      qrImage?: string;
+    };
+    bankTransfer?: {
+      enabled: boolean;
+      bankName?: string;
+      accountName?: string;
+      accountNumber?: string;
+      qrImage?: string;
+    };
+    messengerLink?: string;
   };
 }
 
