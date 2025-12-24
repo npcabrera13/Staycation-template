@@ -38,7 +38,7 @@ const InlineImage: React.FC<InlineImageProps> = ({
 
     return (
         <div
-            className={`relative ${isEditing ? 'cursor-pointer group' : ''} ${className}`}
+            className={`relative overflow-hidden ${isEditing ? 'cursor-pointer group' : ''} ${className}`}
             onMouseEnter={() => isEditing && setIsHovered(true)}
             onMouseLeave={() => isEditing && setIsHovered(false)}
             onClick={handleClick}
@@ -55,7 +55,7 @@ const InlineImage: React.FC<InlineImageProps> = ({
             )}
 
             {isEditing && (
-                <div className={`absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-lg`}>
+                <div className={`absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
                     <div className="bg-primary/90 p-3 rounded-full shadow-lg transform group-hover:scale-110 transition-transform">
                         <Upload size={24} />
                     </div>

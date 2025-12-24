@@ -73,7 +73,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     React.useEffect(() => {
         if (startEditing) {
             setIsEditing(true);
-            setIsBuilderMinimized(false); // Auto-open when editing starts
+            setIsBuilderMinimized(true); // Start minimized so user sees website directly
             if (onEditingStarted) onEditingStarted();
         }
     }, [startEditing, onEditingStarted]);
@@ -546,17 +546,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     onChange={(url) => handleSettingChange('about', 'image', url)}
                                     className="w-full h-full object-cover rounded-3xl shadow-2xl relative z-10 transform hover:scale-[1.02] transition-transform duration-1000"
                                 />
-                                <div className="absolute -bottom-6 left-4 md:-bottom-10 md:-left-10 bg-white p-6 rounded-2xl shadow-xl z-20 max-w-xs animate-[pulse_5s_ease-in-out_infinite]">
-                                    <div className="flex items-center mb-4">
-                                        <div className="flex -space-x-2 mr-4">
-                                            <img className="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=1" alt="User" />
-                                            <img className="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=2" alt="User" />
-                                            <img className="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=3" alt="User" />
-                                        </div>
-                                        <span className="text-xs font-bold text-gray-500">1k+ Happy Guests</span>
-                                    </div>
-                                    <p className="text-sm text-secondary font-serif italic">"The most relaxing weekend of my life. Truly serene."</p>
-                                </div>
                             </RevealOnScroll>
                         </div>
                     </div>

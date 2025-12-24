@@ -618,8 +618,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex-1 overflow-y-auto bg-gray-50 p-1">
                 <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="bg-gray-50 p-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            {day}
+                        <div key={day} className="bg-gray-50 p-1 md:p-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <span className="hidden md:inline">{day}</span>
+                            <span className="md:hidden">{day.charAt(0)}</span>
                         </div>
                     ))}
 
@@ -637,13 +638,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         });
 
                         return (
-                            <div key={idx} className={`min-h-[120px] bg-white p-2 relative group hover:bg-gray-50 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''}`}>
-                                <div className={`text-sm font-medium mb-1 ${isSameDay(date, new Date()) ? 'bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center -ml-1.5 -mt-1 shadow-sm' : ''}`}>
+                            <div key={idx} className={`min-h-[60px] md:min-h-[100px] bg-white p-1 md:p-2 relative group hover:bg-gray-50 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''}`}>
+                                <div className={`text-xs md:text-sm font-medium mb-0.5 md:mb-1 ${isSameDay(date, new Date()) ? 'bg-primary text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-sm shadow-sm' : ''}`}>
                                     {date.getDate()}
                                 </div>
 
-                                <div className="space-y-1">
-                                    {dayBookings.slice(0, 3).map(booking => {
+                                <div className="space-y-0.5 md:space-y-1">
+                                    {dayBookings.slice(0, 2).map(booking => {
                                         const colorClass = booking.status === 'pending'
                                             ? 'bg-yellow-500 text-white border-yellow-600 shadow-sm'
                                             : 'bg-primary text-white border-primary shadow-sm';
@@ -652,15 +653,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             <button
                                                 key={booking.id}
                                                 onClick={(e) => { e.stopPropagation(); handleEditBookingClick(booking); }}
-                                                className={`w-full text-left text-[10px] px-1.5 py-1 rounded border truncate font-medium hover:opacity-90 transition-opacity ${colorClass}`}
+                                                className={`w-full text-left text-[8px] md:text-[10px] px-1 py-0.5 md:px-1.5 md:py-1 rounded border truncate font-medium hover:opacity-90 transition-opacity ${colorClass}`}
                                             >
-                                                {booking.guestName}
+                                                <span className="hidden md:inline">{booking.guestName}</span>
+                                                <span className="md:hidden truncate">{booking.guestName.split(' ')[0] || booking.guestName}</span>
                                             </button>
                                         );
                                     })}
-                                    {dayBookings.length > 3 && (
-                                        <div className="text-[10px] text-gray-400 pl-1 font-medium">
-                                            +{dayBookings.length - 3} more...
+                                    {dayBookings.length > 2 && (
+                                        <div className="text-[8px] md:text-[10px] text-gray-400 pl-0.5 md:pl-1 font-medium">
+                                            +{dayBookings.length - 2}
                                         </div>
                                     )}
                                 </div>
@@ -703,8 +705,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex flex-col-reverse xl:flex-row gap-6 h-full">
                     {/* Main Calendar Area */}
                     <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 flex-shrink-0">
-                            <div>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 md:mb-4 gap-2 md:gap-4 flex-shrink-0">
+                            <div className="hidden md:block">
                                 <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                                     <CalendarIcon className="mr-3 text-primary" size={28} />
                                     {isCalendarExpanded ? 'Expanded Calendar View' : 'Bookings Calendar'}
@@ -712,18 +714,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {!isCalendarExpanded && <p className="text-gray-500 text-sm">Visual timeline of room occupancy</p>}
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
                                 {/* Toggle View Mode Button */}
-                                <div className="flex bg-gray-100 rounded-lg p-1 mr-2">
+                                <div className="flex bg-gray-100 rounded-lg p-0.5 md:p-1">
                                     <button
                                         onClick={() => setExpandedViewMode('grid')}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${expandedViewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         Grid
                                     </button>
                                     <button
                                         onClick={() => setExpandedViewMode('timeline')}
-                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${expandedViewMode === 'timeline' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'timeline' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         Timeline
                                     </button>
@@ -732,17 +734,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {/* Expand/Collapse Button */}
                                 <button
                                     onClick={() => setIsCalendarExpanded(!isCalendarExpanded)}
-                                    className={`p-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${isCalendarExpanded ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                    className={`p-1.5 md:p-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${isCalendarExpanded ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                         }`}
                                     title={isCalendarExpanded ? "Exit Full Screen" : "Full Screen Calendar"}
                                 >
-                                    {isCalendarExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                                    {isCalendarExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                                 </button>
 
-                                <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-1">
-                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, -1))} className="p-2 md:p-3 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronLeft size={20} /></button>
-                                    <div className="px-3 font-bold text-gray-700 min-w-[120px] text-center text-sm">{format(calendarDate, 'MMMM yyyy')}</div>
-                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, 1))} className="p-2 md:p-3 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronRight size={20} /></button>
+                                <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-0.5 md:p-1 ml-auto md:ml-0">
+                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, -1))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronLeft size={18} /></button>
+                                    <div className="px-2 md:px-3 font-bold text-gray-700 min-w-[80px] md:min-w-[120px] text-center text-xs md:text-sm">
+                                        <span className="hidden md:inline">{format(calendarDate, 'MMMM yyyy')}</span>
+                                        <span className="md:hidden">{format(calendarDate, 'MMM yyyy')}</span>
+                                    </div>
+                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, 1))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronRight size={18} /></button>
                                 </div>
                             </div>
                         </div>
@@ -754,6 +759,74 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                         )}
 
+                        {/* Upcoming Arrivals - Easy to see incoming bookings */}
+                        {(() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const next7Days = new Date(today);
+                            next7Days.setDate(next7Days.getDate() + 30);
+
+                            const upcomingArrivals = bookings
+                                .filter(b => {
+                                    if (b.status === 'cancelled') return false;
+                                    const checkIn = new Date(b.checkIn);
+                                    checkIn.setHours(0, 0, 0, 0);
+                                    return checkIn >= today && checkIn <= next7Days;
+                                })
+                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                            if (upcomingArrivals.length === 0) return null;
+
+                            return (
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-blue-800 flex items-center text-sm md:text-base">
+                                            <CalendarIcon size={18} className="mr-2" />
+                                            📅 All Upcoming Arrivals ({upcomingArrivals.length})
+                                        </h3>
+                                        <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-0.5 rounded-full">Next 30 days</span>
+                                    </div>
+                                    <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                                        {upcomingArrivals.map(booking => {
+                                            const room = rooms.find(r => r.id === booking.roomId);
+                                            const checkInDate = new Date(booking.checkIn);
+                                            const isToday = isSameDay(checkInDate, new Date());
+                                            const isTomorrow = isSameDay(checkInDate, addDays(new Date(), 1));
+
+                                            return (
+                                                <button
+                                                    key={booking.id}
+                                                    onClick={() => handleEditBookingClick(booking)}
+                                                    className={`flex-shrink-0 p-2 md:p-3 rounded-lg border-2 text-left transition-all hover:shadow-md ${isToday
+                                                        ? 'bg-green-100 border-green-400 hover:border-green-500'
+                                                        : isTomorrow
+                                                            ? 'bg-yellow-50 border-yellow-300 hover:border-yellow-400'
+                                                            : 'bg-white border-gray-200 hover:border-blue-300'
+                                                        }`}
+                                                    style={{ minWidth: '140px', maxWidth: '180px' }}
+                                                >
+                                                    <div className={`text-[10px] font-bold uppercase mb-1 ${isToday ? 'text-green-700' : isTomorrow ? 'text-yellow-700' : 'text-blue-600'
+                                                        }`}>
+                                                        {isToday ? '🔔 TODAY' : isTomorrow ? '⏰ Tomorrow' : format(checkInDate, 'EEE, MMM d')}
+                                                    </div>
+                                                    <div className="font-bold text-gray-800 text-sm truncate">{booking.guestName}</div>
+                                                    <div className="text-xs text-gray-500 truncate">{room?.name || 'Unknown Room'}</div>
+                                                    <div className="text-xs text-gray-400 mt-1">
+                                                        {booking.nights} night{booking.nights > 1 ? 's' : ''} • {booking.guests} guest{booking.guests > 1 ? 's' : ''}
+                                                    </div>
+                                                    {booking.status === 'pending' && (
+                                                        <div className="mt-1 text-[10px] font-bold text-yellow-600 bg-yellow-100 px-1.5 py-0.5 rounded inline-block">
+                                                            PENDING
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         <div className="flex-1 min-h-0 overflow-auto">
                             {expandedViewMode === 'grid' ? renderGridCalendar() : (
@@ -970,11 +1043,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="animate-fade-in max-w-4xl mx-auto pb-12">
                             <div className="flex justify-between items-center mb-8">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                                         <SettingsIcon className="mr-3 text-primary" size={28} />
                                         Site Settings
                                     </h2>
-                                    <p className="text-gray-500 text-sm">Customize your white-label application</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Customize your white-label application</p>
                                 </div>
                                 <button
                                     onClick={handleSaveSettings}
@@ -986,23 +1059,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             <div className="space-y-6">
                                 {/* Brand Settings */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                                         <Globe size={20} className="mr-2 text-primary" /> Brand Identity
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Site Name</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Name</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.siteName}
                                                 onChange={(e) => setSettingsForm({ ...settingsForm, siteName: e.target.value })}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.description}
                                                 onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
                                             />
@@ -1012,13 +1085,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Hero & Features Note */}
-                                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 flex items-start">
-                                    <div className="bg-blue-100 p-2 rounded-full mr-4 text-blue-600">
+                                <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-800 flex items-start">
+                                    <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mr-4 text-blue-600 dark:text-blue-300">
                                         <Edit size={24} />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-blue-800 mb-1">Visual Builder Enabled</h3>
-                                        <p className="text-blue-600 mb-3">
+                                        <h3 className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-1">Visual Builder Enabled</h3>
+                                        <p className="text-blue-600 dark:text-blue-300 mb-3">
                                             The <strong>Hero Section</strong>, <strong>Features</strong>, and <strong>Why Choose Us</strong> content can now be edited directly on the Home Page using the visual editor.
                                         </p>
                                         {onEnterVisualBuilder && (
@@ -1033,34 +1106,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Map Configuration */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                                         <Globe size={20} className="mr-2 text-primary" /> Map Configuration
                                     </h3>
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Embed URL</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Maps Embed URL</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.map?.embedUrl || ''}
                                                 onChange={(e) => setSettingsForm({ ...settingsForm, map: { ...settingsForm.map, embedUrl: e.target.value } })}
                                                 placeholder="https://www.google.com/maps/embed?..."
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Paste the 'src' attribute from the Google Maps Embed code.</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Paste the 'src' attribute from the Google Maps Embed code.</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Contact Info */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                                         <Phone size={20} className="mr-2 text-primary" /> Contact Information
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.contact.address}
                                                 onChange={(e) => setSettingsForm({
                                                     ...settingsForm,
@@ -1069,9 +1142,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.contact.phone}
                                                 onChange={(e) => setSettingsForm({
                                                     ...settingsForm,
@@ -1080,9 +1153,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                                             <input
-                                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                 value={settingsForm.contact.email}
                                                 onChange={(e) => setSettingsForm({
                                                     ...settingsForm,
@@ -1092,9 +1165,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook</label>
                                                 <input
-                                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                     value={settingsForm.contact.socials.facebook}
                                                     onChange={(e) => setSettingsForm({
                                                         ...settingsForm,
@@ -1103,9 +1176,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instagram</label>
                                                 <input
-                                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                                     value={settingsForm.contact.socials.instagram}
                                                     onChange={(e) => setSettingsForm({
                                                         ...settingsForm,
@@ -1118,13 +1191,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Theme Settings */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                                         <Palette size={20} className="mr-2 text-primary" /> Visual Theme
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Color</label>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="color"
@@ -1135,12 +1208,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         theme: { ...settingsForm.theme, primaryColor: e.target.value }
                                                     })}
                                                 />
-                                                <span className="text-gray-600 font-mono text-sm">{settingsForm.theme.primaryColor}</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{settingsForm.theme.primaryColor}</span>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Used for buttons, highlights, and icons.</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for buttons, highlights, and icons.</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secondary Color</label>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="color"
@@ -1151,25 +1224,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         theme: { ...settingsForm.theme, secondaryColor: e.target.value }
                                                     })}
                                                 />
-                                                <span className="text-gray-600 font-mono text-sm">{settingsForm.theme.secondaryColor}</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{settingsForm.theme.secondaryColor}</span>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">Used for backgrounds, headers, and text accents.</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for backgrounds, headers, and text accents.</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Payment Methods */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                                         <CreditCard size={20} className="mr-2 text-primary" /> Payment Methods
                                     </h3>
-                                    <p className="text-gray-500 text-sm mb-6">Upload QR codes for customers to scan and pay. They will see these after booking.</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Upload QR codes for customers to scan and pay. They will see these after booking.</p>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* GCash */}
-                                        <div className="border rounded-lg p-4">
+                                        <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h4 className="font-bold text-gray-700 flex items-center">
+                                                <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
                                                     <span className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">G</span>
                                                     GCash
                                                 </h4>
@@ -1186,16 +1259,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         })}
                                                         className="w-4 h-4 text-primary rounded"
                                                     />
-                                                    <span className="ml-2 text-sm text-gray-600">Enabled</span>
+                                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
                                                 </label>
                                             </div>
                                             <div className="space-y-3">
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Name</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
                                                     <input
                                                         type="text"
                                                         placeholder="e.g. Juan Dela Cruz"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.gcash?.accountName ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1207,11 +1280,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Number</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
                                                     <input
                                                         type="text"
                                                         placeholder="e.g. 09XX XXX XXXX"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.gcash?.accountNumber ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1223,11 +1296,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">QR Code Image URL</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
                                                     <input
                                                         type="text"
                                                         placeholder="Paste image URL here"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.gcash?.qrImage ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1238,16 +1311,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         })}
                                                     />
                                                     {settingsForm.paymentMethods?.gcash?.qrImage && (
-                                                        <img src={settingsForm.paymentMethods.gcash.qrImage} alt="GCash QR" className="mt-3 w-32 h-32 object-contain border rounded-lg" />
+                                                        <img src={settingsForm.paymentMethods.gcash.qrImage} alt="GCash QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Bank Transfer */}
-                                        <div className="border rounded-lg p-4">
+                                        <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h4 className="font-bold text-gray-700 flex items-center">
+                                                <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
                                                     <span className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">₱</span>
                                                     Bank Transfer
                                                 </h4>
@@ -1264,16 +1337,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         })}
                                                         className="w-4 h-4 text-primary rounded"
                                                     />
-                                                    <span className="ml-2 text-sm text-gray-600">Enabled</span>
+                                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
                                                 </label>
                                             </div>
                                             <div className="space-y-3">
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Bank Name</label>
                                                     <input
                                                         type="text"
                                                         placeholder="e.g. BDO, BPI, UnionBank"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.bankTransfer?.bankName ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1285,11 +1358,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Name</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
                                                     <input
                                                         type="text"
                                                         placeholder="e.g. Juan Dela Cruz"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.bankTransfer?.accountName ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1301,11 +1374,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Account Number</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
                                                     <input
                                                         type="text"
                                                         placeholder="e.g. 1234 5678 9012"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.bankTransfer?.accountNumber ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1317,11 +1390,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">QR Code Image URL</label>
+                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
                                                     <input
                                                         type="text"
                                                         placeholder="Paste image URL here"
-                                                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                                         value={settingsForm.paymentMethods?.bankTransfer?.qrImage ?? ''}
                                                         onChange={(e) => setSettingsForm({
                                                             ...settingsForm,
@@ -1332,7 +1405,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         })}
                                                     />
                                                     {settingsForm.paymentMethods?.bankTransfer?.qrImage && (
-                                                        <img src={settingsForm.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="mt-3 w-32 h-32 object-contain border rounded-lg" />
+                                                        <img src={settingsForm.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
                                                     )}
                                                 </div>
                                             </div>
@@ -1340,12 +1413,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
 
                                     {/* Messenger Link */}
-                                    <div className="mt-6 pt-4 border-t">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Messenger Link (for payment confirmation)</label>
+                                    <div className="mt-6 pt-4 border-t dark:border-gray-700">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Messenger Link (for payment confirmation)</label>
                                         <input
                                             type="text"
                                             placeholder="e.g. https://m.me/yourpage"
-                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                            className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                             value={settingsForm.paymentMethods?.messengerLink ?? ''}
                                             onChange={(e) => setSettingsForm({
                                                 ...settingsForm,
@@ -1355,7 +1428,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 }
                                             })}
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">Customers will be directed here after scanning the QR code to send proof of payment.</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Customers will be directed here after scanning the QR code to send proof of payment.</p>
                                     </div>
                                 </div>
                             </div>
@@ -1982,8 +2055,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <div>
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div>
-                                                            <h3 className="text-xl font-bold text-gray-800">{room.name}</h3>
-                                                            <div className="flex items-center text-sm text-gray-500 mt-1">
+                                                            <h3 className="text-xl font-bold text-gray-800 dark:text-white">{room.name}</h3>
+                                                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
                                                                 <Users size={14} className="mr-1" /> Capacity: {room.capacity} Guests
                                                             </div>
                                                         </div>
@@ -2007,17 +2080,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         )}
                                                     </div>
 
-                                                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">{room.description}</p>
+                                                    <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-4">{room.description}</p>
 
                                                     <div className="flex flex-wrap gap-2">
                                                         {room.amenities.slice(0, 5).map((am, idx) => (
-                                                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 text-gray-600 border border-gray-100">
+                                                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 dark:bg-gray-600 text-gray-600 dark:text-gray-200 border border-gray-100 dark:border-gray-500">
                                                                 {renderAmenityIcon(am.icon)}
                                                                 <span className="ml-1.5">{am.name}</span>
                                                             </span>
                                                         ))}
                                                         {room.amenities.length > 5 && (
-                                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 text-gray-400">
+                                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 dark:bg-gray-600 text-gray-400 dark:text-gray-300">
                                                                 +{room.amenities.length - 5} more
                                                             </span>
                                                         )}

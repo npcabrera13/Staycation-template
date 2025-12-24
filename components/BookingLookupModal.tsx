@@ -42,13 +42,13 @@ const BookingLookupModal: React.FC<BookingLookupModalProps> = ({ isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md md:max-w-lg overflow-hidden animate-pop mx-2">
         <div className="bg-secondary p-6 text-white flex justify-between items-center">
           <h3 className="text-xl font-serif font-bold">My Bookings</h3>
           <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
@@ -56,23 +56,24 @@ const BookingLookupModal: React.FC<BookingLookupModalProps> = ({ isOpen, onClose
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           <form onSubmit={handleSearch} className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Enter your email address</label>
-            <div className="flex gap-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Enter your email address</label>
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. john@example.com"
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary outline-none text-base"
                 required
               />
               <button
                 type="submit"
-                className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-hover transition-colors flex items-center"
+                className="bg-primary text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-hover transition-colors flex items-center justify-center"
               >
-                <Search size={18} />
+                <Search size={18} className="mr-2 sm:mr-0" />
+                <span className="sm:hidden">Search</span>
               </button>
             </div>
           </form>

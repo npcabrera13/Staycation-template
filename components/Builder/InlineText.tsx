@@ -50,6 +50,11 @@ const InlineText: React.FC<InlineTextProps> = ({
     };
 
     const handleFormat = (command: string, arg?: string) => {
+        // Ensure focus is on the content element before executing command
+        if (contentRef.current) {
+            contentRef.current.focus();
+        }
+
         if (command === 'fontSizePx' && arg) {
             // Custom font size handling
             const selection = window.getSelection();
@@ -63,17 +68,19 @@ const InlineText: React.FC<InlineTextProps> = ({
                 span.appendChild(content);
                 range.insertNode(span);
 
-                // Cleanup empty spans if needed? Simple wrap for now.
                 // Reselect
                 selection.removeAllRanges();
                 selection.addRange(range);
             }
         } else {
+            // Execute the formatting command
             document.execCommand(command, false, arg);
         }
 
+        // Trigger input event to save changes
         if (contentRef.current) {
-            contentRef.current.focus(); // Keep focus
+            const event = new Event('input', { bubbles: true });
+            contentRef.current.dispatchEvent(event);
         }
     };
 
@@ -110,10 +117,10 @@ const InlineText: React.FC<InlineTextProps> = ({
             onBlurCapture={handleBlur}
         >
             {isFocused && (
-                <div className="fixed bottom-0 left-0 right-0 z-[100] p-2 flex justify-center md:absolute md:top-auto md:bottom-full md:left-0 md:right-auto md:p-0 md:mb-2 animate-fade-in-up">
+                <div className="absolute bottom-full left-0 right-0 z-[100] mb-2 flex justify-start animate-fade-in-up">
                     <RichTextToolbar
                         onFormat={handleFormat}
-                        className="w-full md:w-auto overflow-x-auto"
+                        className="w-auto max-w-full overflow-x-auto shadow-lg"
                     />
                 </div>
             )}
