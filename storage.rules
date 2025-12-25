@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated reads and writes to booking proof images
+    match /bookings/{bookingId}/{allPaths=**} {
+      // Allow anyone to upload (public uploads for payment proofs)
+      allow read: if true;
+      allow write: if request.resource.size < 5 * 1024 * 1024 // 5MB max
+                   && request.resource.contentType.matches('image/.*'); // only images
+    }
+    
+    // Block all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

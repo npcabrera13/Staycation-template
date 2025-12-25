@@ -92,7 +92,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center cursor-pointer select-none group" onClick={handleLogoClick}>
-            <div className="relative w-8 h-8 mr-2">
+            <div className="relative w-8 h-8 mr-2 overflow-visible">
               {/* Editable Logo - Shows Anchor animation if no logo set, click to upload */}
               <InlineImage
                 src={settings?.logo || "/vite.svg"}

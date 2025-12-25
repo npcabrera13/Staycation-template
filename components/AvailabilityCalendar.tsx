@@ -25,10 +25,20 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
   };
 
   const isDateBooked = (date: Date) => {
+    // Normalize the input date to midnight local time
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
     return roomBookings.some(booking => {
-      const start = new Date(booking.checkIn + 'T00:00:00');
-      const end = new Date(booking.checkOut + 'T00:00:00');
-      return isWithinInterval(date, { start, end });
+      // Parse booking dates - they come as YYYY-MM-DD strings
+      const [startYear, startMonth, startDay] = booking.checkIn.split('-').map(Number);
+      const [endYear, endMonth, endDay] = booking.checkOut.split('-').map(Number);
+
+      const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+      const end = new Date(endYear, endMonth - 1, endDay, 0, 0, 0, 0);
+
+      // Both check-in AND check-out dates are blocked
+      return checkDate >= start && checkDate <= end;
     });
   };
 
@@ -38,13 +48,18 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
   };
 
   const handleDateClick = (date: Date) => {
+    // Normalize today to midnight local time
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Normalize clicked date to midnight local time
+    const clickedDate = new Date(date);
+    clickedDate.setHours(0, 0, 0, 0);
+
     setError(null);
 
-    // 1. Basic Validation
-    if (isBefore(date, today)) return; // Cannot book past
+    // 1. Basic Validation - compare timestamps for accurate past check
+    if (clickedDate.getTime() < today.getTime()) return; // Cannot book past
     if (isDateBooked(date)) {
       setError("This date is unavailable.");
       return;
@@ -58,8 +73,15 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
       return;
     }
 
-    // 3. Clicking the EXACT Start Date again -> Reset All
+    // 3. Clicking the EXACT Start Date again -> Toggle Single Day or Reset
     if (isSameDay(date, startDate)) {
+      if (!endDate) {
+        // If no end date yet, treat as Single Day Stay (Start = End)
+        setEndDate(date);
+        onDateSelect(date, date);
+        return;
+      }
+      // If already has end date (even if same day), Reset
       setStartDate(null);
       setEndDate(null);
       onDateSelect(null, null);

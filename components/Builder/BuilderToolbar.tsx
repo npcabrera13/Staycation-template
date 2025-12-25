@@ -297,6 +297,66 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         />
                     </div>
                 </AccordionItem>
+
+                {/* 5. About Gallery */}
+                <AccordionItem
+                    title="About Gallery"
+                    icon={ImageIcon}
+                    isOpen={openSection === 'about'}
+                    onClick={() => setOpenSection(openSection === 'about' ? null : 'about')}
+                >
+                    <div className="space-y-3">
+                        <label className="block text-xs font-bold text-gray-500">Gallery Images (Carousel)</label>
+                        <p className="text-xs text-gray-400 mb-2">First image is the main image. Additional images appear in the carousel.</p>
+
+                        {/* Main image */}
+                        <div className="flex gap-2 mb-2">
+                            <input
+                                type="text"
+                                value={settings?.about?.image || ''}
+                                onChange={(e) => onUpdateSettings?.('about', 'image', e.target.value)}
+                                className="flex-1 text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
+                                placeholder="Main image URL..."
+                            />
+                        </div>
+
+                        {/* Additional images */}
+                        {(settings?.about?.images || []).map((img, index) => (
+                            <div key={index} className="flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    value={img}
+                                    onChange={(e) => {
+                                        const newImages = [...(settings?.about?.images || [])];
+                                        newImages[index] = e.target.value;
+                                        onUpdateSettings?.('about', 'images', newImages);
+                                    }}
+                                    className="flex-1 text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
+                                    placeholder="Additional image URL..."
+                                />
+                                <button
+                                    onClick={() => {
+                                        const newImages = (settings?.about?.images || []).filter((_, i) => i !== index);
+                                        onUpdateSettings?.('about', 'images', newImages);
+                                    }}
+                                    className="text-red-400 hover:text-red-600 p-1"
+                                    title="Remove Image"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ))}
+                        <button
+                            onClick={() => {
+                                const newImages = [...(settings?.about?.images || []), ''];
+                                onUpdateSettings?.('about', 'images', newImages);
+                            }}
+                            className="w-full py-1 text-xs text-primary border border-primary border-dashed rounded hover:bg-teal-50 flex items-center justify-center gap-1"
+                        >
+                            + Add Another Image
+                        </button>
+                    </div>
+                </AccordionItem>
             </div>
 
             {/* Footer Actions */}

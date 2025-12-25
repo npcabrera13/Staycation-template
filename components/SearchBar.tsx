@@ -26,6 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
     });
   };
 
+
   return (
     <div className="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 -mt-12 relative z-20 animate-fade-in-up border border-gray-100 dark:border-gray-700">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row gap-4 items-center">

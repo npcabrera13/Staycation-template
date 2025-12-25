@@ -9,10 +9,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isDark, setIsDark] = useState(() => {
-        // Check localStorage first, default to light mode if not set
+        // Version flag to force light mode for existing users
+        const themeVersion = localStorage.getItem('themeVersion');
+        if (themeVersion !== 'v2') {
+            // Reset to light mode for all users (one-time migration)
+            localStorage.setItem('themeVersion', 'v2');
+            localStorage.setItem('theme', 'light');
+            return false;
+        }
+        // After migration, respect user's saved preference
         const saved = localStorage.getItem('theme');
-        if (saved) return saved === 'dark';
-        return false; // Default to light mode
+        return saved === 'dark';
     });
 
     useEffect(() => {

@@ -12,6 +12,8 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import StatsSummaryModal from './Admin/StatsSummaryModal';
 import BookingEditModal from './Admin/BookingEditModal';
+import { sendUserConfirmationEmail } from '../services/emailService';
+
 
 interface AdminDashboardProps {
     bookings: Booking[];
@@ -121,7 +123,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         capacity: 2,
         image: 'https://picsum.photos/800/600',
         images: [],
-        amenities: []
+        amenities: [],
+        depositAmount: undefined
     });
     const [newRoomCustomAmenity, setNewRoomCustomAmenity] = useState('');
     const [newRoomCustomIcon, setNewRoomCustomIcon] = useState('sparkles');
@@ -500,6 +503,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             });
         } else {
             if (onUpdateBooking) {
+                // If confirming, send the user confirmation email now
+                if (newStatus === 'confirmed') {
+                    // Find the room for this booking
+                    const room = rooms.find(r => r.id === booking.roomId);
+                    if (room && settings) {
+                        // Only send if enabled in settings
+                        if (settings.notifications?.sendUserConfirmation !== false) {
+                            sendUserConfirmationEmail({ ...booking, status: 'confirmed' }, room, settings);
+                            showToast("Confirmation email sent to guest", "info");
+                        }
+                    }
+                }
+
                 onUpdateBooking({ ...booking, status: newStatus });
             }
         }
@@ -615,10 +631,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
 
         return (
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-1">
-                <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-1">
+                <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="bg-gray-50 p-1 md:p-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <div key={day} className="bg-gray-50 dark:bg-gray-800 p-1 md:p-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">
                             <span className="hidden md:inline">{day}</span>
                             <span className="md:hidden">{day.charAt(0)}</span>
                         </div>
@@ -628,17 +644,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         const isCurrentMonth = date.getMonth() === calendarDate.getMonth();
                         const dayBookings = bookings.filter(b => {
                             if (b.status === 'cancelled') return false;
-                            const start = new Date(b.checkIn);
-                            const end = new Date(b.checkOut);
-                            // Simple check: is single day overlapping or within range
-                            // We treat check-out day as "inclusive" for display or exclusive? 
-                            // Usually hotel bookings: Check-out morning means night is NOT booked.
-                            // But for calendar check: date < checkOut.
-                            return date >= start && date < end;
+
+                            // Parse dates properly using local timezone
+                            const [startY, startM, startD] = b.checkIn.split('-').map(Number);
+                            const [endY, endM, endD] = b.checkOut.split('-').map(Number);
+                            const start = new Date(startY, startM - 1, startD, 0, 0, 0, 0);
+                            const end = new Date(endY, endM - 1, endD, 0, 0, 0, 0);
+
+                            // Normalize comparing date as well
+                            const currentDay = new Date(date);
+                            currentDay.setHours(0, 0, 0, 0);
+
+                            // Include both check-in AND check-out day in the display
+                            return currentDay >= start && currentDay <= end;
                         });
 
                         return (
-                            <div key={idx} className={`min-h-[60px] md:min-h-[100px] bg-white p-1 md:p-2 relative group hover:bg-gray-50 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''}`}>
+                            <div key={idx} className={`min-h-[60px] md:min-h-[100px] bg-white dark:bg-gray-800 p-1 md:p-2 relative group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50 dark:bg-gray-900/50 text-gray-400' : ''}`}>
                                 <div className={`text-xs md:text-sm font-medium mb-0.5 md:mb-1 ${isSameDay(date, new Date()) ? 'bg-primary text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-sm shadow-sm' : ''}`}>
                                     {date.getDate()}
                                 </div>
@@ -654,6 +676,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 key={booking.id}
                                                 onClick={(e) => { e.stopPropagation(); handleEditBookingClick(booking); }}
                                                 className={`w-full text-left text-[8px] md:text-[10px] px-1 py-0.5 md:px-1.5 md:py-1 rounded border truncate font-medium hover:opacity-90 transition-opacity ${colorClass}`}
+                                                title={`${booking.guestName} (${booking.guests} guests)\nTime: ${booking.estimatedArrival || '14:00'} - ${booking.estimatedDeparture || '11:00'}`}
                                             >
                                                 <span className="hidden md:inline">{booking.guestName}</span>
                                                 <span className="md:hidden truncate">{booking.guestName.split(' ')[0] || booking.guestName}</span>
@@ -695,7 +718,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return (
             <div
                 className={isCalendarExpanded
-                    ? "fixed inset-0 z-50 bg-gray-50 flex flex-col p-4 md:p-6 animate-fade-in overflow-hidden"
+                    ? "fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col p-4 md:p-6 animate-fade-in overflow-hidden"
                     : "animate-fade-in"
                 }
                 onTouchStart={onTouchStart}
@@ -704,28 +727,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
                 <div className="flex flex-col-reverse xl:flex-row gap-6 h-full">
                     {/* Main Calendar Area */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 md:mb-4 gap-2 md:gap-4 flex-shrink-0">
                             <div className="hidden md:block">
-                                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                                     <CalendarIcon className="mr-3 text-primary" size={28} />
                                     {isCalendarExpanded ? 'Expanded Calendar View' : 'Bookings Calendar'}
                                 </h2>
-                                {!isCalendarExpanded && <p className="text-gray-500 text-sm">Visual timeline of room occupancy</p>}
+                                {!isCalendarExpanded && <p className="text-gray-500 dark:text-gray-400 text-sm">Visual timeline of room occupancy</p>}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
                                 {/* Toggle View Mode Button */}
-                                <div className="flex bg-gray-100 rounded-lg p-0.5 md:p-1">
+                                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 md:p-1">
                                     <button
                                         onClick={() => setExpandedViewMode('grid')}
-                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'grid' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700'}`}
                                     >
                                         Grid
                                     </button>
                                     <button
                                         onClick={() => setExpandedViewMode('timeline')}
-                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'timeline' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md transition-all ${expandedViewMode === 'timeline' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700'}`}
                                     >
                                         Timeline
                                     </button>
@@ -734,20 +757,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {/* Expand/Collapse Button */}
                                 <button
                                     onClick={() => setIsCalendarExpanded(!isCalendarExpanded)}
-                                    className={`p-1.5 md:p-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${isCalendarExpanded ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                    className={`p-1.5 md:p-2 rounded-lg border transition-colors flex items-center gap-2 font-medium ${isCalendarExpanded ? 'bg-primary text-white border-primary shadow-lg' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                         }`}
                                     title={isCalendarExpanded ? "Exit Full Screen" : "Full Screen Calendar"}
                                 >
                                     {isCalendarExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                                 </button>
 
-                                <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-0.5 md:p-1 ml-auto md:ml-0">
-                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, -1))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronLeft size={18} /></button>
-                                    <div className="px-2 md:px-3 font-bold text-gray-700 min-w-[80px] md:min-w-[120px] text-center text-xs md:text-sm">
+                                <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-0.5 md:p-1 ml-auto md:ml-0">
+                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, -1))} className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 active:bg-gray-200 transition-colors"><ChevronLeft size={18} /></button>
+                                    <div className="px-2 md:px-3 font-bold text-gray-700 dark:text-gray-200 min-w-[80px] md:min-w-[120px] text-center text-xs md:text-sm">
                                         <span className="hidden md:inline">{format(calendarDate, 'MMMM yyyy')}</span>
                                         <span className="md:hidden">{format(calendarDate, 'MMM yyyy')}</span>
                                     </div>
-                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, 1))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-md text-gray-600 active:bg-gray-200 transition-colors"><ChevronRight size={18} /></button>
+                                    <button onClick={() => setCalendarDate(addMonths(calendarDate, 1))} className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 active:bg-gray-200 transition-colors"><ChevronRight size={18} /></button>
                                 </div>
                             </div>
                         </div>
@@ -778,9 +801,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             if (upcomingArrivals.length === 0) return null;
 
                             return (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0">
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-bold text-blue-800 flex items-center text-sm md:text-base">
+                                        <h3 className="font-bold text-blue-800 dark:text-blue-200 flex items-center text-sm md:text-base">
                                             <CalendarIcon size={18} className="mr-2" />
                                             📅 All Upcoming Arrivals ({upcomingArrivals.length})
                                         </h3>
@@ -798,21 +821,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     key={booking.id}
                                                     onClick={() => handleEditBookingClick(booking)}
                                                     className={`flex-shrink-0 p-2 md:p-3 rounded-lg border-2 text-left transition-all hover:shadow-md ${isToday
-                                                        ? 'bg-green-100 border-green-400 hover:border-green-500'
+                                                        ? 'bg-green-100 dark:bg-green-900/50 border-green-400 hover:border-green-500'
                                                         : isTomorrow
-                                                            ? 'bg-yellow-50 border-yellow-300 hover:border-yellow-400'
-                                                            : 'bg-white border-gray-200 hover:border-blue-300'
+                                                            ? 'bg-yellow-50 dark:bg-yellow-900/50 border-yellow-300 hover:border-yellow-400'
+                                                            : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-300'
                                                         }`}
                                                     style={{ minWidth: '140px', maxWidth: '180px' }}
                                                 >
-                                                    <div className={`text-[10px] font-bold uppercase mb-1 ${isToday ? 'text-green-700' : isTomorrow ? 'text-yellow-700' : 'text-blue-600'
+                                                    <div className={`text-[10px] font-bold uppercase mb-1 ${isToday ? 'text-green-700 dark:text-green-400' : isTomorrow ? 'text-yellow-700 dark:text-yellow-400' : 'text-blue-600 dark:text-blue-400'
                                                         }`}>
                                                         {isToday ? '🔔 TODAY' : isTomorrow ? '⏰ Tomorrow' : format(checkInDate, 'EEE, MMM d')}
                                                     </div>
-                                                    <div className="font-bold text-gray-800 text-sm truncate">{booking.guestName}</div>
-                                                    <div className="text-xs text-gray-500 truncate">{room?.name || 'Unknown Room'}</div>
+                                                    <div className="font-bold text-gray-800 dark:text-white text-sm truncate">{booking.guestName}</div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{room?.name || 'Unknown Room'}</div>
                                                     <div className="text-xs text-gray-400 mt-1">
                                                         {booking.nights} night{booking.nights > 1 ? 's' : ''} • {booking.guests} guest{booking.guests > 1 ? 's' : ''}
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-400 flex items-center mt-0.5">
+                                                        <Clock size={10} className="mr-1" />
+                                                        {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
                                                     </div>
                                                     {booking.status === 'pending' && (
                                                         <div className="mt-1 text-[10px] font-bold text-yellow-600 bg-yellow-100 px-1.5 py-0.5 rounded inline-block">
@@ -850,14 +877,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <div className="flex-1 overflow-y-auto overflow-x-auto relative scrollbar-thin">
                                         <div className="min-w-fit">
                                             {rooms.map(room => (
-                                                <div key={room.id} className="flex border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
-                                                    <div className="w-48 flex-shrink-0 p-4 border-r border-gray-200 bg-white z-10 flex flex-col justify-center sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                                        <div className="font-bold text-sm text-gray-800 truncate">{room.name}</div>
+                                                <div key={room.id} className="flex border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors group">
+                                                    <div className="w-48 flex-shrink-0 p-4 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-10 flex flex-col justify-center sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                                        <div className="font-bold text-sm text-gray-800 dark:text-white truncate">{room.name}</div>
                                                         <div className="text-xs text-gray-500">Cap: {room.capacity}</div>
                                                     </div>
                                                     <div className="relative" style={{ width: daysInMonth.length * CELL_WIDTH, height: ROW_HEIGHT }}>
                                                         {daysInMonth.map(day => (
-                                                            <div key={day.toISOString()} className="absolute top-0 bottom-0 border-r border-gray-100" style={{ width: CELL_WIDTH, left: differenceInDays(day, startOfMonth(calendarDate)) * CELL_WIDTH }}></div>
+                                                            <div key={day.toISOString()} className="absolute top-0 bottom-0 border-r border-gray-100 dark:border-gray-700" style={{ width: CELL_WIDTH, left: differenceInDays(day, startOfMonth(calendarDate)) * CELL_WIDTH }}></div>
                                                         ))}
                                                         {bookings
                                                             .filter(b => b.roomId === room.id && b.status !== 'cancelled')
@@ -881,7 +908,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                         onClick={(e) => { e.stopPropagation(); handleEditBookingClick(booking); }}
                                                                         className={`absolute top-3 bottom-3 rounded-md shadow-sm text-[10px] font-bold flex items-center px-2 overflow-hidden whitespace-nowrap hover:brightness-110 transition-all z-10 cursor-pointer ${colorClass}`}
                                                                         style={{ left: `${left + 2}px`, width: `${width - 4}px` }}
-                                                                        title={`${booking.guestName} (${booking.guests} guests)`}
+                                                                        title={`${booking.guestName} (${booking.guests} guests)\nTime: ${booking.estimatedArrival || '14:00'} - ${booking.estimatedDeparture || '11:00'}`}
                                                                     >
                                                                         {width > 40 ? booking.guestName : ''}
                                                                     </button>
@@ -901,15 +928,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {/* Side Stats Panel */}
                     <div className={`w-full xl:w-80 flex-shrink-0 flex flex-col gap-6 ${isCalendarExpanded ? 'hidden xl:flex' : ''}`}>
                         {/* Quick Stats */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
                                 <TrendingUp className="mr-2 text-primary" size={20} />
                                 Month Summary
                             </h3>
                             <div className="space-y-4">
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Date</p>
-                                    <p className="text-sm font-bold text-gray-900">{format(calendarDate, 'MMMM yyyy')}</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{format(calendarDate, 'MMMM yyyy')}</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
@@ -923,18 +950,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 pt-2 border-t border-gray-100">
+                                <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-600">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500 flex items-center"><CheckCircle size={14} className="mr-1.5 text-green-500" /> Confirmed</span>
-                                        <span className="font-bold text-gray-700">{confirmedCount}</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-200">{confirmedCount}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500 flex items-center"><Clock size={14} className="mr-1.5 text-yellow-500" /> Pending</span>
-                                        <span className="font-bold text-gray-700">{pendingCount}</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-200">{pendingCount}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500 flex items-center"><XCircle size={14} className="mr-1.5 text-red-500" /> Cancelled</span>
-                                        <span className="font-bold text-gray-700">{cancelledCount}</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-200">{cancelledCount}</span>
                                     </div>
                                 </div>
                             </div>
@@ -942,31 +969,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {/* Pending Actions List */}
                         {pendingBookings.length > 0 && (
-                            <div className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden flex-1 min-h-[300px]">
-                                <div className="bg-yellow-50 px-5 py-4 border-b border-yellow-100">
-                                    <h3 className="text-yellow-800 font-bold flex items-center">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-900/50 overflow-hidden flex-1 min-h-[300px]">
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 px-5 py-4 border-b border-yellow-100 dark:border-yellow-900/30">
+                                    <h3 className="text-yellow-800 dark:text-yellow-200 font-bold flex items-center">
                                         <Bell className="mr-2" size={18} /> Pending ({pendingBookings.length})
                                     </h3>
                                 </div>
-                                <div className="overflow-y-auto max-h-[400px] p-2 space-y-2">
+                                <div className="overflow-y-auto max-h-[300px] md:max-h-[500px] p-2 space-y-2">
                                     {pendingBookings.map(b => (
-                                        <div key={b.id} className="p-3 border border-gray-100 rounded-lg hover:border-yellow-200 transition-colors bg-white group">
+                                        <div
+                                            key={b.id}
+                                            className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer relative group"
+                                            onClick={() => handleEditBookingClick(b)}
+                                        >
                                             <div className="flex justify-between items-start mb-2">
-                                                <div className="font-bold text-sm text-gray-800 line-clamp-1">{b.guestName}</div>
-                                                <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full font-bold">New</span>
+                                                <div>
+                                                    <h3 className="font-bold text-gray-800 dark:text-white text-sm md:text-base">{b.guestName}</h3>
+                                                    <p className="text-xs text-primary font-medium mt-0.5">
+                                                        {rooms.find(r => r.id === b.roomId)?.name || 'Unknown Room'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
+                                                        <CalendarIcon size={12} className="mr-1" />
+                                                        {format(new Date(b.checkIn), 'MMM d')} - {format(new Date(b.checkOut), 'MMM d')}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
+                                                        <Users size={12} className="mr-1" />
+                                                        {b.guests} Guests
+                                                    </p>
+                                                    {b.paymentProof && (
+                                                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                                            <ImageIcon size={10} className="mr-1" /> Proof Uploaded
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 text-[10px] uppercase font-bold px-2 py-1 rounded">
+                                                    New
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-gray-500 flex items-center mb-1">
-                                                <CalendarIcon size={12} className="mr-1" />
-                                                {format(new Date(b.checkIn), 'MMM d')} - {format(new Date(b.checkOut), 'MMM d')}
-                                            </div>
-                                            <div className="text-xs text-gray-500 flex items-center mb-3">
-                                                <Users size={12} className="mr-1" /> {b.guests} Guests
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleQuickStatusUpdate(b, 'confirmed')} className="flex-1 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded hover:bg-green-100 flex items-center justify-center">
+
+                                            <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 relative z-10">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleQuickStatusUpdate(b, 'confirmed'); }}
+                                                    className="flex-1 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-bold rounded hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center justify-center"
+                                                >
                                                     Accept
                                                 </button>
-                                                <button onClick={() => handleQuickStatusUpdate(b, 'cancelled')} className="flex-1 py-1.5 bg-red-50 text-red-700 text-xs font-bold rounded hover:bg-red-100 flex items-center justify-center">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleQuickStatusUpdate(b, 'cancelled'); }}
+                                                    className="flex-1 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-bold rounded hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center justify-center"
+                                                >
                                                     Decline
                                                 </button>
                                             </div>
@@ -1036,25 +1087,92 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Main Content */}
             <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
 
+                {/* Mobile-Only: Upcoming Arrivals at very top */}
+                <div className="md:hidden mb-4">
+                    {(() => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const next30Days = new Date(today);
+                        next30Days.setDate(next30Days.getDate() + 30);
+
+                        const upcomingArrivals = bookings
+                            .filter(b => {
+                                if (b.status === 'cancelled') return false;
+                                const checkIn = new Date(b.checkIn);
+                                checkIn.setHours(0, 0, 0, 0);
+                                return checkIn >= today && checkIn <= next30Days;
+                            })
+                            .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                        if (upcomingArrivals.length === 0) return (
+                            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
+                                <CalendarIcon size={24} className="mx-auto text-gray-400 mb-2" />
+                                <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming arrivals in the next 30 days</p>
+                            </div>
+                        );
+
+                        return (
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-bold text-blue-800 dark:text-blue-200 flex items-center text-sm">
+                                        <CalendarIcon size={16} className="mr-2" />
+                                        📅 Upcoming Arrivals ({upcomingArrivals.length})
+                                    </h3>
+                                    <span className="text-[10px] text-blue-600 dark:text-blue-300 font-medium bg-blue-100 dark:bg-blue-800 px-2 py-0.5 rounded-full">Next 30 days</span>
+                                </div>
+                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                                    {upcomingArrivals.map(booking => {
+                                        const room = rooms.find(r => r.id === booking.roomId);
+                                        const checkInDate = new Date(booking.checkIn);
+                                        const isToday = isSameDay(checkInDate, new Date());
+                                        const isTomorrow = isSameDay(checkInDate, addDays(new Date(), 1));
+
+                                        return (
+                                            <button
+                                                key={booking.id}
+                                                onClick={() => handleEditBookingClick(booking)}
+                                                className={`flex-shrink-0 p-2 rounded-lg border-2 text-left transition-all hover:shadow-md ${isToday
+                                                    ? 'bg-green-100 dark:bg-green-900/50 border-green-400 dark:border-green-600'
+                                                    : isTomorrow
+                                                        ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-600'
+                                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'
+                                                    }`}
+                                                style={{ minWidth: '120px', maxWidth: '140px' }}
+                                            >
+                                                <div className={`text-[9px] font-bold uppercase mb-1 ${isToday ? 'text-green-700 dark:text-green-300' : isTomorrow ? 'text-yellow-700 dark:text-yellow-300' : 'text-blue-600 dark:text-blue-300'
+                                                    }`}>
+                                                    {isToday ? '🔔 TODAY' : isTomorrow ? '⏰ Tomorrow' : format(checkInDate, 'EEE, MMM d')}
+                                                </div>
+                                                <div className="font-bold text-gray-800 dark:text-white text-xs truncate">{booking.guestName}</div>
+                                                <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{room?.name || 'Room'}</div>
+                                                <div className="text-[9px] text-gray-400 mt-0.5 truncate">
+                                                    {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
+                                                </div>
+                                                {booking.status === 'pending' && (
+                                                    <div className="mt-1 text-[8px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/50 px-1 py-0.5 rounded inline-block">
+                                                        PENDING
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+
                 {activeTab === 'calendar' && renderCalendarView()}
 
                 {activeTab === 'settings' && (
                     settingsForm ? (
                         <div className="animate-fade-in max-w-4xl mx-auto pb-12">
-                            <div className="flex justify-between items-center mb-8">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                                        <SettingsIcon className="mr-3 text-primary" size={28} />
-                                        Site Settings
-                                    </h2>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Customize your white-label application</p>
-                                </div>
-                                <button
-                                    onClick={handleSaveSettings}
-                                    className="flex items-center px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-md font-bold"
-                                >
-                                    <Save size={18} className="mr-2" /> Save Changes
-                                </button>
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
+                                    <SettingsIcon className="mr-3 text-primary" size={28} />
+                                    Site Settings
+                                </h2>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm">Customize your white-label application</p>
                             </div>
 
                             <div className="space-y-6">
@@ -1431,6 +1549,250 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Customers will be directed here after scanning the QR code to send proof of payment.</p>
                                     </div>
                                 </div>
+
+                                {/* Reservation & Deposit Settings */}
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                                        <CreditCard className="mr-2 text-primary" size={20} />
+                                        Reservation & Deposit Settings
+                                    </h3>
+
+                                    {/* Require Deposit Toggle */}
+                                    <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-800 dark:text-white">Require Deposit</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={settingsForm.reservationPolicy?.requireDeposit ?? true}
+                                                onChange={(e) => setSettingsForm({
+                                                    ...settingsForm,
+                                                    reservationPolicy: {
+                                                        ...settingsForm.reservationPolicy,
+                                                        requireDeposit: e.target.checked,
+                                                        depositType: settingsForm.reservationPolicy?.depositType ?? 'percentage',
+                                                        depositPercentage: settingsForm.reservationPolicy?.depositPercentage ?? 50,
+                                                        fixedDepositAmount: settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000,
+                                                        autoConfirmOnDeposit: settingsForm.reservationPolicy?.autoConfirmOnDeposit ?? true,
+                                                        cancellationPolicy: settingsForm.reservationPolicy?.cancellationPolicy ?? '',
+                                                        paymentDeadlineHours: settingsForm.reservationPolicy?.paymentDeadlineHours ?? 24
+                                                    }
+                                                })}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+
+                                    {settingsForm.reservationPolicy?.requireDeposit && (
+                                        <div className="space-y-4">
+                                            {/* Deposit Type */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deposit Type</label>
+                                                <div className="flex gap-4">
+                                                    <label className="flex items-center">
+                                                        <input
+                                                            type="radio"
+                                                            name="depositType"
+                                                            value="percentage"
+                                                            checked={settingsForm.reservationPolicy?.depositType === 'percentage'}
+                                                            onChange={() => setSettingsForm({
+                                                                ...settingsForm,
+                                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'percentage' }
+                                                            })}
+                                                            className="mr-2 text-primary"
+                                                        />
+                                                        <span className="text-gray-700 dark:text-gray-300">Percentage of Total</span>
+                                                    </label>
+                                                    <label className="flex items-center">
+                                                        <input
+                                                            type="radio"
+                                                            name="depositType"
+                                                            value="fixed"
+                                                            checked={settingsForm.reservationPolicy?.depositType === 'fixed'}
+                                                            onChange={() => setSettingsForm({
+                                                                ...settingsForm,
+                                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'fixed' }
+                                                            })}
+                                                            className="mr-2 text-primary"
+                                                        />
+                                                        <span className="text-gray-700 dark:text-gray-300">Fixed Amount</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Percentage Slider or Fixed Amount */}
+                                            {settingsForm.reservationPolicy?.depositType === 'percentage' ? (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Deposit Percentage: <span className="text-primary font-bold">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        min="10"
+                                                        max="100"
+                                                        step="5"
+                                                        value={settingsForm.reservationPolicy?.depositPercentage ?? 50}
+                                                        onChange={(e) => setSettingsForm({
+                                                            ...settingsForm,
+                                                            reservationPolicy: { ...settingsForm.reservationPolicy!, depositPercentage: parseInt(e.target.value) }
+                                                        })}
+                                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                                    />
+                                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                                        <span>10%</span>
+                                                        <span>50%</span>
+                                                        <span>100%</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fixed Deposit Amount (₱)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="100"
+                                                        className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                        value={settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000}
+                                                        onChange={(e) => setSettingsForm({
+                                                            ...settingsForm,
+                                                            reservationPolicy: { ...settingsForm.reservationPolicy!, fixedDepositAmount: parseInt(e.target.value) || 0 }
+                                                        })}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Payment Deadline */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Deadline (hours)</label>
+                                                <select
+                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                    value={settingsForm.reservationPolicy?.paymentDeadlineHours ?? 24}
+                                                    onChange={(e) => setSettingsForm({
+                                                        ...settingsForm,
+                                                        reservationPolicy: { ...settingsForm.reservationPolicy!, paymentDeadlineHours: parseInt(e.target.value) }
+                                                    })}
+                                                >
+                                                    <option value={12}>12 hours</option>
+                                                    <option value={24}>24 hours</option>
+                                                    <option value={48}>48 hours</option>
+                                                    <option value={72}>72 hours (3 days)</option>
+                                                </select>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unpaid bookings can be cancelled after this time</p>
+                                            </div>
+
+                                            {/* Cancellation Policy */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cancellation Policy</label>
+                                                <textarea
+                                                    rows={3}
+                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                                                    placeholder="Describe your cancellation and refund policy..."
+                                                    value={settingsForm.reservationPolicy?.cancellationPolicy ?? ''}
+                                                    onChange={(e) => setSettingsForm({
+                                                        ...settingsForm,
+                                                        reservationPolicy: { ...settingsForm.reservationPolicy!, cancellationPolicy: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Email Notification Settings */}
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                                        <Bell className="mr-2 text-primary" size={20} />
+                                        Email Notifications
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        {/* Admin Email */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Admin Notification Email</label>
+                                            <input
+                                                type="email"
+                                                placeholder="admin@yourresort.com"
+                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                value={settingsForm.notifications?.adminEmail ?? ''}
+                                                onChange={(e) => setSettingsForm({
+                                                    ...settingsForm,
+                                                    notifications: {
+                                                        ...settingsForm.notifications,
+                                                        adminEmail: e.target.value,
+                                                        sendUserConfirmation: settingsForm.notifications?.sendUserConfirmation ?? true,
+                                                        sendAdminAlert: settingsForm.notifications?.sendAdminAlert ?? true,
+                                                        sendCheckInReminder: settingsForm.notifications?.sendCheckInReminder ?? true
+                                                    }
+                                                })}
+                                            />
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Receive notifications about new bookings here</p>
+                                        </div>
+
+                                        {/* Notification Toggles */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mr-3 w-4 h-4 text-primary rounded"
+                                                    checked={settingsForm.notifications?.sendUserConfirmation ?? true}
+                                                    onChange={(e) => setSettingsForm({
+                                                        ...settingsForm,
+                                                        notifications: { ...settingsForm.notifications!, sendUserConfirmation: e.target.checked }
+                                                    })}
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">User Confirmations</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Email guests on booking</p>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mr-3 w-4 h-4 text-primary rounded"
+                                                    checked={settingsForm.notifications?.sendAdminAlert ?? true}
+                                                    onChange={(e) => setSettingsForm({
+                                                        ...settingsForm,
+                                                        notifications: { ...settingsForm.notifications!, sendAdminAlert: e.target.checked }
+                                                    })}
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">Admin Alerts</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Notify on new bookings</p>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mr-3 w-4 h-4 text-primary rounded"
+                                                    checked={settingsForm.notifications?.sendCheckInReminder ?? true}
+                                                    onChange={(e) => setSettingsForm({
+                                                        ...settingsForm,
+                                                        notifications: { ...settingsForm.notifications!, sendCheckInReminder: e.target.checked }
+                                                    })}
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">Check-in Reminders</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Remind guests 1 day before</p>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        {/* Save Button */}
+                                        <div className="mt-6 pt-4 border-t dark:border-gray-700">
+                                            <button
+                                                onClick={handleSaveSettings}
+                                                className="w-full flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-md font-bold"
+                                            >
+                                                <Save size={18} className="mr-2" /> Save Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -1448,16 +1810,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {/* Stats Cards & Charts - Keep existing implementation */}
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
-                                    <p className="text-gray-500 text-sm">Track performance and manage bookings</p>
+                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Overview</h2>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Track performance and manage bookings</p>
                                 </div>
 
-                                <div className="flex items-center space-x-2 bg-white p-1 rounded-lg shadow-sm border border-gray-200">
+                                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                                     {(['week', 'month', 'year'] as Timeframe[]).map((t) => (
                                         <button
                                             key={t}
                                             onClick={() => setTimeframe(t)}
-                                            className={`px-4 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${timeframe === t ? 'bg-secondary text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                                            className={`px-4 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${timeframe === t ? 'bg-secondary text-white' : 'text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                                         >
                                             {t}
                                         </button>
@@ -1475,7 +1837,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     )}
                                     <button
                                         onClick={openExportModal}
-                                        className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-primary transition-colors shadow-sm"
+                                        className="flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-primary transition-colors shadow-sm"
                                     >
                                         <Download size={18} className="mr-2" /> Export Report
                                     </button>
@@ -1484,7 +1846,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             {/* Stats Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="p-3 bg-teal-50 rounded-lg text-primary">
                                             <CalendarIcon size={24} />
@@ -1492,12 +1854,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Bookings</span>
                                     </div>
                                     <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800">{bookings.length}</span>
+                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{bookings.length}</span>
                                         <span className="text-xs text-green-500 font-bold mb-1.5">Total</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="p-3 bg-orange-50 rounded-lg text-accent">
                                             <TrendingUp size={24} />
@@ -1505,12 +1867,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
                                     </div>
                                     <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800">₱{totalRevenue.toLocaleString()}</span>
+                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">₱{totalRevenue.toLocaleString()}</span>
                                         <span className="text-xs text-green-500 font-bold mb-1.5">+12%</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="p-3 bg-blue-50 rounded-lg text-secondary">
                                             <BedDouble size={24} />
@@ -1518,7 +1880,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Occupancy</span>
                                     </div>
                                     <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800">{rooms.length}</span>
+                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{rooms.length}</span>
                                         <span className="text-xs text-gray-400 mb-1.5">Active Rooms</span>
                                     </div>
                                 </div>
@@ -1527,8 +1889,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {/* Charts Section */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Bar Chart */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-96">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-96">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center">
                                         <TrendingUp size={18} className="mr-2 text-primary" />
                                         Revenue Trend ({timeframe})
                                     </h3>
@@ -1548,8 +1910,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Pie Chart */}
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
                                         <TrendingUp size={18} className="mr-2 text-primary" />
                                         Room Distribution
                                     </h3>
@@ -1584,13 +1946,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 style={{ scrollbarWidth: 'thin' }}
                                             >
                                                 {roomPopularity.map((entry, index) => (
-                                                    <div key={index} className="flex items-center text-sm p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                                                    <div key={index} className="flex items-center text-sm p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                                                         <div className="w-3 h-3 rounded-full mr-3 flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="truncate font-medium text-gray-700">{entry.name}</div>
+                                                            <div className="truncate font-medium text-gray-700 dark:text-gray-200">{entry.name}</div>
                                                             <div className="text-xs text-gray-400">{entry.value} Bookings</div>
                                                         </div>
-                                                        <div className="font-bold text-gray-600 text-xs ml-2">
+                                                        <div className="font-bold text-gray-600 dark:text-gray-300 text-xs ml-2">
                                                             {entry.percentage}%
                                                         </div>
                                                     </div>
@@ -1601,8 +1963,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                             {/* Indicator */}
                                             {roomPopularity.length > 4 && (
-                                                <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none flex justify-center items-end pb-2">
-                                                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border border-gray-200 text-[10px] font-medium text-gray-500 flex items-center animate-pulse">
+                                                <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white dark:from-gray-800 via-white/80 dark:via-gray-800/80 to-transparent pointer-events-none flex justify-center items-end pb-2">
+                                                    <div className="bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-gray-600 text-[10px] font-medium text-gray-500 dark:text-gray-300 flex items-center animate-pulse">
                                                         Scroll <ChevronDown size={12} className="ml-1" />
                                                     </div>
                                                 </div>
@@ -1613,13 +1975,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
 
                             {/* Booking List */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                                 {/* Header Area - OPTIMIZED */}
-                                <div className="p-4 md:px-6 md:py-4 border-b border-gray-100 bg-gray-50/50">
+                                <div className="p-4 md:px-6 md:py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
                                         {/* Title */}
-                                        <h3 className="text-lg font-bold text-gray-800">Recent Bookings</h3>
+                                        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Recent Bookings</h3>
 
                                         {/* Actions Toolbar */}
                                         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -1636,7 +1998,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             setBookingFilter(e.target.value as BookingFilter);
                                                             setSelectedBookingIds(new Set());
                                                         }}
-                                                        className="block w-full pl-9 pr-8 py-2.5 md:py-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer hover:border-gray-300 transition-all shadow-sm font-medium"
+                                                        className="block w-full pl-9 pr-8 py-2.5 md:py-2 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500 transition-all shadow-sm font-medium"
                                                     >
                                                         <option value="all">All Time</option>
                                                         <option value="this_month">This Month</option>
@@ -1676,9 +2038,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                 {/* Desktop Table View */}
                                 <div className="hidden lg:block overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-100">
+                                    <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
                                         <thead>
-                                            <tr className="bg-gray-50/50">
+                                            <tr className="bg-gray-50/50 dark:bg-gray-700/50">
                                                 <th className="px-6 py-3 text-left w-10">
                                                     <button
                                                         onClick={handleSelectAll}
@@ -1698,13 +2060,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-100">
+                                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                                             {filteredBookings.length > 0 ? (
                                                 filteredBookings.map((booking) => {
                                                     const roomName = rooms.find(r => r.id === booking.roomId)?.name || 'Unknown Room';
                                                     const isSelected = selectedBookingIds.has(booking.id);
                                                     return (
-                                                        <tr key={booking.id} className={`transition-colors ${isSelected ? 'bg-teal-50' : 'hover:bg-gray-50/80'}`}>
+                                                        <tr key={booking.id} className={`transition-colors ${isSelected ? 'bg-teal-50 dark:bg-teal-900/30' : 'hover:bg-gray-50/80 dark:hover:bg-gray-700/50'}`}>
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <button
                                                                     onClick={() => handleSelectOne(booking.id)}
@@ -1713,10 +2075,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                     {isSelected ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} />}
                                                                 </button>
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.guestName}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{roomName}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                {booking.checkIn}
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{booking.guestName}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{roomName}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                <div>
+                                                                    {booking.checkIn} <span className="text-gray-300 mx-1">→</span> {booking.checkOut}
+                                                                </div>
+                                                                {(booking.estimatedArrival || booking.estimatedDeparture) && (
+                                                                    <div className="text-xs text-gray-400 flex items-center mt-0.5">
+                                                                        <Clock size={10} className="mr-1" />
+                                                                        {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
+                                                                    </div>
+                                                                )}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">₱{booking.totalPrice.toLocaleString()}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -1727,14 +2097,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                                 <button
                                                                     onClick={() => handleEditBookingClick(booking)}
-                                                                    className="text-indigo-600 hover:text-indigo-900 mr-3 bg-indigo-50 p-1.5 rounded-md transition-colors"
+                                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 mr-3 bg-indigo-50 dark:bg-indigo-900/50 p-1.5 rounded-md transition-colors"
                                                                     title="Edit Booking"
                                                                 >
                                                                     <Edit size={16} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteBookingClick(booking.id)}
-                                                                    className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md transition-colors"
+                                                                    className="text-red-600 dark:text-red-400 hover:text-red-900 bg-red-50 dark:bg-red-900/50 p-1.5 rounded-md transition-colors"
                                                                     title="Delete Booking"
                                                                 >
                                                                     <Trash2 size={16} />
@@ -1759,10 +2129,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     {filteredBookings.map((booking) => {
                                         const roomName = rooms.find(r => r.id === booking.roomId)?.name || 'Unknown Room';
                                         return (
-                                            <div key={booking.id} className="bg-white border border-gray-100 rounded-lg shadow-sm p-4 relative">
+                                            <div key={booking.id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-lg shadow-sm p-4 relative">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
-                                                        <h4 className="font-bold text-gray-900">{booking.guestName}</h4>
+                                                        <h4 className="font-bold text-gray-900 dark:text-white">{booking.guestName}</h4>
                                                         <p className="text-xs text-gray-500">{roomName}</p>
                                                     </div>
                                                     <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getStatusColor(booking.status)}`}>
@@ -1772,8 +2142,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 my-3">
                                                     <div>
-                                                        <span className="block text-xs text-gray-400">Check In</span>
-                                                        {booking.checkIn}
+                                                        <span className="block text-xs text-gray-400">Dates & Times</span>
+                                                        <div className="font-medium">{booking.checkIn} - {booking.checkOut}</div>
+                                                        <div className="text-xs text-gray-500 flex items-center mt-1">
+                                                            <Clock size={10} className="mr-1" />
+                                                            {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
+                                                        </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <span className="block text-xs text-gray-400">Total</span>
@@ -1876,6 +2250,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                                                         />
                                                     </div>
+                                                </div>
+                                                {/* Per-Room Deposit Amount */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fixed Deposit Amount (₱) <span className="text-gray-400 text-xs font-normal">(Optional - overrides global)</span></label>
+                                                    <input
+                                                        type="number"
+                                                        value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value ? Number(e.target.value) : undefined;
+                                                            isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
+                                                        }}
+                                                        placeholder="e.g. 2000 (leave empty to use global setting)"
+                                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                    />
+                                                    <p className="text-xs text-gray-400 mt-1">Leave empty to use the global deposit setting instead.</p>
                                                 </div>
                                             </div>
 

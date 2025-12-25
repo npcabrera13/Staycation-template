@@ -12,6 +12,7 @@ export interface Room {
     image: string;
     images: string[];
     amenities: Amenity[];
+    depositAmount?: number; // Optional per-room fixed deposit amount (overrides global settings)
 }
 
 export interface Booking {
@@ -26,6 +27,16 @@ export interface Booking {
     totalPrice: number;
     status: 'confirmed' | 'pending' | 'cancelled';
     bookedAt: string;
+    nights?: number;
+    estimatedArrival?: string; // e.g. "14:00"
+    estimatedDeparture?: string; // e.g. "11:00"
+    // Deposit tracking
+    depositAmount?: number;
+    depositPaid?: boolean;
+    depositPaidAt?: string;
+    balanceAmount?: number;
+    paymentType?: 'deposit' | 'full'; // Whether guest chose to pay deposit only or full amount
+    paymentProof?: string; // URL to the uploaded receipt image
 }
 
 export interface Settings {
@@ -57,6 +68,7 @@ export interface Settings {
             description: string;
         }>;
         image: string;
+        images?: string[]; // Gallery images for carousel
     };
     contact: {
         address: string;
@@ -101,6 +113,23 @@ export interface Settings {
             qrImage?: string;
         };
         messengerLink?: string;
+    };
+    // Reservation & Deposit Settings
+    reservationPolicy?: {
+        requireDeposit: boolean;
+        depositType: 'percentage' | 'fixed';
+        depositPercentage: number;  // 0-100
+        fixedDepositAmount: number;
+        autoConfirmOnDeposit: boolean;
+        cancellationPolicy: string;
+        paymentDeadlineHours: number;  // Hours to pay before auto-cancel
+    };
+    // Email notification settings
+    notifications?: {
+        adminEmail: string;
+        sendUserConfirmation: boolean;
+        sendAdminAlert: boolean;
+        sendCheckInReminder: boolean;
     };
 }
 

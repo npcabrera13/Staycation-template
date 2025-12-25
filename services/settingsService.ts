@@ -33,7 +33,8 @@ export const DEFAULT_SETTINGS: Settings = {
             { title: "Seamless Booking", description: "Real-time availability calendar, instant confirmation, and secure payments." },
             { title: "24/7 Concierge", description: "Our AI concierge and support team are always here to help you plan your trip." }
         ],
-        image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+        image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+        images: []
     },
     features: {
         title: "Stay with us",
@@ -82,9 +83,25 @@ export const DEFAULT_SETTINGS: Settings = {
             qrImage: ""
         },
         messengerLink: ""
+    },
+    reservationPolicy: {
+        requireDeposit: true,
+        depositType: 'percentage',
+        depositPercentage: 50,
+        fixedDepositAmount: 1000,
+        autoConfirmOnDeposit: true,
+        cancellationPolicy: "Deposits are non-refundable if cancelled within 24 hours of check-in. Full refund available for cancellations made 7 days or more before check-in.",
+        paymentDeadlineHours: 24
+    },
+    notifications: {
+        adminEmail: "",
+        sendUserConfirmation: true,
+        sendAdminAlert: true,
+        sendCheckInReminder: true
     }
 };
 
+// Shallow merge with nested object spread - preserves saved values while filling in missing defaults
 export const settingsService = {
     async getSettings(): Promise<Settings> {
         const docRef = doc(db, COLLECTION_NAME, SETTINGS_DOC_ID);
@@ -92,9 +109,23 @@ export const settingsService = {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return docSnap.data() as Settings;
+            const saved = docSnap.data() as Partial<Settings>;
+            // Spread merge: saved values override defaults
+            return {
+                ...DEFAULT_SETTINGS,
+                ...saved,
+                hero: { ...DEFAULT_SETTINGS.hero, ...saved.hero },
+                about: { ...DEFAULT_SETTINGS.about, ...saved.about },
+                features: { ...DEFAULT_SETTINGS.features, ...saved.features },
+                contact: { ...DEFAULT_SETTINGS.contact, ...saved.contact },
+                social: { ...DEFAULT_SETTINGS.social, ...saved.social },
+                theme: { ...DEFAULT_SETTINGS.theme, ...saved.theme },
+                paymentMethods: { ...DEFAULT_SETTINGS.paymentMethods, ...saved.paymentMethods },
+                reservationPolicy: { ...DEFAULT_SETTINGS.reservationPolicy, ...saved.reservationPolicy },
+                notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
+            } as Settings;
         } else {
-            // Return defaults if not found (and maybe create them lazily)
+            // Return defaults if not found
             return DEFAULT_SETTINGS;
         }
     },

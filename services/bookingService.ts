@@ -1,5 +1,5 @@
 import { db } from "../firebaseConfig";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc } from "firebase/firestore";
 import { Booking } from "../types";
 
 const COLLECTION_NAME = "bookings";
@@ -14,6 +14,14 @@ export const bookingService = {
         const q = query(collection(db, COLLECTION_NAME), where("email", "==", email));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+    },
+
+    // Use this to add a booking with a specific ID (preserves the ID from BookingModal)
+    async set(booking: Booking): Promise<Booking> {
+        const { id, ...bookingData } = booking;
+        const docRef = doc(db, COLLECTION_NAME, id);
+        await setDoc(docRef, bookingData);
+        return booking;
     },
 
     async add(booking: Omit<Booking, 'id'>): Promise<Booking> {

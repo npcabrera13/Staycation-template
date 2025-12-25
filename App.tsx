@@ -73,7 +73,7 @@ function AppContent() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <Loader className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-500 font-serif">Loading Serenity...</p>
+          <p className="text-gray-500 font-serif">Loading...</p>
         </div>
       </div>
     );
@@ -165,18 +165,12 @@ function AppContent() {
 
   const handleBooking = async (newBooking: Booking) => {
     try {
-      // Optimistic update
-      const tempId = Math.random().toString();
-      const bookingWithTempId = { ...newBooking, id: tempId };
-      setBookings(prev => [...prev, bookingWithTempId]);
-
-      const savedBooking = await bookingService.add(newBooking);
-
-      // Replace temp with real
-      setBookings(prev => prev.map(b => b.id === tempId ? savedBooking : b));
+      // Use set to preserve the ID generated in BookingModal
+      await bookingService.set(newBooking);
+      setBookings(prev => [...prev, newBooking]);
     } catch (e) {
       console.error(e);
-      // Rollback would go here
+      showToast("Failed to create booking", "error");
     }
   };
 
@@ -270,6 +264,7 @@ function AppContent() {
           onClose={() => setSelectedRoom(null)}
           bookings={bookings}
           onBook={handleBooking}
+          onUpdateBooking={async (b) => { await handleUpdateBooking(b); }}
           initialGalleryOpen={startInGallery}
           settings={settings}
         />

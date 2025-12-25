@@ -1,4 +1,5 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { useNotification } from '../contexts/NotificationContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import RoomCard from './RoomCard';
@@ -50,16 +51,20 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [workingSettings, setWorkingSettings] = useState<Settings>(settings || DEFAULT_SETTINGS);
     const [hasChanges, setHasChanges] = useState(false);
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+    const [activeAboutSlide, setActiveAboutSlide] = useState(0);
+    const [showAboutLightbox, setShowAboutLightbox] = useState(false);
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
+    const { showConfirm } = useNotification();
 
-    // Initial load
+    // Initial load - use deep copy to avoid shared reference
     useEffect(() => {
-        if (settings) setWorkingSettings(settings);
+        if (settings) setWorkingSettings(JSON.parse(JSON.stringify(settings)));
     }, [settings]);
 
     // Hero Slider Interval
     useEffect(() => {
-        const images = workingSettings.hero?.images || (workingSettings.hero?.image ? [workingSettings.hero.image] : []);
+        // Filter out empty images
+        const images = (workingSettings.hero?.images || [workingSettings.hero?.image]).filter(img => img && img.trim() !== '' && img.includes('http'));
         if (!images || images.length <= 1) return;
 
         const interval = setInterval(() => {
@@ -79,9 +84,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
     }, [startEditing, onEditingStarted]);
 
     // Update working settings when actual settings prop changes (if not editing)
+    // Use deep copy to avoid shared reference mutations
     React.useEffect(() => {
         if (!isEditing && settings) {
-            setWorkingSettings(settings);
+            setWorkingSettings(JSON.parse(JSON.stringify(settings)));
         }
     }, [settings, isEditing]);
 
@@ -104,13 +110,41 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }
     };
 
-    const handleCancel = () => {
-        if (settings) {
-            setWorkingSettings(settings);
+    // Ref to capture latest settings for discard callback (avoids stale closure)
+    const settingsRef = useRef(settings);
+    settingsRef.current = settings;
+
+    const handleCancel = useCallback(() => {
+        console.log('=== handleCancel CALLED ===');
+        console.log('hasChanges:', hasChanges);
+        console.log('isEditing:', isEditing);
+
+        const doExit = () => {
+            // Reset to original settings using ref for latest value
+            console.log('Resetting settings and exiting...');
+            console.log('settingsRef.current:', settingsRef.current);
+            if (settingsRef.current) {
+                setWorkingSettings(JSON.parse(JSON.stringify(settingsRef.current)));
+            }
+            setIsEditing(false);
+            setHasChanges(false);
+            setIsBuilderMinimized(false);
+            console.log('=== Builder EXITED, isEditing set to false ===');
+        };
+
+        if (hasChanges) {
+            // Show styled confirmation modal
+            showConfirm({
+                title: "Discard Changes?",
+                message: "You have unsaved changes. Are you sure you want to discard them?",
+                isDangerous: true,
+                confirmLabel: "Discard & Exit",
+                onConfirm: doExit
+            });
+        } else {
+            doExit();
         }
-        setIsEditing(false);
-        setHasChanges(false);
-    };
+    }, [hasChanges, isEditing, showConfirm]);
 
     // Drag Scroll State
     const [isDragging, setIsDragging] = useState(false);
@@ -233,33 +267,62 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 {/* Hero Section */}
                 <div id="hero" className="relative h-[100vh] min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
                     <div className="absolute inset-0">
-                        {/* Render all images for crossfade effect */}
-                        {(workingSettings.hero?.images || [workingSettings.hero?.image || ""]).map((img, index) => {
-                            const isActive = index === (activeHeroSlide ?? 0);
-                            return (
-                                <div
-                                    key={index}
-                                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
-                                >
-                                    <InlineImage
-                                        src={img}
-                                        alt={`Hero Background ${index + 1}`}
-                                        isEditing={false} // Disable direct click-upload for slider, force use of sidebar
-                                        // But if it's isEditing=true, InlineImage shows default cursor. 
-                                        // I'll set isEditing={false} to rely on sidebar for complex slider management
-                                        className="w-full h-full object-cover"
-                                        style={{
-                                            objectPosition: workingSettings.hero?.imagePosition || 'center',
-                                        }}
-                                    />
-                                </div>
-                            );
-                        })}
+                        {/* Get valid images array */}
+                        {(() => {
+                            const validImages = (workingSettings.hero?.images || [workingSettings.hero?.image]).filter(img => img && img.trim() !== '' && img.includes('http'));
 
-                        {/* Fallback if no images array, although mapped above handles it. */}
+                            if (validImages.length === 0) {
+                                // No valid images - show default
+                                return (
+                                    <div className="absolute inset-0">
+                                        <InlineImage
+                                            src={DEFAULT_SETTINGS.hero.image}
+                                            alt="Hero Background"
+                                            isEditing={false}
+                                            className="w-full h-full object-cover"
+                                            style={{ objectPosition: 'center' }}
+                                        />
+                                    </div>
+                                );
+                            }
+
+                            if (validImages.length === 1) {
+                                // Single image - no carousel
+                                return (
+                                    <div className="absolute inset-0">
+                                        <InlineImage
+                                            src={validImages[0]}
+                                            alt="Hero Background"
+                                            isEditing={false}
+                                            className="w-full h-full object-cover"
+                                            style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
+                                        />
+                                    </div>
+                                );
+                            }
+
+                            // Multiple images - carousel with crossfade
+                            return validImages.map((img, index) => {
+                                const isActive = index === (activeHeroSlide ?? 0);
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                                    >
+                                        <InlineImage
+                                            src={img}
+                                            alt={`Hero Background ${index + 1}`}
+                                            isEditing={false}
+                                            className="w-full h-full object-cover"
+                                            style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
+                                        />
+                                    </div>
+                                );
+                            });
+                        })()}
 
                         <div
-                            className="absolute inset-0 bg-black transition-opacity duration-300"
+                            className="absolute inset-0 bg-black transition-opacity duration-300 z-20"
                             style={{ opacity: (workingSettings.hero?.overlayOpacity ?? 50) / 100 }}
                         ></div>
                     </div>
@@ -270,7 +333,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </div>
                     )}
 
-                    <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-10 pt-20">
+                    <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-30 pt-20">
                         <RevealOnScroll>
                             <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-accent text-sm tracking-widest uppercase font-bold mb-6">
                                 {settings?.siteName || "Welcome to Paradise"}
@@ -418,7 +481,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                 <div
                                     ref={scrollContainerRef}
-                                    className={`flex overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'}`}
+                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'}`}
                                     onScroll={handleScroll}
                                     onMouseDown={handleMouseDown}
                                     onMouseLeave={handleMouseLeave}
@@ -428,7 +491,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     {filteredRooms.map((room, index) => (
                                         <div key={room.id} className="w-[85vw] max-w-[340px] md:w-[45%] md:max-w-none lg:w-[32%] flex-shrink-0 snap-center h-full flex flex-col">
                                             {/* Pointer events none only applied when actively dragging to prevent accidental clicks */}
-                                            <div className={isDragging ? "pointer-events-none" : ""}>
+                                            <div className={`h-full ${isDragging ? "pointer-events-none" : ""}`}>
                                                 <RoomCard room={room} onSelect={onRoomSelect} />
                                             </div>
                                         </div>
@@ -539,16 +602,171 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         <div className="md:w-1/2 relative w-full h-96 md:h-[600px] mt-12 md:mt-0">
                             <RevealOnScroll delay={300} className="h-full w-full">
                                 <div className="absolute -inset-4 bg-accent/20 rounded-full blur-3xl z-0 animate-pulse-slow"></div>
-                                <InlineImage
-                                    src={workingSettings.about?.image || "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"}
-                                    alt="Relaxing Interior"
-                                    isEditing={isEditing}
-                                    onChange={(url) => handleSettingChange('about', 'image', url)}
-                                    className="w-full h-full object-cover rounded-3xl shadow-2xl relative z-10 transform hover:scale-[1.02] transition-transform duration-1000"
-                                />
+
+                                {/* About Image Carousel */}
+                                {(() => {
+                                    const aboutImages = [
+                                        workingSettings.about?.image,
+                                        ...(workingSettings.about?.images || [])
+                                    ].filter(img => img && img.trim() !== '');
+
+                                    if (aboutImages.length === 0) {
+                                        return (
+                                            <InlineImage
+                                                src="https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                                                alt="About Section"
+                                                isEditing={isEditing}
+                                                onChange={(url) => handleSettingChange('about', 'image', url)}
+                                                className="w-full h-full object-cover rounded-3xl shadow-2xl relative z-10"
+                                            />
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="relative w-full h-full group">
+                                            {/* Main Image */}
+                                            <div
+                                                className="w-full h-full cursor-pointer relative overflow-hidden rounded-3xl shadow-2xl z-10"
+                                                onClick={() => !isEditing && setShowAboutLightbox(true)}
+                                            >
+                                                {aboutImages.map((img, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className={`absolute inset-0 transition-opacity duration-500 ${index === activeAboutSlide ? 'opacity-100' : 'opacity-0'}`}
+                                                    >
+                                                        {isEditing && index === 0 ? (
+                                                            <InlineImage
+                                                                src={img}
+                                                                alt={`About ${index + 1}`}
+                                                                isEditing={isEditing}
+                                                                onChange={(url) => handleSettingChange('about', 'image', url)}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <img
+                                                                src={img}
+                                                                alt={`About ${index + 1}`}
+                                                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {/* Zoom hint overlay */}
+                                                {!isEditing && aboutImages.length > 0 && (
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                        <span className="bg-white/90 text-gray-800 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+                                                            🔍 Click to Zoom
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Carousel Arrows */}
+                                            {aboutImages.length > 1 && (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveAboutSlide(prev => (prev - 1 + aboutImages.length) % aboutImages.length);
+                                                        }}
+                                                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <ChevronLeft size={24} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveAboutSlide(prev => (prev + 1) % aboutImages.length);
+                                                        }}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <ChevronRight size={24} />
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* Dots Indicator */}
+                                            {aboutImages.length > 1 && (
+                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                                                    {aboutImages.map((_, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveAboutSlide(idx);
+                                                            }}
+                                                            className={`h-2 rounded-full transition-all ${idx === activeAboutSlide ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </RevealOnScroll>
                         </div>
                     </div>
+
+                    {/* About Lightbox Modal */}
+                    {showAboutLightbox && (() => {
+                        const aboutImages = [
+                            workingSettings.about?.image,
+                            ...(workingSettings.about?.images || [])
+                        ].filter(img => img && img.trim() !== '');
+
+                        return (
+                            <div
+                                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+                                onClick={() => setShowAboutLightbox(false)}
+                            >
+                                <button
+                                    onClick={() => setShowAboutLightbox(false)}
+                                    className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-10"
+                                >
+                                    ✕
+                                </button>
+
+                                {/* Navigation arrows */}
+                                {aboutImages.length > 1 && (
+                                    <>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveAboutSlide(prev => (prev - 1 + aboutImages.length) % aboutImages.length);
+                                            }}
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
+                                        >
+                                            <ChevronLeft size={32} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveAboutSlide(prev => (prev + 1) % aboutImages.length);
+                                            }}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
+                                        >
+                                            <ChevronRight size={32} />
+                                        </button>
+                                    </>
+                                )}
+
+                                <img
+                                    src={aboutImages[activeAboutSlide]}
+                                    alt="About Full Size"
+                                    className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+
+                                {/* Image counter */}
+                                {aboutImages.length > 1 && (
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 bg-black/50 px-4 py-2 rounded-full text-sm">
+                                        {activeAboutSlide + 1} / {aboutImages.length}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </section>
 
                 {/* Location Section with Google Maps Embed */}
@@ -603,7 +821,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
             {isEditing && (
                 <BuilderToolbar
                     isEditing={isEditing}
-                    onToggleEdit={handleCancel}
+                    onToggleEdit={() => setIsEditing(true)}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     hasChanges={hasChanges}
@@ -611,6 +829,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onUpdateSettings={handleSettingChange}
                     isMinimized={isBuilderMinimized}
                     onToggleMinimize={setIsBuilderMinimized}
+                    onLogout={onExitAdmin}
                 />
             )
             }

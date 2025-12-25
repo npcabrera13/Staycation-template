@@ -4,33 +4,45 @@ import {
     X, Wifi, Wind, Coffee, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
     ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users, Printer, Download, Star,
-    Info, Grid, Image as ImageIcon
+    Info, Grid, Image as ImageIcon, Loader, Clock
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
+import { sendAdminNotificationEmail } from '../services/emailService';
+import { compressImageToBase64 } from '../utils/imageUtils';
 
 interface BookingModalProps {
     room: Room | null;
     onClose: () => void;
     bookings: Booking[];
     onBook: (booking: Booking) => void;
+    onUpdateBooking?: (booking: Booking) => Promise<void>; // Added for updating with proof
     initialGalleryOpen?: boolean;
     settings?: Settings;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook, initialGalleryOpen = false, settings }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook, onUpdateBooking, initialGalleryOpen = false, settings }) => {
     const [step, setStep] = useState<1 | 2 | 3>(1); // 1=Details, 2=Payment, 3=Success
     const [selectedStart, setSelectedStart] = useState<Date | null>(null);
     const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
     const [guestName, setGuestName] = useState('');
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [estimatedArrival, setEstimatedArrival] = useState<string>('14:00');
+    const [estimatedDeparture, setEstimatedDeparture] = useState<string>('11:00');
     const [guestCount, setGuestCount] = useState<number>(1);
     const [newBookingId, setNewBookingId] = useState<string>('');
+    const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isImageExpanded, setIsImageExpanded] = useState(initialGalleryOpen);
     const [showGalleryInfo, setShowGalleryInfo] = useState(true);
+
+    // Upload State
+    const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadSuccess, setUploadSuccess] = useState(false);
+    const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full'>('deposit');
 
     // Error State
     const [errors, setErrors] = useState<{ name?: string, email?: string, phone?: string, guests?: string }>({});
@@ -45,6 +57,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             setGuestName('');
             setEmail('');
             setPhoneNumber('');
+            setEstimatedArrival('14:00');
+            setEstimatedDeparture('11:00');
             setGuestCount(1);
             setErrors({});
             setIsProcessing(false);
@@ -52,6 +66,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             setIsImageExpanded(initialGalleryOpen);
             setShowGalleryInfo(true);
             setNewBookingId('');
+            setPaymentProofFile(null);
+            setUploadSuccess(false);
+            setUploading(false);
+            setCreatedBooking(null);
+            setPaymentChoice('deposit');
         }
     }, [room, initialGalleryOpen]);
 
@@ -71,7 +90,24 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     };
 
     const nights = (selectedStart && selectedEnd) ? differenceInDays(selectedEnd, selectedStart) : 0;
-    const totalPrice = nights * room.price;
+    // Day Use Logic: If 0 nights (same day), charge for 1 night (or could be 75% if we wanted a policy). 
+    // For now, treat as 1 unit of "stay".
+    const billableNights = Math.max(1, nights);
+    const totalPrice = billableNights * room.price;
+
+    // Calculate deposit for display (same logic as in confirmPayment)
+    let displayDeposit = 0;
+    if (room.depositAmount && room.depositAmount > 0) {
+        displayDeposit = room.depositAmount;
+    } else if (settings?.reservationPolicy?.requireDeposit) {
+        if (settings.reservationPolicy.depositType === 'percentage') {
+            displayDeposit = Math.round(totalPrice * (settings.reservationPolicy.depositPercentage / 100));
+        } else if (settings.reservationPolicy.depositType === 'fixed') {
+            displayDeposit = settings.reservationPolicy.fixedDepositAmount || 0;
+        }
+    }
+    displayDeposit = Math.min(displayDeposit, totalPrice);
+    const displayBalance = totalPrice - displayDeposit;
 
     const handleDateSelect = (start: Date | null, end: Date | null) => {
         setSelectedStart(start);
@@ -120,6 +156,38 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         setIsProcessing(true);
         const id = crypto.randomUUID();
 
+        // Format dates using local timezone (not UTC!)
+        const formatLocalDate = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Calculate deposit amount
+        // Priority: 1) Room-specific depositAmount, 2) Global settings, 3) No deposit
+        let calculatedDeposit = 0;
+
+        if (room.depositAmount && room.depositAmount > 0) {
+            // Use room-specific fixed deposit amount
+            calculatedDeposit = room.depositAmount;
+        } else if (settings?.reservationPolicy?.requireDeposit) {
+            // Use global deposit settings
+            if (settings.reservationPolicy.depositType === 'percentage') {
+                calculatedDeposit = Math.round(totalPrice * (settings.reservationPolicy.depositPercentage / 100));
+            } else if (settings.reservationPolicy.depositType === 'fixed') {
+                calculatedDeposit = settings.reservationPolicy.fixedDepositAmount || 0;
+            }
+        }
+
+        // Ensure deposit doesn't exceed total price
+        calculatedDeposit = Math.min(calculatedDeposit, totalPrice);
+        const calculatedBalance = totalPrice - calculatedDeposit;
+
+        // Adjust based on payment choice
+        const finalDeposit = paymentChoice === 'full' ? totalPrice : calculatedDeposit;
+        const finalBalance = paymentChoice === 'full' ? 0 : calculatedBalance;
+
         setTimeout(() => {
             const newBooking: Booking = {
                 id: id,
@@ -128,17 +196,84 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                 email,
                 phoneNumber,
                 guests: guestCount,
-                checkIn: selectedStart!.toISOString().split('T')[0],
-                checkOut: selectedEnd!.toISOString().split('T')[0],
+                checkIn: formatLocalDate(selectedStart!),
+                checkOut: formatLocalDate(selectedEnd!),
                 totalPrice,
                 status: 'pending',
-                bookedAt: new Date().toISOString().split('T')[0]
+                estimatedArrival,
+                estimatedDeparture,
+                bookedAt: formatLocalDate(new Date()),
+                nights: billableNights,
+                // Deposit tracking
+                depositAmount: finalDeposit > 0 ? finalDeposit : undefined,
+                balanceAmount: finalDeposit > 0 ? finalBalance : undefined,
+                depositPaid: false,
+                paymentType: calculatedDeposit > 0 ? paymentChoice : undefined
             };
             onBook(newBooking);
             setNewBookingId(id);
+            setCreatedBooking(newBooking); // Store locally for upload
+
+            // Send email notifications
+            // NOTE: User confirmation email is now sent ONLY when admin accepts the booking
+            if (settings) {
+                // Send admin notification email
+                if (settings.notifications?.sendAdminAlert && settings.notifications?.adminEmail) {
+                    sendAdminNotificationEmail(newBooking, room, settings);
+                }
+            }
+
             setIsProcessing(false);
             setStep(3); // Move to Success Step
         }, 2000);
+    };
+
+    const handleUploadProof = async () => {
+        if (!paymentProofFile || !newBookingId || !onUpdateBooking) {
+            console.log('Upload requirements not met:', { paymentProofFile: !!paymentProofFile, newBookingId, onUpdateBooking: !!onUpdateBooking });
+            return;
+        }
+
+        // Check file size (max 10MB before compression)
+        if (paymentProofFile.size > 10 * 1024 * 1024) {
+            alert("File is too large. Please upload an image smaller than 10MB.");
+            return;
+        }
+
+        setUploading(true);
+        console.log('Starting Base64 upload for booking:', newBookingId);
+        console.log('File details:', { name: paymentProofFile.name, size: paymentProofFile.size, type: paymentProofFile.type });
+
+        try {
+            // Compress and convert to Base64
+            console.log('Compressing image...');
+            const base64Image = await compressImageToBase64(paymentProofFile, 800, 0.7);
+            console.log('Image compressed successfully, length:', base64Image.length);
+
+            // Update booking with Base64 image data
+            // First try the locally stored booking, then fall back to searching in props
+            const bookingToUpdate = createdBooking || bookings.find(b => b.id === newBookingId);
+            if (bookingToUpdate) {
+                await onUpdateBooking({ ...bookingToUpdate, paymentProof: base64Image });
+                setUploadSuccess(true);
+                console.log('Booking updated with Base64 payment proof');
+            } else {
+                console.error('Booking not found:', newBookingId);
+                alert('Booking not found. Please try again or send proof via Messenger.');
+            }
+        } catch (error: any) {
+            console.error("Error processing image:", error);
+            // Check for Firestore-specific errors
+            if (error.code === 'invalid-argument' || error.message?.includes('bytes')) {
+                alert("Image is too large for storage. Please use a smaller image (under 2MB) or send via Messenger.");
+            } else if (error.code === 'permission-denied') {
+                alert("Permission denied. Please try again or send proof via Messenger.");
+            } else {
+                alert(error.message || "Failed to upload image. Please try a smaller image or send via Messenger.");
+            }
+        } finally {
+            setUploading(false);
+        }
     };
 
     const iconMap: Record<string, React.ReactNode> = {
@@ -363,6 +498,34 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     {errors.guests && <div className="flex items-center text-red-500 text-xs mt-0.5"><AlertCircle size={10} className="mr-1" /> {errors.guests}</div>}
                                                 </div>
                                             </div>
+
+                                            {/* Check-in / Check-out Time Selection */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Check-in Time</label>
+                                                    <div className="relative">
+                                                        <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                        <input
+                                                            type="time"
+                                                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg pl-9 pr-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow outline-none dark:text-white"
+                                                            value={estimatedArrival}
+                                                            onChange={(e) => setEstimatedArrival(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Check-out Time</label>
+                                                    <div className="relative">
+                                                        <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                        <input
+                                                            type="time"
+                                                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg pl-9 pr-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow outline-none dark:text-white"
+                                                            value={estimatedDeparture}
+                                                            onChange={(e) => setEstimatedDeparture(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -371,8 +534,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         <div className="text-center sm:text-left">
                                             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Total Price</p>
                                             <div className="text-2xl md:text-3xl font-bold text-secondary dark:text-white">
-                                                {nights > 0 ? (
-                                                    <>₱{totalPrice.toLocaleString()} <span className="text-sm font-normal text-gray-400">for {nights} night{nights > 1 ? 's' : ''}</span></>
+                                                {selectedStart && selectedEnd ? (
+                                                    <>₱{totalPrice.toLocaleString()} <span className="text-sm font-normal text-gray-400">for {nights === 0 ? 'Day Use' : `${nights} night${nights > 1 ? 's' : ''}`}</span></>
                                                 ) : (
                                                     <span className="text-gray-400 dark:text-gray-500 text-base font-normal">Select dates to see price</span>
                                                 )}
@@ -380,7 +543,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         </div>
                                         <button
                                             onClick={handleProceedToPayment}
-                                            disabled={totalPrice === 0}
+                                            disabled={totalPrice === 0 && !selectedStart}
                                             className="w-full sm:w-auto bg-secondary text-white px-8 py-3 rounded-full font-bold hover:bg-primary transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                         >
                                             Continue
@@ -411,12 +574,77 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 </div>
                                                 <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
                                                     <span>Dates</span>
-                                                    <span className="font-semibold">{selectedStart?.toLocaleDateString()} - {selectedEnd?.toLocaleDateString()}</span>
+                                                    <span className="font-semibold">
+                                                        {selectedStart?.toLocaleDateString()} - {nights === 0 ? 'Same Day' : selectedEnd?.toLocaleDateString()}
+                                                        <br />
+                                                        <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                                                            Time: {estimatedArrival} - {estimatedDeparture}
+                                                        </span>
+                                                    </span>
                                                 </div>
-                                                <div className="flex justify-between text-blue-900 dark:text-white pt-2 text-lg font-bold">
-                                                    <span>Total Due</span>
-                                                    <span>₱{totalPrice.toLocaleString()}</span>
-                                                </div>
+                                                {/* Deposit breakdown if applicable */}
+                                                {displayDeposit > 0 ? (
+                                                    <>
+                                                        <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
+                                                            <span>Room Total</span>
+                                                            <span className="font-semibold">₱{totalPrice.toLocaleString()}</span>
+                                                        </div>
+
+                                                        {/* Payment Choice Toggle */}
+                                                        <div className="bg-white dark:bg-gray-800 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-b border-blue-200/50">
+                                                            <p className="text-xs text-gray-500 mb-2 font-medium">Choose Payment Option:</p>
+                                                            <div className="flex flex-col gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setPaymentChoice('deposit')}
+                                                                    className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'deposit'
+                                                                        ? 'border-green-500 bg-green-50 text-green-700'
+                                                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span>💰 Pay Deposit Only</span>
+                                                                        <span className="text-lg">₱{displayDeposit.toLocaleString()}</span>
+                                                                    </div>
+                                                                    <p className="text-xs font-normal mt-1 opacity-70">Pay remaining ₱{displayBalance.toLocaleString()} on arrival</p>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setPaymentChoice('full')}
+                                                                    className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'full'
+                                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span>✅ Pay Full Amount</span>
+                                                                        <span className="text-lg">₱{totalPrice.toLocaleString()}</span>
+                                                                    </div>
+                                                                    <p className="text-xs font-normal mt-1 opacity-70">No balance due on arrival</p>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Payment Prompt Message */}
+                                                        <div className={`py-3 -mx-4 md:-mx-6 px-4 md:px-6 text-center ${paymentChoice === 'full' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                                                            <p className={`text-lg font-bold ${paymentChoice === 'full' ? 'text-blue-800' : 'text-green-800'}`}>
+                                                                {paymentChoice === 'full'
+                                                                    ? `💳 Please send ₱${totalPrice.toLocaleString()}`
+                                                                    : `💰 Please send ₱${displayDeposit.toLocaleString()} deposit`}
+                                                            </p>
+                                                            {paymentChoice === 'deposit' && (
+                                                                <p className="text-sm text-green-700 mt-1">
+                                                                    Balance of ₱{displayBalance.toLocaleString()} due upon arrival
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex justify-between text-blue-900 dark:text-white pt-2 text-lg font-bold">
+                                                        <span>Total Due</span>
+                                                        <span>₱{totalPrice.toLocaleString()}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -514,11 +742,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                             <div>
                                                 <p className="text-gray-500 text-xs">Check-in</p>
-                                                <p className="font-semibold text-gray-800">{selectedStart?.toLocaleDateString()}</p>
+                                                <p className="font-semibold text-gray-800">{selectedStart?.toLocaleDateString()} @ {estimatedArrival}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-500 text-xs">Check-out</p>
-                                                <p className="font-semibold text-gray-800">{selectedEnd?.toLocaleDateString()}</p>
+                                                <p className="font-semibold text-gray-800">{selectedEnd?.toLocaleDateString()} @ {estimatedDeparture}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -553,7 +781,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 )}
                                             </div>
 
-                                            {settings.paymentMethods.messengerLink && (
+                                            {settings.paymentMethods.messengerLink && !uploadSuccess && (
                                                 <a
                                                     href={settings.paymentMethods.messengerLink}
                                                     target="_blank"
@@ -566,6 +794,48 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Upload Payment Proof Section */}
+                                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 w-full max-w-md mb-6 shadow-sm">
+                                        <h4 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center text-sm">
+                                            <ImageIcon size={16} className="mr-2 text-primary" />
+                                            Upload Payment Proof
+                                        </h4>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                            Already paid? Upload your receipt screenshot here to speed up confirmation.
+                                        </p>
+
+                                        {!uploadSuccess ? (
+                                            <div className="flex flex-col gap-3">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        if (e.target.files && e.target.files[0]) {
+                                                            setPaymentProofFile(e.target.files[0]);
+                                                        }
+                                                    }}
+                                                    className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                                />
+                                                <button
+                                                    onClick={handleUploadProof}
+                                                    disabled={!paymentProofFile || uploading}
+                                                    className="w-full py-2 bg-primary text-white rounded-lg font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-dark transition-colors flex justify-center items-center"
+                                                >
+                                                    {uploading ? (
+                                                        <>
+                                                            <Loader className="animate-spin mr-2" size={14} /> Uploading...
+                                                        </>
+                                                    ) : 'Submit Proof'}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center justify-center text-sm font-medium">
+                                                <CheckCircle size={16} className="mr-2" />
+                                                Proof Uploaded Successfully!
+                                            </div>
+                                        )}
+                                    </div>
 
                                     <div className="flex gap-4 w-full max-w-md">
                                         <button onClick={() => alert("Downloading receipt...")} className="flex-1 flex items-center justify-center py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">

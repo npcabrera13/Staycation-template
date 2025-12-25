@@ -36,9 +36,12 @@ const InlineImage: React.FC<InlineImageProps> = ({
         }
     };
 
+    // Only apply overflow-hidden when displaying actual image, not children with intentional overflow
+    const overflowClass = (useChildrenAsPlaceholder && children) ? '' : 'overflow-hidden';
+
     return (
         <div
-            className={`relative overflow-hidden ${isEditing ? 'cursor-pointer group' : ''} ${className}`}
+            className={`relative ${overflowClass} ${isEditing ? 'cursor-pointer group' : ''} ${className}`}
             onMouseEnter={() => isEditing && setIsHovered(true)}
             onMouseLeave={() => isEditing && setIsHovered(false)}
             onClick={handleClick}

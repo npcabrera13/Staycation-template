@@ -91,11 +91,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
       </div>
 
       <div className="p-6 flex-1 flex flex-col relative bg-white dark:bg-gray-800">
-        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 line-clamp-3 flex-1 leading-relaxed font-light">{room.description}</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 line-clamp-2 min-h-[2.5rem] leading-relaxed font-light">{room.description}</p>
 
         <div className="mt-auto space-y-5">
           {/* Amenities Badges */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 min-h-[72px] content-start">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-surface dark:bg-gray-700 text-secondary dark:text-gray-200 border border-secondary/10 dark:border-gray-600">
               <Users size={12} className="mr-1.5" /> {room.capacity} Guests
             </span>
