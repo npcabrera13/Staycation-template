@@ -5,16 +5,13 @@ import {
   Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
   ListPlus
 } from 'lucide-react';
-import InlineImage from './Builder/InlineImage';
 
 interface RoomCardProps {
   room: Room;
   onSelect: (room: Room, openGallery?: boolean) => void;
-  isEditing?: boolean;
-  onImageUpdate?: (url: string) => void;
 }
 
-const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect, isEditing, onImageUpdate }) => {
+const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
 
   const iconMap: Record<string, React.ReactNode> = {
     'wifi': <Wifi size={14} />,
@@ -74,11 +71,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect, isEditing, onImageU
       >
         {/* Wrapper div for transform - transform applied here, not on image */}
         <div className="absolute inset-0 transform group-hover:scale-110 transition-transform duration-[1.5s] ease-out">
-          <InlineImage
+          <img
             src={room.image}
             alt={room.name}
-            isEditing={!!isEditing}
-            onChange={(url) => { if (onImageUpdate) onImageUpdate(url); }}
             className="w-full h-full object-cover"
           />
         </div>

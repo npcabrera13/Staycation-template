@@ -46,7 +46,6 @@ interface LandingPageProps {
     onExitAdmin?: () => void;
     startEditing?: boolean;
     onEditingStarted?: () => void;
-    onUpdateRoom?: (room: Room) => Promise<void>;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
@@ -61,8 +60,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     isAdmin = false,
     onExitAdmin,
     startEditing,
-    onEditingStarted,
-    onUpdateRoom
+    onEditingStarted
 }) => {
     const navigate = useNavigate();
     const [activeRoomIndex, setActiveRoomIndex] = useState(0);
@@ -533,13 +531,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 >
                                     {filteredRooms.map((room, index) => (
                                         <div key={room.id} className="w-[85vw] max-w-[340px] md:w-[45%] md:max-w-none lg:w-[32%] flex-shrink-0 snap-center h-full flex flex-col">
-                                            {/* Pointer events none only applied when actively dragging to prevent accidental clicks */}
                                             <div className={`h-full ${isDragging ? "pointer-events-none" : ""}`}>
                                                 <RoomCard
                                                     room={room}
                                                     onSelect={onRoomSelect}
-                                                    isEditing={isEditing}
-                                                    onImageUpdate={onUpdateRoom ? (newUrl) => onUpdateRoom({ ...room, image: newUrl }) : undefined}
                                                 />
                                             </div>
                                         </div>
@@ -682,21 +677,11 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                         key={index}
                                                         className={`absolute inset-0 transition-opacity duration-500 ${index === activeAboutSlide ? 'opacity-100' : 'opacity-0'}`}
                                                     >
-                                                        {isEditing && index === 0 ? (
-                                                            <InlineImage
-                                                                src={img}
-                                                                alt={`About ${index + 1}`}
-                                                                isEditing={isEditing}
-                                                                onChange={(url) => handleSettingChange('about', 'image', url)}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <img
-                                                                src={img}
-                                                                alt={`About ${index + 1}`}
-                                                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
-                                                            />
-                                                        )}
+                                                        <img
+                                                            src={img}
+                                                            alt={`About ${index + 1}`}
+                                                            className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
+                                                        />
                                                     </div>
                                                 ))}
 

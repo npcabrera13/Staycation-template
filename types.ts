@@ -98,6 +98,7 @@ export interface Settings {
         primaryColor: string;
         primaryHoverColor?: string;
         secondaryColor: string;
+        accentColor?: string;
     };
     paymentMethods?: {
         gcash?: {

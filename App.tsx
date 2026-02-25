@@ -63,6 +63,10 @@ function AppContent() {
           }
           document.documentElement.style.setProperty('--color-secondary', fetchedSettings.theme.secondaryColor);
           localStorage.setItem('theme-secondary', fetchedSettings.theme.secondaryColor);
+          if (fetchedSettings.theme.accentColor) {
+            document.documentElement.style.setProperty('--color-accent', fetchedSettings.theme.accentColor);
+            localStorage.setItem('theme-accent', fetchedSettings.theme.accentColor);
+          }
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -181,6 +185,10 @@ function AppContent() {
       }
       document.documentElement.style.setProperty('--color-secondary', newSettings.theme.secondaryColor);
       localStorage.setItem('theme-secondary', newSettings.theme.secondaryColor);
+      if (newSettings.theme.accentColor) {
+        document.documentElement.style.setProperty('--color-accent', newSettings.theme.accentColor);
+        localStorage.setItem('theme-accent', newSettings.theme.accentColor);
+      }
     } catch (e) {
       console.error(e);
       showToast("Failed to update settings", "error");

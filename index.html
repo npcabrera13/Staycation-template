@@ -15,6 +15,7 @@
       --color-primary: #2A9D8F;
       --color-primary-hover: #21867a;
       --color-secondary: #264653;
+      --color-accent: #E9C46A;
     }
   </style>
   <script>
@@ -24,9 +25,11 @@
         var p = localStorage.getItem('theme-primary');
         var ph = localStorage.getItem('theme-primary-hover');
         var s = localStorage.getItem('theme-secondary');
+        var a = localStorage.getItem('theme-accent');
         if (p) document.documentElement.style.setProperty('--color-primary', p);
         if (ph) document.documentElement.style.setProperty('--color-primary-hover', ph);
         if (s) document.documentElement.style.setProperty('--color-secondary', s);
+        if (a) document.documentElement.style.setProperty('--color-accent', a);
       } catch (e) { }
     })();
   </script>
@@ -39,7 +42,7 @@
             primary: 'var(--color-primary)',
             'primary-hover': 'var(--color-primary-hover)',
             secondary: 'var(--color-secondary)',
-            accent: '#E9C46A',
+            accent: 'var(--color-accent)',
             surface: '#F4F1DE',
             text: '#333333'
           },
