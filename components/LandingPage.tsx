@@ -6,6 +6,7 @@ import RoomCard from './RoomCard';
 import AIChat from './AIChat';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
@@ -61,6 +62,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     startEditing,
     onEditingStarted
 }) => {
+    const navigate = useNavigate();
     const [activeRoomIndex, setActiveRoomIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -125,6 +127,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
             await onUpdateSettings(workingSettings);
             setIsEditing(false);
             setHasChanges(false);
+            if (isAdmin) {
+                navigate('/admin');
+            }
         }
     };
 
@@ -147,6 +152,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
             setIsEditing(false);
             setHasChanges(false);
             setIsBuilderMinimized(false);
+            if (isAdmin) {
+                navigate('/admin');
+            }
             console.log('=== Builder EXITED, isEditing set to false ===');
         };
 

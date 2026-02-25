@@ -1267,9 +1267,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="space-y-6">
                                 {/* Brand Settings */}
                                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                                        <Globe size={20} className="mr-2 text-primary" /> Brand Identity
-                                    </h3>
+                                    <div className="flex items-center justify-between border-b dark:border-gray-700 pb-2 mb-4">
+                                        <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                            <Globe size={20} className="mr-2 text-primary" /> Brand Identity
+                                        </h3>
+                                        <button
+                                            onClick={() => onUpdateSettings(settingsForm)}
+                                            className="px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                                        >
+                                            Save Settings
+                                        </button>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Name</label>

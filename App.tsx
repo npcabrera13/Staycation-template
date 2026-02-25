@@ -54,6 +54,7 @@ function AppContent() {
 
         // Apply theme
         if (fetchedSettings) {
+          document.title = fetchedSettings.siteName || "Staycation";
           document.documentElement.style.setProperty('--color-primary', fetchedSettings.theme.primaryColor);
           localStorage.setItem('theme-primary', fetchedSettings.theme.primaryColor);
           if (fetchedSettings.theme.primaryHoverColor) {
@@ -171,6 +172,7 @@ function AppContent() {
       setSettings(newSettings);
 
       // Apply theme immediately
+      document.title = newSettings.siteName || "Staycation";
       document.documentElement.style.setProperty('--color-primary', newSettings.theme.primaryColor);
       localStorage.setItem('theme-primary', newSettings.theme.primaryColor);
       if (newSettings.theme.primaryHoverColor) {
