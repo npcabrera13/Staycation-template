@@ -81,8 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
             accountName: "",
             accountNumber: "",
             qrImage: ""
-        },
-        messengerLink: ""
+        }
     },
     reservationPolicy: {
         requireDeposit: true,

@@ -4,6 +4,8 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import RoomCard from './RoomCard';
 import AIChat from './AIChat';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
@@ -12,6 +14,22 @@ import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
 import BuilderToolbar from './Builder/BuilderToolbar';
+
+// Wrapper that only shows AI chat when enabled in SuperAdmin settings
+const AiChatWrapper: React.FC = () => {
+    const [enabled, setEnabled] = useState(false);
+    useEffect(() => {
+        const check = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
+                if (snap.exists() && snap.data().enableAiChat === true) setEnabled(true);
+            } catch { }
+        };
+        check();
+    }, []);
+    if (!enabled) return null;
+    return <AIChat />;
+};
 import { DEFAULT_SETTINGS } from '../services/settingsService';
 
 interface LandingPageProps {
@@ -815,7 +833,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onSettingChange={handleSettingChange}
                     onAdminEnter={onAdminEnter}
                 />
-                <AIChat />
+                <AiChatWrapper />
             </div >
 
             {isEditing && (

@@ -95,12 +95,12 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             <div className="relative w-8 h-8 mr-2 overflow-visible">
               {/* Editable Logo - Shows Anchor animation if no logo set, click to upload */}
               <InlineImage
-                src={settings?.logo || "/vite.svg"}
+                src={settings?.logo || ""}
                 alt="Logo"
                 isEditing={!!isEditing}
                 onChange={(val) => onUpdateSettings && onUpdateSettings('logo' as any, '', val)}
                 className="w-full h-full flex items-center justify-center"
-                useChildrenAsPlaceholder={!settings?.logo || settings?.logo === '/vite.svg'}
+                useChildrenAsPlaceholder={!settings?.logo || settings.logo.trim() === ''}
               >
                 <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
                   <Anchor className="h-full w-full text-primary transition-transform duration-700 group-hover:rotate-[360deg]" />

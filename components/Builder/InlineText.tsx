@@ -112,10 +112,12 @@ const InlineText: React.FC<InlineTextProps> = ({
             onBlurCapture={handleBlur}
         >
             {isFocused && (
-                <span className="absolute bottom-full left-0 right-0 z-[100] mb-2 flex justify-start animate-fade-in-up" style={{ display: 'flex' }}>
+                <span
+                    className="absolute bottom-full right-0 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] mb-2 flex justify-end md:justify-center animate-fade-in-up md:w-max min-w-[280px]"
+                >
                     <RichTextToolbar
                         onFormat={handleFormat}
-                        className="w-auto max-w-full overflow-x-auto shadow-lg"
+                        className="w-full md:w-max max-w-[90vw] md:max-w-[800px] overflow-visible shadow-2xl"
                     />
                 </span>
             )}

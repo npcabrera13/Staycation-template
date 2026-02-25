@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Booking, Room, Amenity, Settings } from '../types';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import { format, isValid, differenceInDays, addDays, addMonths, isAfter, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff
 } from 'lucide-react';
 
 import { useNotification } from '../contexts/NotificationContext';
@@ -86,9 +88,63 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onEnterVisualBuilder
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>('calendar');
+
+
     const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
     const [expandedViewMode, setExpandedViewMode] = useState<'grid' | 'timeline'>('grid');
     const { showToast, showConfirm } = useNotification();
+
+    // Expiry tracker state
+    const [expiryDays, setExpiryDays] = useState<number | null>(null);
+    const [expiryDate, setExpiryDate] = useState<string | null>(null);
+    const [showExpiryWarning, setShowExpiryWarning] = useState(false);
+    const [showMissingPasscodeWarning, setShowMissingPasscodeWarning] = useState(false);
+    const [contactInfo, setContactInfo] = useState({ providerName: '', email: '', phone: '' });
+
+    // Passcode state
+    const [adminPasscode, setAdminPasscode] = useState('');
+    const [newPasscode, setNewPasscode] = useState('');
+    const [confirmPasscode, setConfirmPasscode] = useState('');
+    const [showPasscode, setShowPasscode] = useState(false);
+    const [passcodeStatus, setPasscodeStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [passcodeError, setPasscodeError] = useState('');
+
+    useEffect(() => {
+        const fetchExpiry = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'subscription'));
+                if (snap.exists() && snap.data().expiresAt) {
+                    const exp = snap.data().expiresAt;
+                    setExpiryDate(exp);
+                    const days = Math.ceil((new Date(exp).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    setExpiryDays(days);
+                    if (days <= 7) setShowExpiryWarning(true);
+                }
+            } catch { }
+        };
+        const fetchContact = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
+                if (snap.exists() && snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
+            } catch { }
+        };
+        fetchExpiry();
+        fetchContact();
+        // Load admin passcode
+        const fetchPasscode = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
+                if (snap.exists() && snap.data().adminPasscode) {
+                    setAdminPasscode(snap.data().adminPasscode);
+                } else {
+                    if (!sessionStorage.getItem('dismissedPasscodeWarning')) {
+                        setShowMissingPasscodeWarning(true);
+                    }
+                }
+            } catch { }
+        };
+        fetchPasscode();
+    }, []);
 
     // Settings State
     const [settingsForm, setSettingsForm] = useState<Settings | null>(null);
@@ -1068,6 +1124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     >
                         <SettingsIcon size={20} className="mr-3" /> Settings
                     </button>
+
                 </nav>
                 <div className="p-4 border-t border-gray-700 hidden md:block space-y-3">
                     {onEnterVisualBuilder && (
@@ -1086,6 +1143,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {/* Main Content */}
             <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
+
+                {/* Expiry Tracker Banner */}
+                {expiryDays !== null && (
+                    <div className={`mb-4 rounded-xl p-3 flex items-center justify-between border ${expiryDays <= 0 ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800' :
+                        expiryDays <= 7 ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800' :
+                            expiryDays <= 30 ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' :
+                                'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
+                        }`}>
+                        <div className="flex items-center">
+                            <Clock size={18} className={`mr-2 ${expiryDays <= 0 ? 'text-red-500' : expiryDays <= 7 ? 'text-yellow-500' : expiryDays <= 30 ? 'text-amber-500' : 'text-green-500'
+                                }`} />
+                            <div>
+                                <span className={`text-sm font-bold ${expiryDays <= 0 ? 'text-red-700 dark:text-red-300' : expiryDays <= 7 ? 'text-yellow-700 dark:text-yellow-300' : expiryDays <= 30 ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-300'
+                                    }`}>
+                                    {expiryDays <= 0 ? `Website expired ${Math.abs(expiryDays)} days ago` :
+                                        `${expiryDays} day${expiryDays !== 1 ? 's' : ''} until expiry`}
+                                </span>
+                                {expiryDate && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
+                                        (Expires: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        {expiryDays <= 7 && (
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${expiryDays <= 0 ? 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
+                                }`}>
+                                {expiryDays <= 0 ? 'EXPIRED' : 'RENEW SOON'}
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {/* Mobile-Only: Upcoming Arrivals at very top */}
                 <div className="md:hidden mb-4">
@@ -1529,25 +1618,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Messenger Link */}
-                                    <div className="mt-6 pt-4 border-t dark:border-gray-700">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Messenger Link (for payment confirmation)</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. https://m.me/yourpage"
-                                            className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                            value={settingsForm.paymentMethods?.messengerLink ?? ''}
-                                            onChange={(e) => setSettingsForm({
-                                                ...settingsForm,
-                                                paymentMethods: {
-                                                    ...settingsForm.paymentMethods,
-                                                    messengerLink: e.target.value
-                                                }
-                                            })}
-                                        />
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Customers will be directed here after scanning the QR code to send proof of payment.</p>
-                                    </div>
                                 </div>
 
                                 {/* Reservation & Deposit Settings */}
@@ -1782,6 +1852,127 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             </label>
                                         </div>
 
+                                        {/* Security — Admin Passcode */}
+                                        <div className="border-t dark:border-gray-700 pt-6">
+                                            <h3 className="flex items-center text-lg font-bold text-gray-800 dark:text-white mb-4">
+                                                <Shield className="mr-2 text-primary" size={20} />
+                                                Admin Passcode
+                                            </h3>
+                                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                                                {adminPasscode
+                                                    ? 'A 6-digit passcode is set. Staff must enter it to access the admin panel.'
+                                                    : 'No passcode set. Anyone with access to the link can open the admin panel.'}
+                                            </p>
+
+                                            {adminPasscode && (
+                                                <div className="mb-4 flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400">Current:</span>
+                                                    <span className="font-mono text-lg font-bold text-gray-800 dark:text-white tracking-widest">
+                                                        {showPasscode ? adminPasscode : '••••••'}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => setShowPasscode(!showPasscode)}
+                                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                    >
+                                                        {showPasscode ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        {adminPasscode ? 'New Passcode' : 'Set Passcode'} (6 digits)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        placeholder="e.g. 123456"
+                                                        value={newPasscode}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                            setNewPasscode(val);
+                                                            setPasscodeError('');
+                                                        }}
+                                                        className="w-full px-4 py-2.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono tracking-widest text-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        Confirm Passcode
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        placeholder="Re-enter passcode"
+                                                        value={confirmPasscode}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                            setConfirmPasscode(val);
+                                                            setPasscodeError('');
+                                                        }}
+                                                        className="w-full px-4 py-2.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono tracking-widest text-lg"
+                                                    />
+                                                </div>
+                                                {passcodeError && <p className="text-red-500 text-sm">{passcodeError}</p>}
+                                                {passcodeStatus === 'saved' && <p className="text-green-500 text-sm">✓ Passcode saved!</p>}
+
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (newPasscode.length !== 6) {
+                                                                setPasscodeError('Passcode must be exactly 6 digits');
+                                                                return;
+                                                            }
+                                                            if (newPasscode !== confirmPasscode) {
+                                                                setPasscodeError('Passcodes do not match');
+                                                                return;
+                                                            }
+                                                            setPasscodeStatus('saving');
+                                                            try {
+                                                                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
+                                                                setAdminPasscode(newPasscode);
+                                                                setNewPasscode('');
+                                                                setConfirmPasscode('');
+                                                                setPasscodeStatus('saved');
+                                                                showToast('Admin passcode saved!', 'success');
+                                                                setTimeout(() => setPasscodeStatus('idle'), 3000);
+                                                            } catch {
+                                                                setPasscodeStatus('error');
+                                                                setPasscodeError('Failed to save passcode');
+                                                            }
+                                                        }}
+                                                        disabled={passcodeStatus === 'saving'}
+                                                        className="flex-1 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-semibold disabled:opacity-50"
+                                                    >
+                                                        {passcodeStatus === 'saving' ? 'Saving...' : adminPasscode ? 'Update Passcode' : 'Set Passcode'}
+                                                    </button>
+                                                    {adminPasscode && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const confirmed = await showConfirm('Are you sure you want to remove the admin passcode? The admin panel will be accessible without a passcode.');
+                                                                if (!confirmed) return;
+                                                                try {
+                                                                    await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
+                                                                    setAdminPasscode('');
+                                                                    setNewPasscode('');
+                                                                    setConfirmPasscode('');
+                                                                    showToast('Passcode removed', 'success');
+                                                                } catch {
+                                                                    showToast('Failed to remove passcode', 'error');
+                                                                }
+                                                            }}
+                                                            className="px-4 py-2.5 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* Save Button */}
                                         <div className="mt-6 pt-4 border-t dark:border-gray-700">
                                             <button
@@ -1803,6 +1994,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     )
                 )}
+
+
 
                 {
                     activeTab === 'overview' && (
@@ -2536,6 +2729,96 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 booking={editingBooking}
                 onSave={handleSaveBooking}
             />
+
+            {/* Expiry Warning Popup */}
+            {showExpiryWarning && expiryDays !== null && expiryDays <= 7 && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
+                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'}`}>
+                            <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                            {expiryDays <= 0 ? 'Subscription Expired!' : 'Subscription Expiring Soon!'}
+                        </h3>
+                        <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : 'text-yellow-500'}`}>
+                            {expiryDays <= 0 ? 'Expired' : `${expiryDays} day${expiryDays !== 1 ? 's' : ''} left`}
+                        </p>
+                        {expiryDate && (
+                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                                {expiryDays <= 0 ? 'Expired on' : 'Expires on'}: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                            </p>
+                        )}
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">
+                            {contactInfo.providerName
+                                ? `Please contact ${contactInfo.providerName} to renew your subscription.`
+                                : 'Please contact your service provider to renew your subscription and avoid service interruption.'}
+                        </p>
+                        {(contactInfo.email || contactInfo.phone) && (
+                            <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-3 mb-5 space-y-2">
+                                {contactInfo.email && (
+                                    <a href={`mailto:${contactInfo.email}`} className="flex items-center justify-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-medium">
+                                        <Clock size={14} /> {contactInfo.email}
+                                    </a>
+                                )}
+                                {contactInfo.phone && (
+                                    <a href={`tel:${contactInfo.phone}`} className="flex items-center justify-center gap-2 text-green-500 hover:text-green-600 text-sm font-medium">
+                                        <Phone size={14} /> {contactInfo.phone}
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setShowExpiryWarning(false)}
+                            className="w-full py-3 bg-gray-900 dark:bg-white dark:text-gray-900 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+                        >
+                            I Understand
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Missing Passcode Warning Modal */}
+            {showMissingPasscodeWarning && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
+                        <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mb-4">
+                            <Lock className="text-red-500" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                            Admin Panel is Unprotected
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
+                            You haven't set an admin passcode, so anyone visiting this page can access the admin panel.
+                            Would you like to secure it with a passcode now?
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowMissingPasscodeWarning(false);
+                                    setActiveTab('settings');
+                                    // Give it a tiny delay to switch to settings tab before scrolling
+                                    setTimeout(() => {
+                                        const passcodeSection = document.getElementById('admin-passcode-section');
+                                        if (passcodeSection) passcodeSection.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }}
+                                className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shadow-md flex items-center justify-center gap-2"
+                            >
+                                <Lock size={18} /> Add Password Now
+                            </button>
+                            <button
+                                onClick={() => {
+                                    sessionStorage.setItem('dismissedPasscodeWarning', 'true');
+                                    setShowMissingPasscodeWarning(false);
+                                }}
+                                className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Later
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

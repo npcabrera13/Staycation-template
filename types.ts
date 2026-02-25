@@ -112,7 +112,6 @@ export interface Settings {
             accountNumber?: string;
             qrImage?: string;
         };
-        messengerLink?: string;
     };
     // Reservation & Deposit Settings
     reservationPolicy?: {

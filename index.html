@@ -18,6 +18,19 @@
     }
   </style>
   <script>
+    // Instantly apply cached theme colors before React loads
+    (function () {
+      try {
+        var p = localStorage.getItem('theme-primary');
+        var ph = localStorage.getItem('theme-primary-hover');
+        var s = localStorage.getItem('theme-secondary');
+        if (p) document.documentElement.style.setProperty('--color-primary', p);
+        if (ph) document.documentElement.style.setProperty('--color-primary-hover', ph);
+        if (s) document.documentElement.style.setProperty('--color-secondary', s);
+      } catch (e) { }
+    })();
+  </script>
+  <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -110,6 +123,7 @@
 
 <body
   class="bg-surface dark:bg-gray-900 text-text dark:text-gray-100 antialiased scroll-smooth selection:bg-primary selection:text-white transition-colors duration-300">
+  <script src="/firebase-config.js"></script>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

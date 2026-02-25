@@ -14,12 +14,17 @@ import { Room, Booking, Settings } from './types';
 import { roomService } from './services/roomService';
 import { bookingService } from './services/bookingService';
 import { settingsService, DEFAULT_SETTINGS } from './services/settingsService';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Lock, Mail, AlertTriangle, Phone, User } from 'lucide-react';
+import { useLicense } from './components/LicenseProvider';
 import LandingPage from './components/LandingPage';
+import LicenseProvider from './components/LicenseProvider';
+import SuperAdmin from './components/SuperAdmin';
+import AdminPasscodeGate from './components/AdminPasscodeGate';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
 function AppContent() {
   const navigate = useNavigate();
+  const { isAdminLocked, isHomepageLocked, contactEmail, contactPhone, providerName } = useLicense();
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [startEditing, setStartEditing] = useState(false);
   const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
@@ -50,10 +55,13 @@ function AppContent() {
         // Apply theme
         if (fetchedSettings) {
           document.documentElement.style.setProperty('--color-primary', fetchedSettings.theme.primaryColor);
+          localStorage.setItem('theme-primary', fetchedSettings.theme.primaryColor);
           if (fetchedSettings.theme.primaryHoverColor) {
             document.documentElement.style.setProperty('--color-primary-hover', fetchedSettings.theme.primaryHoverColor);
+            localStorage.setItem('theme-primary-hover', fetchedSettings.theme.primaryHoverColor);
           }
           document.documentElement.style.setProperty('--color-secondary', fetchedSettings.theme.secondaryColor);
+          localStorage.setItem('theme-secondary', fetchedSettings.theme.secondaryColor);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -70,11 +78,22 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-500 font-serif">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
+        <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full"
+            style={{
+              animation: 'loadingSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+            }}
+          />
         </div>
+        <style>{`
+          @keyframes loadingSlide {
+            0% { width: 0%; margin-left: 0%; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -153,10 +172,13 @@ function AppContent() {
 
       // Apply theme immediately
       document.documentElement.style.setProperty('--color-primary', newSettings.theme.primaryColor);
+      localStorage.setItem('theme-primary', newSettings.theme.primaryColor);
       if (newSettings.theme.primaryHoverColor) {
         document.documentElement.style.setProperty('--color-primary-hover', newSettings.theme.primaryHoverColor);
+        localStorage.setItem('theme-primary-hover', newSettings.theme.primaryHoverColor);
       }
       document.documentElement.style.setProperty('--color-secondary', newSettings.theme.secondaryColor);
+      localStorage.setItem('theme-secondary', newSettings.theme.secondaryColor);
     } catch (e) {
       console.error(e);
       showToast("Failed to update settings", "error");
@@ -210,50 +232,161 @@ function AppContent() {
     <div className="min-h-screen flex flex-col font-sans">
       <Routes>
         <Route path="/admin" element={
-          <AdminDashboard
-            bookings={bookings}
-            rooms={rooms}
-            onUpdateRoom={handleUpdateRoom}
-            onAddRoom={handleAddRoom}
-            onDeleteRoom={handleDeleteRoom}
-            onUpdateBooking={handleUpdateBooking}
-            onDeleteBooking={handleDeleteBooking}
-            onDeleteBookings={handleDeleteBookings}
-            onAddBooking={handleAddBooking}
-            onRefresh={refreshData}
-            onSeed={handleSeed}
-            settings={settings}
-            onUpdateSettings={handleUpdateSettings}
-            onExit={() => navigate('/')}
-            onEnterVisualBuilder={() => {
-              setStartEditing(true);
-              navigate('/');
-            }}
-          />
+          <AdminPasscodeGate onBack={() => navigate('/')}>
+            <div className="relative">
+              <AdminDashboard
+                bookings={bookings}
+                rooms={rooms}
+                onUpdateRoom={handleUpdateRoom}
+                onAddRoom={handleAddRoom}
+                onDeleteRoom={handleDeleteRoom}
+                onUpdateBooking={handleUpdateBooking}
+                onDeleteBooking={handleDeleteBooking}
+                onDeleteBookings={handleDeleteBookings}
+                onAddBooking={handleAddBooking}
+                onRefresh={refreshData}
+                onSeed={handleSeed}
+                settings={settings}
+                onUpdateSettings={handleUpdateSettings}
+                onExit={() => navigate('/')}
+                onEnterVisualBuilder={() => {
+                  setStartEditing(true);
+                  navigate('/');
+                }}
+              />
+              {/* Admin Lockout Overlay */}
+              {isAdminLocked && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backdropFilter: 'blur(6px)' }}>
+                  <div className="absolute inset-0 bg-black/60" />
+                  <div className="relative max-w-md w-full mx-4 text-center">
+                    <div className="relative mb-6">
+                      <div className="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center animate-pulse">
+                        <div className="w-14 h-14 bg-red-500/30 rounded-full flex items-center justify-center">
+                          <Lock className="text-red-400" size={28} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+                      <div className="flex items-center justify-center gap-2 mb-3">
+                        <AlertTriangle className="text-yellow-400" size={18} />
+                        <span className="text-yellow-400 text-xs font-semibold uppercase tracking-wider">Access Suspended</span>
+                      </div>
+                      <h2 className="text-xl font-bold text-white mb-2">Admin Panel Locked</h2>
+                      <p className="text-gray-300 text-sm mb-5 leading-relaxed">
+                        Your subscription has expired or your admin access has been suspended.
+                        Please contact {providerName || 'your service provider'} to renew.
+                      </p>
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-2">
+                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact Support</p>
+                        {providerName && (
+                          <div className="flex items-center justify-center gap-2 text-gray-300 text-sm">
+                            <User size={14} className="text-gray-400" />
+                            <span className="font-medium">{providerName}</span>
+                          </div>
+                        )}
+                        {contactEmail && (
+                          <a href={`mailto:${contactEmail}`} className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm">
+                            <Mail size={14} /> {contactEmail}
+                          </a>
+                        )}
+                        {contactPhone && (
+                          <a href={`tel:${contactPhone}`} className="flex items-center justify-center gap-2 text-green-400 hover:text-green-300 transition-colors font-medium text-sm">
+                            <Phone size={14} /> {contactPhone}
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        Retry Connection
+                      </button>
+                    </div>
+                    <p className="text-gray-500 text-xs mt-4">Your data is safe and will be available once renewed.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </AdminPasscodeGate>
         } />
 
         <Route path="/" element={
-          <LandingPage
-            rooms={rooms}
-            bookings={bookings}
-            onRoomSelect={(room, openGallery = false) => {
-              setSelectedRoom(room);
-              setStartInGallery(openGallery);
-            }}
-            onAdminEnter={() => {
-              setIsAdminAuthenticated(true);
-              navigate('/admin');
-            }}
-            onOpenMyBookings={() => setIsMyBookingsOpen(true)}
-            isLoading={isLoading}
-            settings={settings}
-            isAdmin={isAdminAuthenticated}
-            onUpdateSettings={handleUpdateSettings}
-            onExitAdmin={() => setIsAdminAuthenticated(false)}
-            startEditing={startEditing}
-            onEditingStarted={() => setStartEditing(false)}
-          />
+          <>
+            <LandingPage
+              rooms={rooms}
+              bookings={bookings}
+              onRoomSelect={(room, openGallery = false) => {
+                setSelectedRoom(room);
+                setStartInGallery(openGallery);
+              }}
+              onAdminEnter={() => {
+                setIsAdminAuthenticated(true);
+                navigate('/admin');
+              }}
+              onOpenMyBookings={() => setIsMyBookingsOpen(true)}
+              isLoading={isLoading}
+              settings={settings}
+              isAdmin={isAdminAuthenticated}
+              onUpdateSettings={handleUpdateSettings}
+              onExitAdmin={() => setIsAdminAuthenticated(false)}
+              startEditing={startEditing}
+              onEditingStarted={() => setStartEditing(false)}
+            />
+            {/* Homepage Lockout Overlay */}
+            {isHomepageLocked && (
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backdropFilter: 'blur(6px)' }}>
+                <div className="absolute inset-0 bg-black/60" />
+                <div className="relative max-w-md w-full mx-4 text-center">
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center animate-pulse">
+                      <div className="w-14 h-14 bg-red-500/30 rounded-full flex items-center justify-center">
+                        <Lock className="text-red-400" size={28} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <AlertTriangle className="text-yellow-400" size={18} />
+                      <span className="text-yellow-400 text-xs font-semibold uppercase tracking-wider">Subscription Inactive</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">Website Access Suspended</h2>
+                    <p className="text-gray-300 text-sm mb-5 leading-relaxed">
+                      This website's subscription has expired or has not been activated yet.
+                      Please contact {providerName || 'the service provider'} to renew.
+                    </p>
+                    <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-2">
+                      <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact Support</p>
+                      {providerName && (
+                        <div className="flex items-center justify-center gap-2 text-gray-300 text-sm">
+                          <User size={14} className="text-gray-400" />
+                          <span className="font-medium">{providerName}</span>
+                        </div>
+                      )}
+                      {contactEmail && (
+                        <a href={`mailto:${contactEmail}`} className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm">
+                          <Mail size={14} /> {contactEmail}
+                        </a>
+                      )}
+                      {contactPhone && (
+                        <a href={`tel:${contactPhone}`} className="flex items-center justify-center gap-2 text-green-400 hover:text-green-300 transition-colors font-medium text-sm">
+                          <Phone size={14} /> {contactPhone}
+                        </a>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      Retry Connection
+                    </button>
+                  </div>
+                  <p className="text-gray-500 text-xs mt-4">Your data is safe and will be available once the subscription is renewed.</p>
+                </div>
+              </div>
+            )}
+          </>
         } />
+        <Route path="/superadmin" element={<SuperAdmin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
@@ -283,9 +416,11 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <NotificationProvider>
-        <AppContent />
-      </NotificationProvider>
+      <LicenseProvider>
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
+      </LicenseProvider>
     </Router>
   );
 }

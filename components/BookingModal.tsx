@@ -43,9 +43,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const [uploading, setUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full'>('deposit');
+    const [zoomedQr, setZoomedQr] = useState<string | null>(null);
 
     // Error State
-    const [errors, setErrors] = useState<{ name?: string, email?: string, phone?: string, guests?: string }>({});
+    const [errors, setErrors] = useState<{ name?: string, email?: string, phone?: string, guests?: string, date?: string }>({});
 
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
@@ -71,6 +72,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             setUploading(false);
             setCreatedBooking(null);
             setPaymentChoice('deposit');
+            setZoomedQr(null);
         }
     }, [room, initialGalleryOpen]);
 
@@ -112,15 +114,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const handleDateSelect = (start: Date | null, end: Date | null) => {
         setSelectedStart(start);
         setSelectedEnd(end);
+        if (start && end && errors.date) {
+            setErrors({ ...errors, date: undefined });
+        }
     };
 
     const handleProceedToPayment = () => {
         // Validation
-        const newErrors: { name?: string, email?: string, phone?: string, guests?: string } = {};
+        const newErrors: { name?: string, email?: string, phone?: string, guests?: string, date?: string } = {};
 
         if (!selectedStart || !selectedEnd) {
-            alert("Please select dates first.");
-            return;
+            newErrors.date = "Please select dates first.";
         }
 
         if (!guestName.trim()) {
@@ -540,11 +544,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     <span className="text-gray-400 dark:text-gray-500 text-base font-normal">Select dates to see price</span>
                                                 )}
                                             </div>
+                                            {errors.date && <p className="text-red-500 text-sm mt-2 animate-fade-in flex items-center justify-center sm:justify-start"><AlertCircle size={14} className="mr-1" /> {errors.date}</p>}
                                         </div>
                                         <button
                                             onClick={handleProceedToPayment}
-                                            disabled={totalPrice === 0 && !selectedStart}
-                                            className="w-full sm:w-auto bg-secondary text-white px-8 py-3 rounded-full font-bold hover:bg-primary transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                            className="w-full sm:w-auto bg-secondary text-white px-8 py-3 rounded-full font-bold hover:bg-primary transition-all transform hover:scale-105 shadow-lg"
                                         >
                                             Continue
                                         </button>
@@ -660,7 +664,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 <div className="flex gap-6 justify-center flex-wrap">
                                                     {settings.paymentMethods.gcash?.enabled && settings.paymentMethods.gcash.qrImage && (
                                                         <div className="text-center">
-                                                            <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-36 h-36 object-contain border-2 border-blue-200 rounded-xl bg-white mb-2 mx-auto" />
+                                                            <div className="relative group mx-auto w-36 h-36 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
+                                                                <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-full h-full object-contain border-2 border-blue-200 rounded-xl bg-white" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                                                    <Maximize2 className="text-white" size={24} />
+                                                                </div>
+                                                            </div>
                                                             <div className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block">GCash</div>
                                                             {settings.paymentMethods.gcash.accountName && (
                                                                 <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">{settings.paymentMethods.gcash.accountName}</p>
@@ -672,7 +681,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     )}
                                                     {settings.paymentMethods.bankTransfer?.enabled && settings.paymentMethods.bankTransfer.qrImage && (
                                                         <div className="text-center">
-                                                            <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-36 h-36 object-contain border-2 border-green-200 rounded-xl bg-white mb-2 mx-auto" />
+                                                            <div className="relative group mx-auto w-36 h-36 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
+                                                                <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border-2 border-green-200 rounded-xl bg-white" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                                                    <Maximize2 className="text-white" size={24} />
+                                                                </div>
+                                                            </div>
                                                             <div className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block">{settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}</div>
                                                             {settings.paymentMethods.bankTransfer.accountName && (
                                                                 <p className="text-xs text-green-700 dark:text-green-400 mt-1">{settings.paymentMethods.bankTransfer.accountName}</p>
@@ -696,31 +710,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         >
                                             Back
                                         </button>
-                                        {settings?.paymentMethods?.messengerLink ? (
-                                            <a
-                                                href={settings.paymentMethods.messengerLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                onClick={() => { confirmPayment(); }}
-                                                className="flex-[2] bg-blue-600 text-white py-3 rounded-full font-bold hover:bg-blue-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center text-center"
-                                            >
-                                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.936 1.444 5.554 3.709 7.273V22l3.313-1.82c.884.246 1.821.378 2.978.378 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2z" /></svg>
-                                                Send Payment Proof
-                                            </a>
-                                        ) : (
-                                            <button
-                                                onClick={confirmPayment}
-                                                disabled={isProcessing}
-                                                className="flex-[2] bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center"
-                                            >
-                                                {isProcessing ? (
-                                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                ) : 'Confirm Booking'}
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={confirmPayment}
+                                            disabled={isProcessing}
+                                            className="flex-[2] bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center"
+                                        >
+                                            {isProcessing ? (
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : 'Confirm Booking'}
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -763,7 +764,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             <div className="flex gap-4 justify-center flex-wrap">
                                                 {settings.paymentMethods.gcash?.enabled && settings.paymentMethods.gcash.qrImage && (
                                                     <div className="text-center">
-                                                        <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-28 h-28 object-contain border rounded-lg bg-white mb-2" />
+                                                        <div className="relative group mx-auto w-28 h-28 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
+                                                            <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-full h-full object-contain border rounded-lg bg-white" />
+                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                                <Maximize2 className="text-white" size={20} />
+                                                            </div>
+                                                        </div>
                                                         <p className="text-xs font-bold text-blue-800 dark:text-blue-300">GCash</p>
                                                         {settings.paymentMethods.gcash.accountName && (
                                                             <p className="text-xs text-blue-600 dark:text-blue-400">{settings.paymentMethods.gcash.accountName}</p>
@@ -772,7 +778,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 )}
                                                 {settings.paymentMethods.bankTransfer?.enabled && settings.paymentMethods.bankTransfer.qrImage && (
                                                     <div className="text-center">
-                                                        <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-28 h-28 object-contain border rounded-lg bg-white mb-2" />
+                                                        <div className="relative group mx-auto w-28 h-28 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
+                                                            <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border rounded-lg bg-white" />
+                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                                <Maximize2 className="text-white" size={20} />
+                                                            </div>
+                                                        </div>
                                                         <p className="text-xs font-bold text-blue-800 dark:text-blue-300">{settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}</p>
                                                         {settings.paymentMethods.bankTransfer.accountName && (
                                                             <p className="text-xs text-blue-600 dark:text-blue-400">{settings.paymentMethods.bankTransfer.accountName}</p>
@@ -780,21 +791,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {settings.paymentMethods.messengerLink && !uploadSuccess && (
-                                                <a
-                                                    href={settings.paymentMethods.messengerLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="mt-4 w-full flex items-center justify-center py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
-                                                >
-                                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.936 1.444 5.554 3.709 7.273V22l3.313-1.82c.884.246 1.821.378 2.978.378 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2z" /></svg>
-                                                    Send Proof via Messenger
-                                                </a>
-                                            )}
                                         </div>
                                     )}
-
                                     {/* Upload Payment Proof Section */}
                                     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 w-full max-w-md mb-6 shadow-sm">
                                         <h4 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center text-sm">
@@ -963,6 +961,28 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                         </div>
                     </div>
 
+                </div>
+            )}
+
+            {/* Zoomed QR Code Overlay */}
+            {zoomedQr && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-2 md:p-4"
+                    onClick={() => setZoomedQr(null)}
+                >
+                    <div className="relative max-w-xl w-full max-h-[95vh] flex items-center justify-center animate-pop" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => setZoomedQr(null)}
+                            className="absolute -top-12 right-0 md:-right-4 p-2 text-white hover:text-red-400 transition-colors bg-black/40 hover:bg-black/60 rounded-full z-10"
+                        >
+                            <X size={24} />
+                        </button>
+                        <img
+                            src={zoomedQr}
+                            alt="Zoomed QR Code"
+                            className="w-full max-h-[90vh] object-contain rounded-xl md:rounded-2xl bg-white shadow-2xl p-2 md:p-8"
+                        />
+                    </div>
                 </div>
             )}
         </div>
