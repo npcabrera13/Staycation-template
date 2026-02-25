@@ -333,6 +333,7 @@ function AppContent() {
               onExitAdmin={() => setIsAdminAuthenticated(false)}
               startEditing={startEditing}
               onEditingStarted={() => setStartEditing(false)}
+              onUpdateRoom={handleUpdateRoom}
             />
             {/* Homepage Lockout Overlay */}
             {isHomepageLocked && (

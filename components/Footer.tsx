@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Settings } from '../types';
 import { COMPANY_INFO } from '../constants'; // Fallback
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Phone, X, Check } from 'lucide-react';
 
 import InlineText from './Builder/InlineText';
 
@@ -17,21 +17,22 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'twitter') => {
+  const [editingSocial, setEditingSocial] = useState<'facebook' | 'instagram' | 'twitter' | 'tiktok' | null>(null);
+  const [socialUrlInput, setSocialUrlInput] = useState('');
+
+  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'twitter' | 'tiktok') => {
     if (isEditing && onSettingChange) {
       e.preventDefault();
       const currentUrl = settings?.social?.[platform] || '';
-      const newUrl = prompt(`Enter ${platform} URL:`, currentUrl);
-      if (newUrl !== null) {
-        // We need to update nested social object.
-        // Since onSettingChange signature is (section, key, value), we might need to handle 'social' object entirely
-        // OR update signature to support paths. 
-        // Simpler: assume onSettingChange handles root sections.
-        const newSocials = { ...settings?.social, [platform]: newUrl };
-        onSettingChange('social', platform, newUrl); // Wait, my LandingPage handler handles (section, key, value)? 
-        // LandingPage: handleSettingChange(section, key, value) => { ... workingSettings[section] = { ...workingSettings[section], [key]: value } }
-        // So for social, section='social', key='facebook'.
-      }
+      setSocialUrlInput(currentUrl);
+      setEditingSocial(platform);
+    }
+  };
+
+  const handleSaveSocial = () => {
+    if (editingSocial && onSettingChange) {
+      onSettingChange('social', editingSocial, socialUrlInput);
+      setEditingSocial(null);
     }
   };
 
@@ -132,7 +133,7 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                 </a>
                 <a
                   href={isEditing ? '#' : settings?.social?.tiktok}
-                  onClick={(e) => handleSocialClick(e, 'tiktok' as any)}
+                  onClick={(e) => handleSocialClick(e, 'tiktok')}
                   className={`hover:text-pink-600 transition ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
                   title={isEditing ? 'Click to edit TikTok URL' : ''}
                 >
@@ -163,6 +164,48 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
           </span>
         </div>
       </div>
+
+      {/* Custom URL Editor Modal */}
+      {editingSocial && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all text-left">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 capitalize">
+              Edit {editingSocial} Link
+            </h3>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Enter URL
+              </label>
+              <input
+                type="text"
+                autoFocus
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-gray-700 dark:text-gray-200"
+                placeholder={`https://${editingSocial}.com/yourpage`}
+                value={socialUrlInput}
+                onChange={(e) => setSocialUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveSocial();
+                  if (e.key === 'Escape') setEditingSocial(null);
+                }}
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setEditingSocial(null)}
+                className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors flex items-center"
+              >
+                <X size={16} className="mr-2" /> Cancel
+              </button>
+              <button
+                onClick={handleSaveSocial}
+                className="px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all flex items-center"
+              >
+                <Check size={16} className="mr-2" /> Save Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 };

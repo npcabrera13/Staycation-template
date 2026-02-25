@@ -46,6 +46,7 @@ interface LandingPageProps {
     onExitAdmin?: () => void;
     startEditing?: boolean;
     onEditingStarted?: () => void;
+    onUpdateRoom?: (room: Room) => Promise<void>;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
@@ -60,7 +61,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
     isAdmin = false,
     onExitAdmin,
     startEditing,
-    onEditingStarted
+    onEditingStarted,
+    onUpdateRoom
 }) => {
     const navigate = useNavigate();
     const [activeRoomIndex, setActiveRoomIndex] = useState(0);
@@ -304,7 +306,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         <InlineImage
                                             src={DEFAULT_SETTINGS.hero.image}
                                             alt="Hero Background"
-                                            isEditing={false}
+                                            isEditing={isEditing}
+                                            onChange={(val) => handleSettingChange('hero', 'image', val)}
                                             className="w-full h-full object-cover"
                                             style={{ objectPosition: 'center' }}
                                         />
@@ -319,7 +322,11 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         <InlineImage
                                             src={validImages[0]}
                                             alt="Hero Background"
-                                            isEditing={false}
+                                            isEditing={isEditing}
+                                            onChange={(val) => {
+                                                handleSettingChange('hero', 'image', val);
+                                                handleSettingChange('hero', 'images', [val]);
+                                            }}
                                             className="w-full h-full object-cover"
                                             style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
                                         />
@@ -338,7 +345,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         <InlineImage
                                             src={img}
                                             alt={`Hero Background ${index + 1}`}
-                                            isEditing={false}
+                                            isEditing={isEditing}
+                                            onChange={(val) => {
+                                                const newImages = [...validImages];
+                                                newImages[index] = val;
+                                                handleSettingChange('hero', 'images', newImages);
+                                            }}
                                             className="w-full h-full object-cover"
                                             style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
                                         />
@@ -523,7 +535,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         <div key={room.id} className="w-[85vw] max-w-[340px] md:w-[45%] md:max-w-none lg:w-[32%] flex-shrink-0 snap-center h-full flex flex-col">
                                             {/* Pointer events none only applied when actively dragging to prevent accidental clicks */}
                                             <div className={`h-full ${isDragging ? "pointer-events-none" : ""}`}>
-                                                <RoomCard room={room} onSelect={onRoomSelect} />
+                                                <RoomCard
+                                                    room={room}
+                                                    onSelect={onRoomSelect}
+                                                    isEditing={isEditing}
+                                                    onImageUpdate={onUpdateRoom ? (newUrl) => onUpdateRoom({ ...room, image: newUrl }) : undefined}
+                                                />
                                             </div>
                                         </div>
                                     ))}
