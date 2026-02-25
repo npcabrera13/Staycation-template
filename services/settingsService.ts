@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
     description: "Experience the ultimate relaxation with our curated staycation packages.",
     heroImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
     hero: {
+        tagline: "Welcome to Paradise",
         title: "Rediscover Serenity",
         subtitle: "Luxury staycations curated for your peace of mind. Experience comfort like never before.",
         ctaText: "Explore Rooms",

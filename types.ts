@@ -45,6 +45,7 @@ export interface Settings {
     description: string;
     heroImage: string; // Kept for backward compatibility or general open graph use
     hero: {
+        tagline?: string;
         title: string;
         subtitle: string;
         ctaText: string;

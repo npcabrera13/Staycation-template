@@ -354,7 +354,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-30 pt-20">
                         <RevealOnScroll>
                             <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-accent text-sm tracking-widest uppercase font-bold mb-6">
-                                {settings?.siteName || "Welcome to Paradise"}
+                                <InlineText
+                                    value={workingSettings.hero?.tagline ?? (settings?.siteName || "Welcome to Paradise")}
+                                    placeholder="Enter short tagline"
+                                    isEditing={isEditing}
+                                    onChange={(val) => handleSettingChange('hero', 'tagline', val)}
+                                />
                             </span>
                         </RevealOnScroll>
 

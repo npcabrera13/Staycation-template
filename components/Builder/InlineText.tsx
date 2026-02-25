@@ -8,6 +8,7 @@ interface InlineTextProps {
     className?: string;
     multiline?: boolean;
     placeholder?: string;
+    toolbarPosition?: 'top' | 'bottom';
 }
 
 const InlineText: React.FC<InlineTextProps> = ({
@@ -15,7 +16,8 @@ const InlineText: React.FC<InlineTextProps> = ({
     isEditing,
     onChange,
     className = '',
-    placeholder = 'Enter text...'
+    placeholder = 'Enter text...',
+    toolbarPosition = 'top'
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const contentRef = useRef<HTMLSpanElement>(null);
@@ -113,7 +115,7 @@ const InlineText: React.FC<InlineTextProps> = ({
         >
             {isFocused && (
                 <span
-                    className="absolute bottom-full right-0 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] mb-2 flex justify-end md:justify-center animate-fade-in-up md:w-max min-w-[280px]"
+                    className={`absolute ${toolbarPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} right-0 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] flex justify-end md:justify-center animate-fade-in-up md:w-max min-w-[280px]`}
                 >
                     <RichTextToolbar
                         onFormat={handleFormat}

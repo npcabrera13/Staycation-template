@@ -114,6 +114,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
                 value={settings?.siteName || "Serenity"}
                 isEditing={!!isEditing}
                 onChange={(val) => onUpdateSettings && onUpdateSettings('siteName' as any, '', val)}
+                toolbarPosition="bottom"
               />
             </span>
           </div>
