@@ -2,13 +2,19 @@ import React, { useState, useMemo } from 'react';
 import { Calendar, Users, Search } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Room } from '../types';
+import InlineButton from './Builder/InlineButton';
 
 interface SearchBarProps {
   rooms: Room[];
   onSearch: (filters: { checkIn: Date | null; checkOut: Date | null; guests: number }) => void;
+  isEditing?: boolean;
+  buttonText?: string;
+  onButtonTextChange?: (val: string) => void;
+  buttonColor?: string;
+  onButtonColorChange?: (val: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch, isEditing = false, buttonText, onButtonTextChange, buttonColor, onButtonColorChange }) => {
   const [checkIn, setCheckIn] = useState<string>('');
   const [checkOut, setCheckOut] = useState<string>('');
   const [guests, setGuests] = useState<number>(1);
@@ -79,15 +85,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch }) => {
         </div>
 
         {/* Search Button */}
-        <div className="w-full md:w-auto mt-2 md:mt-5 lg:mt-0">
-          <button
+        <div className="w-full md:w-auto mt-2 md:mt-5 lg:mt-0 flex justify-center">
+          <InlineButton
+            text={buttonText || "Check Availability"}
+            defaultText="Check Availability"
+            onTextChange={onButtonTextChange || (() => { })}
+            color={buttonColor || 'var(--color-accent)'}
+            onColorChange={onButtonColorChange || (() => { })}
+            isEditing={isEditing}
             onClick={handleSearchClick}
-            className="w-full bg-accent hover:bg-secondary text-secondary hover:text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center h-[50px]"
-          >
-            <Search size={20} className="lg:mr-2" />
-            <span className="lg:inline hidden">Check</span>
-            <span className="lg:hidden ml-2">Check Availability</span>
-          </button>
+            icon={<Search size={20} className="mr-2" />}
+            className="w-full h-[50px] shadow-md hover:shadow-lg !px-6 !py-3.5 !rounded-xl !text-secondary hover:!text-white !bg-accent hover:!bg-secondary !transition-all !duration-300 flex items-center justify-center whitespace-nowrap"
+          />
         </div>
       </div>
     </div>

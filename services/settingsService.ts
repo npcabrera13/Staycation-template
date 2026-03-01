@@ -98,6 +98,10 @@ export const DEFAULT_SETTINGS: Settings = {
         sendUserConfirmation: true,
         sendAdminAlert: true,
         sendCheckInReminder: true
+    },
+    searchBar: {
+        buttonText: "Check Availability",
+        buttonColor: "" // Uses accent by default, but allows override
     }
 };
 

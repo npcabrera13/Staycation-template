@@ -9,6 +9,8 @@ interface InlineButtonProps {
     isEditing: boolean;
     onClick?: () => void;
     className?: string; // Additional classes for the button itself
+    icon?: React.ReactNode;
+    defaultText?: string;
 }
 
 const InlineButton: React.FC<InlineButtonProps> = ({
@@ -18,7 +20,9 @@ const InlineButton: React.FC<InlineButtonProps> = ({
     onColorChange,
     isEditing,
     onClick,
-    className = ""
+    className = "",
+    icon,
+    defaultText = "Explore Rooms"
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
@@ -64,11 +68,11 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         return (
             <button
                 onClick={onClick}
-                className={`inline-flex items-center px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-pointer ${className}`}
+                className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-pointer ${className}`}
                 style={{ backgroundColor: color, color: color === '#ffffff' ? '#000000' : 'var(--color-secondary)' }}
             >
-                {text || "Explore Rooms"}
-                <span className="ml-2 group-hover:translate-y-1 transition-transform">↓</span>
+                {icon}
+                {text || defaultText}
             </button>
         );
     }
@@ -134,14 +138,14 @@ const InlineButton: React.FC<InlineButtonProps> = ({
             {/* Editing Button */}
             <div
                 onClick={handleButtonClick}
-                className={`inline-flex items-center px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 transform shadow-2xl group cursor-pointer border-2 border-dashed ${isFocused ? 'border-white scale-105 shadow-primary/20 bg-white' : 'border-white/50 hover:border-white hover:scale-105'} ${className}`}
+                className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 transform shadow-2xl group cursor-pointer border-2 border-dashed ${isFocused ? 'border-primary/50 scale-105 shadow-primary/20 bg-white' : 'border-white/50 hover:border-white hover:scale-105'} ${className}`}
                 style={{
                     backgroundColor: isFocused ? '#ffffff' : color,
                     color: isFocused ? 'var(--color-primary)' : (color === '#ffffff' ? '#000000' : 'var(--color-secondary)')
                 }}
             >
-                {text || "Explore Rooms"}
-                <span className="ml-2 group-hover:translate-y-1 transition-transform">↓</span>
+                {icon}
+                {text || defaultText}
             </div>
         </div>
     );

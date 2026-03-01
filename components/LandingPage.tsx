@@ -567,7 +567,15 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                         {/* Search Bar - Below Room Cards */}
                         <div className="mt-16">
-                            <SearchBar rooms={rooms} onSearch={setSearchCriteria} />
+                            <SearchBar
+                                rooms={rooms}
+                                onSearch={setSearchCriteria}
+                                isEditing={isEditing}
+                                buttonText={workingSettings.searchBar?.buttonText}
+                                onButtonTextChange={(val) => handleSettingChange('searchBar', 'buttonText', val)}
+                                buttonColor={workingSettings.searchBar?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                onButtonColorChange={(val) => handleSettingChange('searchBar', 'buttonColor', val)}
+                            />
                         </div>
 
                     </div>

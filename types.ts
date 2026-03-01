@@ -123,7 +123,7 @@ export interface Settings {
         fixedDepositAmount: number;
         autoConfirmOnDeposit: boolean;
         cancellationPolicy: string;
-        paymentDeadlineHours: number;  // Hours to pay before auto-cancel
+        paymentDeadlineHours: number;
     };
     // Email notification settings
     notifications?: {
@@ -131,6 +131,10 @@ export interface Settings {
         sendUserConfirmation: boolean;
         sendAdminAlert: boolean;
         sendCheckInReminder: boolean;
+    };
+    searchBar?: {
+        buttonText?: string;
+        buttonColor?: string;
     };
 }
 
