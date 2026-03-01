@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
         title: "Rediscover Serenity",
         subtitle: "Luxury staycations curated for your peace of mind. Experience comfort like never before.",
         ctaText: "Explore Rooms",
+        buttonColor: "", // Inherit global accent by default
         image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
         images: [
             "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",

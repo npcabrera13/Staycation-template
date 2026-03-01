@@ -420,8 +420,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             <InlineButton
                                 text={workingSettings.hero?.ctaText || "Explore Rooms"}
                                 onTextChange={(val) => handleSettingChange('hero', 'ctaText', val)}
-                                color={workingSettings.theme.accentColor || '#E9C46A'}
-                                onColorChange={(newColor) => handleSettingChange('theme', 'accentColor', newColor)}
+                                color={workingSettings.hero?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                onColorChange={(newColor) => handleSettingChange('hero', 'buttonColor', newColor)}
                                 isEditing={isEditing}
                                 onClick={() => {
                                     if (!isEditing) {

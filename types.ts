@@ -49,6 +49,7 @@ export interface Settings {
         title: string;
         subtitle: string;
         ctaText: string;
+        buttonColor?: string;
         image: string;
         images?: string[];
         slideInterval?: number;
