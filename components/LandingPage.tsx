@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Fa
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
+import InlineButton from './Builder/InlineButton';
 import BuilderToolbar from './Builder/BuilderToolbar';
 
 // Wrapper that only shows AI chat when enabled in SuperAdmin settings
@@ -409,30 +410,18 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={600}>
-                            {isEditing ? (
-                                <div className="inline-flex items-center bg-accent text-secondary px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-default">
-                                    <InlineText
-                                        value={workingSettings.hero?.ctaText ?? ""}
-                                        placeholder="Explore Rooms"
-                                        isEditing={isEditing}
-                                        onChange={(val) => handleSettingChange('hero', 'ctaText', val)}
-                                        className="whitespace-nowrap"
-                                    />
-                                    <span className="ml-2 group-hover:translate-y-1 transition-transform">↓</span>
-                                </div>
-                            ) : (
-                                <a
-                                    href="#rooms"
-                                    onClick={(e) => {
-                                        e.preventDefault();
+                            <InlineButton
+                                text={workingSettings.hero?.ctaText || "Explore Rooms"}
+                                onTextChange={(val) => handleSettingChange('hero', 'ctaText', val)}
+                                color={workingSettings.theme.accentColor || '#E9C46A'}
+                                onColorChange={(newColor) => handleSettingChange('theme', 'accentColor', newColor)}
+                                isEditing={isEditing}
+                                onClick={() => {
+                                    if (!isEditing) {
                                         document.getElementById('rooms')?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="inline-flex items-center bg-accent text-secondary px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-pointer"
-                                >
-                                    {workingSettings.hero?.ctaText || "Explore Rooms"}
-                                    <span className="ml-2 group-hover:translate-y-1 transition-transform">↓</span>
-                                </a>
-                            )}
+                                    }
+                                }}
+                            />
                         </RevealOnScroll>
                     </div>
                 </div>

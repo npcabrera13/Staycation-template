@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Anchor, Search, BookOpen, Moon, Sun } from 'lucide-react';
+import { Menu, X, Anchor, Search, Moon, Sun, Check, ImageIcon } from 'lucide-react';
 import { Settings } from '../types';
-import InlineImage from './Builder/InlineImage';
 import InlineText from './Builder/InlineText';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -19,6 +18,8 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
   // ... state refs ...
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isEditingLogo, setIsEditingLogo] = useState(false);
+  const [logoUrlInput, setLogoUrlInput] = useState('');
   const clickCountRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const navigate = useNavigate();
@@ -39,9 +40,12 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
   }, []);
 
   const handleLogoClick = (e: React.MouseEvent) => {
-    // console.log("Logo Clicked", { isEditing, count: clickCountRef.current });
-    if (isEditing) return; // Disable admin 3-click while editing
     e.preventDefault();
+    if (isEditing) {
+      setLogoUrlInput(settings?.logo || '');
+      setIsEditingLogo(true);
+      return; // Disable admin 3-click while editing
+    }
     // Prevent text selection logic here if needed?
     // document.getSelection()?.removeAllRanges();
 
@@ -92,21 +96,19 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center cursor-pointer select-none group" onClick={handleLogoClick}>
-            <div className="relative w-8 h-8 mr-2 overflow-visible">
-              {/* Editable Logo - Shows Anchor animation if no logo set, click to upload */}
-              <InlineImage
-                src={settings?.logo || ""}
-                alt="Logo"
-                isEditing={!!isEditing}
-                onChange={(val) => onUpdateSettings && onUpdateSettings('logo' as any, '', val)}
-                className="w-full h-full flex items-center justify-center"
-                useChildrenAsPlaceholder={!settings?.logo || settings.logo.trim() === ''}
-              >
+            <div className={`relative w-8 h-8 mr-2 overflow-visible ${isEditing ? 'ring-2 ring-primary ring-offset-2 rounded-sm cursor-pointer' : ''}`}>
+              {settings?.logo?.trim() ? (
+                <img
+                  src={settings.logo}
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
                 <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
                   <Anchor className="h-full w-full text-primary transition-transform duration-700 group-hover:rotate-[360deg]" />
                   <div className="absolute inset-0 bg-primary opacity-20 blur-lg rounded-full animate-pulse"></div>
                 </div>
-              </InlineImage>
+              )}
             </div>
 
             <span className="font-serif text-xl font-bold tracking-wider text-secondary dark:text-white">
@@ -180,6 +182,67 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-secondary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
               Book Your Stay
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Modal for Logo Hotlink URL */}
+      {isEditingLogo && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all text-left">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <ImageIcon className="text-primary" size={24} /> Edit Logo URL
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Paste a direct link to your image (like Imgur) to feature it as your logo instead of the default icon.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  value={logoUrlInput}
+                  onChange={(e) => setLogoUrlInput(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow"
+                  placeholder="https://i.imgur.com/example.png"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setIsEditingLogo(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <X size={18} /> Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (onUpdateSettings) {
+                      onUpdateSettings('logo' as any, '', logoUrlInput);
+                    }
+                    setIsEditingLogo(false);
+                  }}
+                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Check size={18} /> Save URL
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  if (onUpdateSettings) {
+                    onUpdateSettings('logo' as any, '', '');
+                  }
+                  setIsEditingLogo(false);
+                }}
+                className="w-full mt-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-medium border border-red-200 dark:border-red-900/50"
+              >
+                Clear Logo (Use Default Anchor)
+              </button>
+            </div>
           </div>
         </div>
       )}
