@@ -96,15 +96,16 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                                <Palette size={14} /> Button Color
+                                <Palette size={14} /> Button Color (Click box below)
                             </span>
                             <div className="flex gap-2 items-center">
-                                <span className="text-xs font-mono text-gray-400">{color}</span>
+                                <span className="text-xs font-mono text-gray-800 bg-gray-100 px-1 py-0.5 rounded">{color.toUpperCase()}</span>
                                 <input
                                     type="color"
                                     value={color}
                                     onChange={(e) => onColorChange(e.target.value)}
-                                    className="w-6 h-6 rounded border-0 cursor-pointer p-0"
+                                    className="w-8 h-8 rounded cursor-pointer p-0 border-2 border-gray-200 hover:border-primary transition-colors"
+                                    title="Choose Custom Color"
                                 />
                             </div>
                         </div>

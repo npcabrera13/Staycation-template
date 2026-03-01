@@ -112,6 +112,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }
     }, [settings, isEditing]);
 
+    // Live update document title
+    React.useEffect(() => {
+        if (workingSettings.siteName) {
+            document.title = workingSettings.siteName;
+        }
+    }, [workingSettings.siteName]);
+
     const handleSettingChange = (section: keyof Settings, field: string, value: any) => {
         setWorkingSettings(prev => {
             const updated = { ...prev };
