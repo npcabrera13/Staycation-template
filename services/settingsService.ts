@@ -8,7 +8,7 @@ const COLLECTION_NAME = "settings";
 
 export const DEFAULT_SETTINGS: Settings = {
     siteName: "Serenity Staycation",
-    logo: "/vite.svg", // Default logo
+    logo: "", // Default empty to show anchor
     description: "Experience the ultimate relaxation with our curated staycation packages.",
     heroImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
     hero: {
