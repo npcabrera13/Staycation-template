@@ -61,6 +61,23 @@ const InlineText: React.FC<InlineTextProps> = ({
             contentRef.current.focus();
         }
 
+        // Smart selection: if nothing is highlighted, select all text in this block
+        const selection = window.getSelection();
+        let isCollapsed = true;
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            if (!range.collapsed && contentRef.current?.contains(range.commonAncestorContainer)) {
+                isCollapsed = false;
+            }
+        }
+
+        if (isCollapsed && contentRef.current) {
+            const range = document.createRange();
+            range.selectNodeContents(contentRef.current);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+        }
+
         if (command === 'fontSizePx' && arg) {
             const selection = window.getSelection();
             if (selection && selection.rangeCount > 0) {
@@ -109,13 +126,13 @@ const InlineText: React.FC<InlineTextProps> = ({
     return (
         <span
             ref={wrapperRef}
-            className="relative inline-block w-full"
+            className="relative inline-block w-full hover:z-[40] focus-within:z-[50]"
             onClick={(e) => e.stopPropagation()}
             onBlurCapture={handleBlur}
         >
             {isFocused && (
                 <span
-                    className={`absolute ${toolbarPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} right-0 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] flex justify-end md:justify-center animate-fade-in-up md:w-max min-w-[280px]`}
+                    className={`absolute ${toolbarPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} right-0 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[9999] flex justify-end md:justify-center animate-fade-in-up md:w-max min-w-[280px]`}
                 >
                     <RichTextToolbar
                         onFormat={handleFormat}
@@ -131,7 +148,7 @@ const InlineText: React.FC<InlineTextProps> = ({
                 onInput={handleInput}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                className={`outline-none border-2 border-dashed ${isFocused ? 'border-primary bg-white/10' : 'border-accent/30'} hover:border-accent rounded px-2 min-w-[50px] transition-all cursor-text ${className}`}
+                className={`outline-none border-2 border-dashed ${isFocused ? 'border-blue-500 bg-white/10' : 'border-gray-400/50'} hover:border-gray-400 rounded px-2 min-w-[50px] transition-all cursor-text flex-1 ${className}`}
                 style={{ minHeight: '1.5em', display: 'inline-block' }}
                 data-placeholder={placeholder}
             />

@@ -96,7 +96,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center cursor-pointer select-none group" onClick={handleLogoClick}>
-            <div className={`relative w-8 h-8 mr-2 overflow-visible ${isEditing ? 'ring-2 ring-primary ring-offset-2 rounded-sm cursor-pointer' : ''}`}>
+            <div className={`relative h-10 w-auto max-w-[120px] mr-3 overflow-visible flex-shrink-0 ${isEditing ? 'ring-2 ring-primary ring-offset-2 rounded-sm cursor-pointer' : ''}`}>
               {settings?.logo?.trim() ? (
                 <img
                   src={settings.logo}
@@ -112,12 +112,18 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             </div>
 
             <span className="font-serif text-xl font-bold tracking-wider text-secondary dark:text-white">
-              <InlineText
-                value={settings?.siteName || "Serenity"}
-                isEditing={!!isEditing}
-                onChange={(val) => onUpdateSettings && onUpdateSettings('siteName' as any, '', val)}
-                toolbarPosition="bottom"
-              />
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={settings?.siteName || ''}
+                  onChange={(e) => onUpdateSettings && onUpdateSettings('siteName' as any, '', e.target.value)}
+                  className="bg-transparent border-2 border-dashed border-gray-400/50 hover:border-gray-400 focus:border-blue-500 rounded px-2 py-1 outline-none text-xl font-bold font-serif tracking-wider text-secondary dark:text-white w-full min-w-[300px] transition-colors"
+                  placeholder="Site Name"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                settings?.siteName || 'Serenity'
+              )}
             </span>
           </div>
 

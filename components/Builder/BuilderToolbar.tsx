@@ -165,6 +165,18 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             <span className="text-xs font-mono text-gray-600">{settings?.theme.accentColor}</span>
                         </div>
                     </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Global Font Family</label>
+                        <select
+                            value={settings?.theme.fontFamily || 'sans'}
+                            onChange={(e) => onUpdateSettings?.('theme', 'fontFamily', e.target.value)}
+                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700 cursor-pointer outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        >
+                            <option value="sans">Sans-Serif</option>
+                            <option value="serif">Serif (Elegant)</option>
+                            <option value="mono">Monospace (Typewriter)</option>
+                        </select>
+                    </div>
                 </AccordionItem>
 
                 {/* 2. Hero Section */}
@@ -264,53 +276,42 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     </div>
                 </AccordionItem>
 
-                {/* 3. Social Links */}
+                {/* 3. Social Links Toggles */}
                 <AccordionItem
-                    title="Social Hotlinks"
+                    title="Social & Links"
                     icon={Share2}
                     isOpen={openSection === 'social'}
                     onClick={() => setOpenSection(openSection === 'social' ? null : 'social')}
                 >
-                    {['facebook', 'instagram', 'twitter', 'tiktok'].map(platform => (
-                        <div key={platform}>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 capitalize">{platform} URL</label>
-                            <input
-                                type="text"
-                                value={(settings?.social as any)?.[platform] || ''}
-                                onChange={(e) => onUpdateSettings?.('social', platform, e.target.value)}
-                                className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                                placeholder={`https://${platform}.com/...`}
-                            />
+                    <div className="space-y-4">
+                        <p className="text-xs text-gray-400 mb-2 leading-relaxed">Toggle which icons appear in your footer. Empty links will be hidden from visitors but remain visible in the editor.</p>
+                        <div className="space-y-3">
+                            {[
+                                { key: 'showFacebook', label: 'Facebook Icon', icon: 'facebook' as const },
+                                { key: 'showInstagram', label: 'Instagram Icon', icon: 'instagram' as const },
+                                { key: 'showX', label: 'X (Twitter) Icon', icon: 'x' as const },
+                                { key: 'showTiktok', label: 'TikTok Icon', icon: 'tiktok' as const },
+                                { key: 'showAirbnb', label: 'Airbnb Icon', icon: 'airbnb' as const },
+                                { key: 'showCustom', label: 'Custom Link Icon', icon: 'customUrl' as const },
+                            ].map(({ key, label }) => (
+                                <label key={key} className="flex items-center justify-between cursor-pointer group">
+                                    <span className="text-xs font-bold text-gray-600 group-hover:text-primary transition-colors">{label}</span>
+                                    <div className="relative">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={(settings?.social as any)?.[key] !== false} // Default to true if undefined
+                                            onChange={(e) => onUpdateSettings?.('social', key, e.target.checked)}
+                                        />
+                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                    </div>
+                                </label>
+                            ))}
                         </div>
-                    ))}
-                </AccordionItem>
-
-                {/* 4. Contact Info */}
-                <AccordionItem
-                    title="Contact Info"
-                    icon={Layout}
-                    isOpen={openSection === 'contact'}
-                    onClick={() => setOpenSection(openSection === 'contact' ? null : 'contact')}
-                >
-                    <div className="space-y-3">
-                        <label className="block text-xs font-bold text-gray-500 mb-1">Phone</label>
-                        <input
-                            value={settings?.contact.phone || ''}
-                            onChange={(e) => onUpdateSettings?.('contact', 'phone', e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1">Email</label>
-                        <input
-                            value={settings?.contact.email || ''}
-                            onChange={(e) => onUpdateSettings?.('contact', 'email', e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                        />
                     </div>
                 </AccordionItem>
 
-                {/* 5. About Gallery */}
+                {/* 4. About Gallery */}
                 <AccordionItem
                     title="About Gallery"
                     icon={ImageIcon}

@@ -12,9 +12,19 @@ interface SearchBarProps {
   onButtonTextChange?: (val: string) => void;
   buttonColor?: string;
   onButtonColorChange?: (val: string) => void;
+  buttonTextColor?: string;
+  onButtonTextColorChange?: (val: string) => void;
+  buttonFontFamily?: string;
+  onButtonFontFamilyChange?: (val: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch, isEditing = false, buttonText, onButtonTextChange, buttonColor, onButtonColorChange }) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  rooms, onSearch, isEditing = false,
+  buttonText, onButtonTextChange,
+  buttonColor, onButtonColorChange,
+  buttonTextColor, onButtonTextColorChange,
+  buttonFontFamily, onButtonFontFamilyChange
+}) => {
   const [checkIn, setCheckIn] = useState<string>('');
   const [checkOut, setCheckOut] = useState<string>('');
   const [guests, setGuests] = useState<number>(1);
@@ -92,10 +102,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ rooms, onSearch, isEditing = fals
             onTextChange={onButtonTextChange || (() => { })}
             color={buttonColor || 'var(--color-accent)'}
             onColorChange={onButtonColorChange || (() => { })}
+            textColor={buttonTextColor || ''}
+            onTextColorChange={onButtonTextColorChange || (() => { })}
+            fontFamily={buttonFontFamily || 'sans'}
+            onFontFamilyChange={onButtonFontFamilyChange || (() => { })}
             isEditing={isEditing}
             onClick={handleSearchClick}
             icon={<Search size={20} className="mr-2" />}
-            className="w-full h-[50px] shadow-md hover:shadow-lg !px-6 !py-3.5 !rounded-xl !text-secondary hover:!text-white !bg-accent hover:!bg-secondary !transition-all !duration-300 flex items-center justify-center whitespace-nowrap"
+            className="w-full h-[50px] shadow-md hover:shadow-lg px-6 py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center whitespace-nowrap"
           />
         </div>
       </div>

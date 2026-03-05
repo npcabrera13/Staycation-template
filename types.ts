@@ -50,6 +50,8 @@ export interface Settings {
         subtitle: string;
         ctaText: string;
         buttonColor?: string;
+        buttonTextColor?: string;
+        buttonFontFamily?: string;
         image: string;
         images?: string[];
         slideInterval?: number;
@@ -81,9 +83,18 @@ export interface Settings {
     };
     social: {
         facebook: string;
+        showFacebook?: boolean;
         instagram: string;
-        twitter: string;
+        showInstagram?: boolean;
+        x: string;
+        showX?: boolean;
         tiktok?: string;
+        showTiktok?: boolean;
+        airbnb?: string;
+        showAirbnb?: boolean;
+        customUrl?: string;
+        customLabel?: string;
+        showCustom?: boolean;
     };
     map: {
         embedUrl: string;
@@ -100,6 +111,7 @@ export interface Settings {
         primaryHoverColor?: string;
         secondaryColor: string;
         accentColor?: string;
+        fontFamily?: string;
     };
     paymentMethods?: {
         gcash?: {
@@ -136,6 +148,8 @@ export interface Settings {
     searchBar?: {
         buttonText?: string;
         buttonColor?: string;
+        buttonTextColor?: string;
+        buttonFontFamily?: string;
     };
 }
 

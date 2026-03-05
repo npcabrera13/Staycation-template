@@ -67,6 +67,10 @@ function AppContent() {
             document.documentElement.style.setProperty('--color-accent', fetchedSettings.theme.accentColor);
             localStorage.setItem('theme-accent', fetchedSettings.theme.accentColor);
           }
+
+          // Apply font family
+          document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
+          document.body.classList.add(`font-${fetchedSettings.theme.fontFamily || 'sans'}`);
         }
       } catch (error) {
         console.error("Failed to load data:", error);

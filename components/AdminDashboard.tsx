@@ -1339,72 +1339,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Contact Info */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                                        <Phone size={20} className="mr-2 text-primary" /> Contact Information
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.contact.address}
-                                                onChange={(e) => setSettingsForm({
-                                                    ...settingsForm,
-                                                    contact: { ...settingsForm.contact, address: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.contact.phone}
-                                                onChange={(e) => setSettingsForm({
-                                                    ...settingsForm,
-                                                    contact: { ...settingsForm.contact, phone: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.contact.email}
-                                                onChange={(e) => setSettingsForm({
-                                                    ...settingsForm,
-                                                    contact: { ...settingsForm.contact, email: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook</label>
-                                                <input
-                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                    value={settingsForm.contact.socials.facebook}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        contact: { ...settingsForm.contact, socials: { ...settingsForm.contact.socials, facebook: e.target.value } }
-                                                    })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instagram</label>
-                                                <input
-                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                    value={settingsForm.contact.socials.instagram}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        contact: { ...settingsForm.contact, socials: { ...settingsForm.contact.socials, instagram: e.target.value } }
-                                                    })}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Theme Settings */}
                                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
@@ -2710,22 +2644,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 }
             </main >
             {/* Modals */}
-            <StatsSummaryModal
+            < StatsSummaryModal
                 isOpen={showStatsModal}
                 onClose={() => setShowStatsModal(false)}
-                bookings={bookings.filter(b => {
-                    // Filter context: "Total Bookings" usually implies the bookings in the current view (month)
-                    // or global? The prompt asked for "Summary", let's pass the calendar-filtered bookings to match the count shown
-                    // The count shown is `totalBookingsInMonth`.
-                    if (b.status === 'cancelled') return false; // Although stats might want to see cancelled?
-                    // Let's pass ALL bookings so the modal can decide or pass filtered.
-                    // The modal logic (created above) filters itself.
-                    // But we want it to match the "Total Bookings" number which *excludes* cancelled in the view...
-                    // Wait, the "Total Bookings" count in renderCalendarView *excludes* cancelled.
-                    // But the Stats Modal *shows* cancelled.
-                    // So we should pass contextual bookings based on the month.
-                    return isSameMonth(new Date(b.checkIn), calendarDate);
-                })}
+                bookings={
+                    bookings.filter(b => {
+                        // Filter context: "Total Bookings" usually implies the bookings in the current view (month)
+                        // or global? The prompt asked for "Summary", let's pass the calendar-filtered bookings to match the count shown
+                        // The count shown is `totalBookingsInMonth`.
+                        if (b.status === 'cancelled') return false; // Although stats might want to see cancelled?
+                        // Let's pass ALL bookings so the modal can decide or pass filtered.
+                        // The modal logic (created above) filters itself.
+                        // But we want it to match the "Total Bookings" number which *excludes* cancelled in the view...
+                        // Wait, the "Total Bookings" count in renderCalendarView *excludes* cancelled.
+                        // But the Stats Modal *shows* cancelled.
+                        // So we should pass contextual bookings based on the month.
+                        return isSameMonth(new Date(b.checkIn), calendarDate);
+                    })
+                }
                 revenue={monthlyRevenue}
             />
             <BookingEditModal
@@ -2739,94 +2675,98 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
 
             {/* Expiry Warning Popup */}
-            {showExpiryWarning && expiryDays !== null && expiryDays <= 7 && (
-                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
-                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'}`}>
-                            <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                            {expiryDays <= 0 ? 'Subscription Expired!' : 'Subscription Expiring Soon!'}
-                        </h3>
-                        <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : 'text-yellow-500'}`}>
-                            {expiryDays <= 0 ? 'Expired' : `${expiryDays} day${expiryDays !== 1 ? 's' : ''} left`}
-                        </p>
-                        {expiryDate && (
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                                {expiryDays <= 0 ? 'Expired on' : 'Expires on'}: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                            </p>
-                        )}
-                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">
-                            {contactInfo.providerName
-                                ? `Please contact ${contactInfo.providerName} to renew your subscription.`
-                                : 'Please contact your service provider to renew your subscription and avoid service interruption.'}
-                        </p>
-                        {(contactInfo.email || contactInfo.phone) && (
-                            <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-3 mb-5 space-y-2">
-                                {contactInfo.email && (
-                                    <a href={`mailto:${contactInfo.email}`} className="flex items-center justify-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-medium">
-                                        <Clock size={14} /> {contactInfo.email}
-                                    </a>
-                                )}
-                                {contactInfo.phone && (
-                                    <a href={`tel:${contactInfo.phone}`} className="flex items-center justify-center gap-2 text-green-500 hover:text-green-600 text-sm font-medium">
-                                        <Phone size={14} /> {contactInfo.phone}
-                                    </a>
-                                )}
+            {
+                showExpiryWarning && expiryDays !== null && expiryDays <= 7 && (
+                    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
+                            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'}`}>
+                                <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
                             </div>
-                        )}
-                        <button
-                            onClick={() => setShowExpiryWarning(false)}
-                            className="w-full py-3 bg-gray-900 dark:bg-white dark:text-gray-900 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
-                        >
-                            I Understand
-                        </button>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                {expiryDays <= 0 ? 'Subscription Expired!' : 'Subscription Expiring Soon!'}
+                            </h3>
+                            <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : 'text-yellow-500'}`}>
+                                {expiryDays <= 0 ? 'Expired' : `${expiryDays} day${expiryDays !== 1 ? 's' : ''} left`}
+                            </p>
+                            {expiryDate && (
+                                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                                    {expiryDays <= 0 ? 'Expired on' : 'Expires on'}: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                </p>
+                            )}
+                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">
+                                {contactInfo.providerName
+                                    ? `Please contact ${contactInfo.providerName} to renew your subscription.`
+                                    : 'Please contact your service provider to renew your subscription and avoid service interruption.'}
+                            </p>
+                            {(contactInfo.email || contactInfo.phone) && (
+                                <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-3 mb-5 space-y-2">
+                                    {contactInfo.email && (
+                                        <a href={`mailto:${contactInfo.email}`} className="flex items-center justify-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-medium">
+                                            <Clock size={14} /> {contactInfo.email}
+                                        </a>
+                                    )}
+                                    {contactInfo.phone && (
+                                        <a href={`tel:${contactInfo.phone}`} className="flex items-center justify-center gap-2 text-green-500 hover:text-green-600 text-sm font-medium">
+                                            <Phone size={14} /> {contactInfo.phone}
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setShowExpiryWarning(false)}
+                                className="w-full py-3 bg-gray-900 dark:bg-white dark:text-gray-900 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+                            >
+                                I Understand
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Missing Passcode Warning Modal */}
-            {showMissingPasscodeWarning && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
-                        <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mb-4">
-                            <Lock className="text-red-500" size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                            Admin Panel is Unprotected
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
-                            You haven't set an admin passcode, so anyone visiting this page can access the admin panel.
-                            Would you like to secure it with a passcode now?
-                        </p>
-                        <div className="flex flex-col gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowMissingPasscodeWarning(false);
-                                    setActiveTab('settings');
-                                    // Give it a tiny delay to switch to settings tab before scrolling
-                                    setTimeout(() => {
-                                        const passcodeSection = document.getElementById('admin-passcode-section');
-                                        if (passcodeSection) passcodeSection.scrollIntoView({ behavior: 'smooth' });
-                                    }, 100);
-                                }}
-                                className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shadow-md flex items-center justify-center gap-2"
-                            >
-                                <Lock size={18} /> Add Password Now
-                            </button>
-                            <button
-                                onClick={() => {
-                                    sessionStorage.setItem('dismissedPasscodeWarning', 'true');
-                                    setShowMissingPasscodeWarning(false);
-                                }}
-                                className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                            >
-                                Later
-                            </button>
+            {
+                showMissingPasscodeWarning && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
+                            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mb-4">
+                                <Lock className="text-red-500" size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                Admin Panel is Unprotected
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
+                                You haven't set an admin passcode, so anyone visiting this page can access the admin panel.
+                                Would you like to secure it with a passcode now?
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowMissingPasscodeWarning(false);
+                                        setActiveTab('settings');
+                                        // Give it a tiny delay to switch to settings tab before scrolling
+                                        setTimeout(() => {
+                                            const passcodeSection = document.getElementById('admin-passcode-section');
+                                            if (passcodeSection) passcodeSection.scrollIntoView({ behavior: 'smooth' });
+                                        }, 100);
+                                    }}
+                                    className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <Lock size={18} /> Add Password Now
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        sessionStorage.setItem('dismissedPasscodeWarning', 'true');
+                                        setShowMissingPasscodeWarning(false);
+                                    }}
+                                    className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                    Later
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div >
     );
 };

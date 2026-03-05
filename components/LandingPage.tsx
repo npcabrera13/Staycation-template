@@ -15,6 +15,7 @@ import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
 import InlineButton from './Builder/InlineButton';
+import InlineColorBlock from './Builder/InlineColorBlock';
 import BuilderToolbar from './Builder/BuilderToolbar';
 
 // Wrapper that only shows AI chat when enabled in SuperAdmin settings
@@ -119,12 +120,37 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }
     }, [workingSettings.siteName]);
 
+    // Live update CSS variables for Theme
+    React.useEffect(() => {
+        if (workingSettings.theme) {
+            if (workingSettings.theme.primaryColor) {
+                document.documentElement.style.setProperty('--color-primary', workingSettings.theme.primaryColor);
+            }
+            if (workingSettings.theme.secondaryColor) {
+                document.documentElement.style.setProperty('--color-secondary', workingSettings.theme.secondaryColor);
+            }
+            if (workingSettings.theme.accentColor) {
+                document.documentElement.style.setProperty('--color-accent', workingSettings.theme.accentColor);
+            }
+            if (workingSettings.theme.fontFamily) {
+                document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
+                document.body.classList.add(`font-${workingSettings.theme.fontFamily}`);
+            }
+        }
+    }, [workingSettings.theme]);
+
     const handleSettingChange = (section: keyof Settings, field: string, value: any) => {
         setWorkingSettings(prev => {
             const updated = { ...prev };
-            if (typeof updated[section] === 'object' && updated[section] !== null) {
+
+            if (field === '') {
+                // Top-level property update (e.g. siteName, logo)
+                (updated as any)[section] = value;
+            } else if (typeof updated[section] === 'object' && updated[section] !== null) {
+                // Nested property update (e.g. theme.primaryColor, hero.image)
                 (updated[section] as any)[field] = value;
             }
+
             return updated;
         });
         setHasChanges(true);
@@ -296,7 +322,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     settings={workingSettings} // Use working settings to see live preview
                     isEditing={isEditing}
                     isBuilderOpen={isEditing && !isBuilderMinimized}
-                    onSettingChange={handleSettingChange}
+                    onUpdateSettings={handleSettingChange}
                 />
                 {/* Hero Section */}
                 <div id="hero" className="relative h-[100vh] min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
@@ -346,7 +372,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 return (
                                     <div
                                         key={index}
-                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
                                     >
                                         <InlineImage
                                             src={img}
@@ -422,6 +448,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 onTextChange={(val) => handleSettingChange('hero', 'ctaText', val)}
                                 color={workingSettings.hero?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
                                 onColorChange={(newColor) => handleSettingChange('hero', 'buttonColor', newColor)}
+                                textColor={workingSettings.hero?.buttonTextColor || ''}
+                                onTextColorChange={(val) => handleSettingChange('hero', 'buttonTextColor', val)}
+                                fontFamily={workingSettings.hero?.buttonFontFamily || 'sans'}
+                                onFontFamilyChange={(val) => handleSettingChange('hero', 'buttonFontFamily', val)}
                                 isEditing={isEditing}
                                 onClick={() => {
                                     if (!isEditing) {
@@ -458,7 +488,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         onChange={(val) => handleSettingChange('roomsSection', 'title', val)}
                                     />
                                 </h2>
-                                <div className="w-24 h-1 bg-accent mx-auto mb-8 rounded-full"></div>
+                                <InlineColorBlock
+                                    color={workingSettings.roomsSection?.accentColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                    onChange={(color) => handleSettingChange('roomsSection', 'accentColor', color)}
+                                    className="w-24 h-1 mx-auto mb-8 rounded-full"
+                                    isEditing={isEditing}
+                                />
 
                                 {searchCriteria ? (
                                     <div className="flex flex-col items-center animate-fade-in">
@@ -575,6 +610,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 onButtonTextChange={(val) => handleSettingChange('searchBar', 'buttonText', val)}
                                 buttonColor={workingSettings.searchBar?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
                                 onButtonColorChange={(val) => handleSettingChange('searchBar', 'buttonColor', val)}
+                                buttonTextColor={workingSettings.searchBar?.buttonTextColor}
+                                onButtonTextColorChange={(val) => handleSettingChange('searchBar', 'buttonTextColor', val)}
+                                buttonFontFamily={workingSettings.searchBar?.buttonFontFamily}
+                                onButtonFontFamilyChange={(val) => handleSettingChange('searchBar', 'buttonFontFamily', val)}
                             />
                         </div>
 
@@ -679,13 +718,35 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 {aboutImages.map((img, index) => (
                                                     <div
                                                         key={index}
-                                                        className={`absolute inset-0 transition-opacity duration-500 ${index === activeAboutSlide ? 'opacity-100' : 'opacity-0'}`}
+                                                        className={`absolute inset-0 transition-opacity duration-500 ${index === activeAboutSlide ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
                                                     >
-                                                        <img
-                                                            src={img}
-                                                            alt={`About ${index + 1}`}
-                                                            className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
-                                                        />
+                                                        {isEditing ? (
+                                                            <InlineImage
+                                                                src={img}
+                                                                alt={`About ${index + 1}`}
+                                                                isEditing={true}
+                                                                onChange={(newUrl) => {
+                                                                    const currentImages = [...(workingSettings.about?.images || [])];
+                                                                    if (index === 0 && workingSettings.about?.image) {
+                                                                        // Depending on how images are structured (first is main, rest are array)
+                                                                        handleSettingChange('about', 'image', newUrl);
+                                                                    } else {
+                                                                        const arrIndex = (workingSettings.about?.image && workingSettings.about.image.trim() !== '') ? index - 1 : index;
+                                                                        if (arrIndex >= 0) {
+                                                                            currentImages[arrIndex] = newUrl;
+                                                                            handleSettingChange('about', 'images', currentImages);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="w-full h-full object-cover rounded-3xl"
+                                                            />
+                                                        ) : (
+                                                            <img
+                                                                src={img}
+                                                                alt={`About ${index + 1}`}
+                                                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
+                                                            />
+                                                        )}
                                                     </div>
                                                 ))}
 

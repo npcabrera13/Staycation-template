@@ -37,20 +37,19 @@ const RevealOnScroll: React.FC<RevealProps> = ({ children, width = "100%", delay
   }, []);
 
   return (
-    <div 
-        ref={ref} 
-        style={{ width }}
-        className={className}
+    <div
+      ref={ref}
+      style={{ width }}
+      className={`relative hover:z-[40] focus-within:z-[50] ${className}`}
     >
       <div
-        style={{ 
-            transitionDuration: '1000ms',
-            transitionDelay: `${delay}ms`,
-            transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+        style={{
+          transitionDuration: '1000ms',
+          transitionDelay: `${delay}ms`,
+          transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
         }}
-        className={`transform transition-all h-full ${
-          isVisible ? "opacity-100 translate-y-0 blur-0" : "opacity-0 translate-y-12 blur-sm"
-        }`}
+        className={`transform transition-all h-full ${isVisible ? "opacity-100 translate-y-0 blur-0" : "opacity-0 translate-y-12 blur-sm"
+          }`}
       >
         {children}
       </div>

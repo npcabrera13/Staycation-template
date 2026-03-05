@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS: Settings = {
         subtitle: "Luxury staycations curated for your peace of mind. Experience comfort like never before.",
         ctaText: "Explore Rooms",
         buttonColor: "", // Inherit global accent by default
+        buttonTextColor: "",
+        buttonFontFamily: "sans",
         image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
         images: [
             "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
@@ -56,8 +58,11 @@ export const DEFAULT_SETTINGS: Settings = {
     social: {
         facebook: COMPANY_INFO.facebook,
         instagram: COMPANY_INFO.instagram,
-        twitter: "https://twitter.com",
-        tiktok: "https://tiktok.com"
+        x: "https://x.com",
+        tiktok: "https://tiktok.com",
+        airbnb: "",
+        customUrl: "",
+        customLabel: ""
     },
     roomsSection: {
         title: "Our Exclusive Rooms"
@@ -66,9 +71,11 @@ export const DEFAULT_SETTINGS: Settings = {
         copyrightText: "All rights reserved."
     },
     theme: {
-        primaryColor: "#2563EB",
-        primaryHoverColor: "#1d4ed8",
-        secondaryColor: "#1E40AF"
+        primaryColor: "#0D9488", // Teal 600
+        primaryHoverColor: "#0F766E", // Teal 700
+        secondaryColor: "#000000",
+        accentColor: "#E9C46A", // Soft gold
+        fontFamily: "sans"
     },
     paymentMethods: {
         gcash: {
@@ -102,7 +109,9 @@ export const DEFAULT_SETTINGS: Settings = {
     },
     searchBar: {
         buttonText: "Check Availability",
-        buttonColor: "" // Uses accent by default, but allows override
+        buttonColor: "", // Uses accent by default, but allows override
+        buttonTextColor: "",
+        buttonFontFamily: "sans"
     }
 };
 

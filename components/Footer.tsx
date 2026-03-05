@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Settings } from '../types';
 import { COMPANY_INFO } from '../constants'; // Fallback
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Facebook, Instagram, Mail, MapPin, Phone, X, Check } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Phone, X, Check, Link } from 'lucide-react';
 
 import InlineText from './Builder/InlineText';
 
@@ -17,10 +17,10 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [editingSocial, setEditingSocial] = useState<'facebook' | 'instagram' | 'twitter' | 'tiktok' | null>(null);
+  const [editingSocial, setEditingSocial] = useState<'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'customUrl' | null>(null);
   const [socialUrlInput, setSocialUrlInput] = useState('');
 
-  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'twitter' | 'tiktok') => {
+  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'customUrl') => {
     if (isEditing && onSettingChange) {
       e.preventDefault();
       const currentUrl = settings?.social?.[platform] || '';
@@ -115,39 +115,93 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
               </li>
               <li className="flex space-x-4 mt-4">
                 {/* Socials - Click to edit URL in edit mode */}
-                <a
-                  href={isEditing ? '#' : settings?.social?.facebook}
-                  onClick={(e) => handleSocialClick(e, 'facebook')}
-                  className={`hover:text-blue-400 transition ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
-                  title={isEditing ? 'Click to edit Facebook URL' : ''}
-                >
-                  <Facebook />
-                </a>
-                <a
-                  href={isEditing ? '#' : settings?.social?.instagram}
-                  onClick={(e) => handleSocialClick(e, 'instagram')}
-                  className={`hover:text-pink-400 transition ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
-                  title={isEditing ? 'Click to edit Instagram URL' : ''}
-                >
-                  <Instagram />
-                </a>
-                <a
-                  href={isEditing ? '#' : settings?.social?.tiktok}
-                  onClick={(e) => handleSocialClick(e, 'tiktok')}
-                  className={`hover:text-pink-600 transition ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
-                  title={isEditing ? 'Click to edit TikTok URL' : ''}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="lucide lucide-tiktok"
+                {/* Facebook */}
+                {settings?.social?.showFacebook !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.facebook}
+                    onClick={(e) => handleSocialClick(e, 'facebook')}
+                    className={`hover:text-blue-400 transition ${!settings?.social?.facebook && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit Facebook URL' : ''}
                   >
-                    <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z" />
-                  </svg>
-                </a>
+                    <Facebook />
+                  </a>
+                )}
+
+                {/* Instagram */}
+                {settings?.social?.showInstagram !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.instagram}
+                    onClick={(e) => handleSocialClick(e, 'instagram')}
+                    className={`hover:text-pink-400 transition ${!settings?.social?.instagram && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit Instagram URL' : ''}
+                  >
+                    <Instagram />
+                  </a>
+                )}
+
+                {/* TikTok */}
+                {settings?.social?.showTiktok !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.tiktok}
+                    onClick={(e) => handleSocialClick(e, 'tiktok')}
+                    className={`hover:text-pink-600 transition ${!settings?.social?.tiktok && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit TikTok URL' : ''}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="lucide lucide-tiktok"
+                    >
+                      <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z" />
+                    </svg>
+                  </a>
+                )}
+
+                {/* X (formerly Twitter) */}
+                {settings?.social?.showX !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.x}
+                    onClick={(e) => handleSocialClick(e, 'x')}
+                    className={`hover:text-gray-400 transition ${!settings?.social?.x && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit X URL' : ''}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-twitter"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
+                  </a>
+                )}
+
+                {/* Airbnb */}
+                {settings?.social?.showAirbnb !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.airbnb}
+                    onClick={(e) => handleSocialClick(e, 'airbnb')}
+                    className={`hover:text-[#FF5A5F] transition ${!settings?.social?.airbnb && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit Airbnb URL' : ''}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.001 22.094c-.035 0-2.813-.257-5.908-4.29-3.267-4.26-4.275-8.498-3.003-12.607 1.094-3.535 3.99-5.157 7.021-5.18h.082l.006.002h.67l.119-.001h1.166l.004-.002.102.002h.715c3.023.023 5.927 1.645 7.021 5.18 1.272 4.109.264 8.35-3.006 12.607-3.094 4.033-5.871 4.29-5.906 4.29zm-5.4-8.067c1.164 2.872 3.843 3.513 5.4 3.58 1.558-.067 4.24-7.464 5.4-10.336-1.558-.067-4.24-.708-5.4-3.58-1.157 2.871-3.839 3.512-5.4 3.58 1.56 2.871 4.243 10.268 5.4 10.336-1.157-.068-3.84-7.465-5.4-10.336zM12 9.4c1.435 0 2.6 1.165 2.6 2.6s-1.165 2.6-2.6 2.6-2.6-1.165-2.6-2.6 1.165-2.6 2.6-2.6z" />
+                    </svg>
+                  </a>
+                )}
+
+                {/* Custom URL */}
+                {settings?.social?.showCustom !== false && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.customUrl}
+                    onClick={(e) => handleSocialClick(e, 'customUrl')}
+                    className={`hover:text-blue-400 transition ${!settings?.social?.customUrl && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''} flex items-center gap-1`}
+                    title={isEditing ? 'Click to edit Custom URL' : (settings?.social?.customLabel || 'Website')}
+                  >
+                    <Link size={24} />
+                    {(!isEditing && settings?.social?.customLabel) && (
+                      <span className="text-sm border-b border-transparent hover:border-current leading-tight">
+                        {settings.social.customLabel}
+                      </span>
+                    )}
+                  </a>
+                )}
               </li>
             </ul>
           </div>
