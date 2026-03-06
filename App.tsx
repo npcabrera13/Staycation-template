@@ -55,6 +55,16 @@ function AppContent() {
         // Apply theme
         if (fetchedSettings) {
           document.title = fetchedSettings.siteName || "Staycation";
+
+          // Sync favicon to logoUrl
+          let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = fetchedSettings.logo || '/vite.svg';
+
           document.documentElement.style.setProperty('--color-primary', fetchedSettings.theme.primaryColor);
           localStorage.setItem('theme-primary', fetchedSettings.theme.primaryColor);
           if (fetchedSettings.theme.primaryHoverColor) {
@@ -181,6 +191,16 @@ function AppContent() {
 
       // Apply theme immediately
       document.title = newSettings.siteName || "Staycation";
+
+      // Sync favicon to logoUrl
+      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = newSettings.logo || '/vite.svg';
+
       document.documentElement.style.setProperty('--color-primary', newSettings.theme.primaryColor);
       localStorage.setItem('theme-primary', newSettings.theme.primaryColor);
       if (newSettings.theme.primaryHoverColor) {

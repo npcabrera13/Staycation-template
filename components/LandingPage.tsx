@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
@@ -738,6 +738,14 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                                         }
                                                                     }
                                                                 }}
+                                                                onAdd={(newUrl) => {
+                                                                    const currentImages = [...(workingSettings.about?.images || [])];
+                                                                    if (newUrl && newUrl.trim() !== "") {
+                                                                        currentImages.push(newUrl.trim());
+                                                                        handleSettingChange('about', 'images', currentImages);
+                                                                        setActiveAboutSlide(currentImages.length);
+                                                                    }
+                                                                }}
                                                                 className="w-full h-full object-cover rounded-3xl"
                                                             />
                                                         ) : (
@@ -783,6 +791,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                     </button>
                                                 </>
                                             )}
+
 
                                             {/* Dots Indicator */}
                                             {aboutImages.length > 1 && (
