@@ -2814,7 +2814,130 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                 )
             }
-        </div >
+
+            {/* Export Configuration Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in relative">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold dark:text-white flex items-center">
+                                <Download className="mr-2 text-primary" size={24} /> Export Report
+                            </h3>
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors bg-gray-100 dark:bg-gray-700 p-2 rounded-full"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Report Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={exportConfig.title}
+                                    onChange={(e) => setExportConfig({ ...exportConfig, title: e.target.value })}
+                                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm px-4 py-2 bg-gray-50 dark:bg-gray-800"
+                                    placeholder="e.g. Monthly Report - January"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                        Override Revenue (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={exportConfig.overrideRevenue || ''}
+                                        onChange={(e) => setExportConfig({ ...exportConfig, overrideRevenue: e.target.value })}
+                                        className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm px-4 py-2 bg-gray-50 dark:bg-gray-800"
+                                        placeholder={`Default: PHP ${totalRevenue.toLocaleString()}`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                        Override Bookings (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={exportConfig.overrideBookings || ''}
+                                        onChange={(e) => setExportConfig({ ...exportConfig, overrideBookings: e.target.value })}
+                                        className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm px-4 py-2 bg-gray-50 dark:bg-gray-800"
+                                        placeholder={`Default: ${bookings.length}`}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Format
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setExportConfig({ ...exportConfig, format: 'doc' })}
+                                        className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'doc'
+                                                ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        .DOC (Text)
+                                    </button>
+                                    <button
+                                        onClick={() => setExportConfig({ ...exportConfig, format: 'csv' })}
+                                        className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'csv'
+                                                ? 'bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        .CSV (Excel)
+                                    </button>
+                                    <button
+                                        onClick={() => setExportConfig({ ...exportConfig, format: 'txt' })}
+                                        className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'txt'
+                                                ? 'bg-gray-100 border-gray-500 text-gray-700 dark:bg-gray-600 dark:border-gray-400 dark:text-gray-200'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        .TXT
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                    Additional Notes
+                                </label>
+                                <textarea
+                                    value={exportConfig.notes}
+                                    onChange={(e) => setExportConfig({ ...exportConfig, notes: e.target.value })}
+                                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-primary focus:border-primary sm:text-sm px-4 py-2 bg-gray-50 dark:bg-gray-800 min-h-[80px]"
+                                    placeholder="Add any context or explanations for these numbers..."
+                                />
+                            </div>
+
+                            <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100 dark:border-gray-700">
+                                <button
+                                    onClick={() => setShowExportModal(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={processExport}
+                                    className="px-6 py-2 text-sm font-bold text-white bg-primary border border-transparent rounded-lg shadow-sm hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                                >
+                                    Download Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
