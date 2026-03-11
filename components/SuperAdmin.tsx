@@ -599,7 +599,7 @@ const SuperAdmin: React.FC = () => {
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
                                             <span className="text-purple-500/50 font-bold mr-2 text-xs">{index + 1 + 6}.</span>
                                             <span className="font-mono text-xs text-purple-300 truncate mr-2">{key}</span>
-                                            <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                            <button onClick={() => copyWithToast(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
                                                 <Copy size={14} />
                                             </button>
                                         </div>
@@ -918,11 +918,12 @@ const SuperAdmin: React.FC = () => {
 
             {/* Copy Toast Notification */}
             {copyToast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-xl shadow-2xl shadow-green-500/30 flex items-center gap-2 z-50 animate-fade-in-up" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+                <div className="fixed bottom-6 left-1/2 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-xl shadow-2xl shadow-green-500/30 flex items-center gap-2 z-50" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
                     <CheckCircle size={16} />
                     <span className="text-sm font-medium">Copied <span className="font-mono text-green-200">{copyToast}</span></span>
                 </div>
             )}
+            <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
         </div>
     );
 };
