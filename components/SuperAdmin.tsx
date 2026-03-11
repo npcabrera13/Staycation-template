@@ -539,15 +539,15 @@ const SuperAdmin: React.FC = () => {
                                     { key: 'VITE_FIREBASE_MESSAGING_SENDER_ID', desc: 'The messagingSenderId from your Firebase JS snippet' },
                                     { key: 'VITE_FIREBASE_APP_ID', desc: 'The appId from your Firebase JS snippet' }
                                 ].map(({ key, desc }, index) => (
-                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center group gap-2">
-                                        <div className="flex items-center w-full sm:w-auto overflow-hidden">
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
+                                        <div className="flex items-center w-full md:w-auto overflow-hidden">
                                             <span className="text-blue-500/50 font-bold mr-2 text-xs">{index + 1}.</span>
                                             <span className="font-mono text-xs text-blue-300 truncate mr-2">{key}</span>
                                             <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
                                                 <Copy size={14} />
                                             </button>
                                         </div>
-                                        <span className="text-xs text-gray-500 truncate">{desc}</span>
+                                        <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
                                     </div>
                                 ))}
                             </div>
@@ -578,20 +578,20 @@ const SuperAdmin: React.FC = () => {
                             </p>
                             <div className="space-y-3">
                                 {[
-                                    { key: 'VITE_OG_URL', desc: 'e.g. https://client-hotel.com' },
-                                    { key: 'VITE_OG_TITLE', desc: 'e.g. Hotel Sunshine Resort' },
-                                    { key: 'VITE_OG_DESCRIPTION', desc: 'e.g. Book your luxury stay directly with us.' },
-                                    { key: 'VITE_OG_IMAGE', desc: 'Absolute URL to a 1200x630 preview image' },
+                                    { key: 'VITE_OG_URL', desc: 'The live website link the user goes to when they click the preview (e.g. https://client-hotel.com)' },
+                                    { key: 'VITE_OG_TITLE', desc: 'The large, bold headline text shown in the preview card (e.g. Hotel Sunshine Resort)' },
+                                    { key: 'VITE_OG_DESCRIPTION', desc: 'The smaller subtitle text shown under the title in the preview card' },
+                                    { key: 'VITE_OG_IMAGE', desc: 'The large picture shown in Messenger/Facebook. Must be a direct URL ending in .jpg or .png' },
                                 ].map(({ key, desc }, index) => (
-                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center group gap-2">
-                                        <div className="flex items-center w-full sm:w-auto overflow-hidden">
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
+                                        <div className="flex items-center w-full md:w-auto overflow-hidden">
                                             <span className="text-purple-500/50 font-bold mr-2 text-xs">{index + 1 + 6}.</span>
                                             <span className="font-mono text-xs text-purple-300 truncate mr-2">{key}</span>
                                             <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
                                                 <Copy size={14} />
                                             </button>
                                         </div>
-                                        <span className="text-xs text-gray-500 truncate">{desc}</span>
+                                        <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
                                     </div>
                                 ))}
                             </div>
