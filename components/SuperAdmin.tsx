@@ -571,13 +571,14 @@ const SuperAdmin: React.FC = () => {
 
                         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
                             <h4 className="text-md font-bold text-white mb-4 flex items-center">
-                                <ExternalLink size={18} className="mr-2 text-purple-400" /> Open Graph Meta Tags (4)
+                                <ExternalLink size={18} className="mr-2 text-purple-400" /> Branding & SEO Meta Tags (5)
                             </h4>
                             <p className="text-gray-400 text-xs mb-4">
-                                Controls how the website appears when shared on Messenger, Facebook, and Twitter dynamically, preventing Git branch merge conflicts.
+                                Controls the browser tab icon, title, and social media previews, preventing Git branch merge conflicts.
                             </p>
                             <div className="space-y-3">
                                 {[
+                                    { key: 'VITE_FAVICON_URL', desc: 'The small logo icon shown on the browser tab (e.g. /favicon.ico or a direct image URL)' },
                                     { key: 'VITE_OG_URL', desc: 'The live website link the user goes to when they click the preview (e.g. https://client-hotel.com)' },
                                     { key: 'VITE_OG_TITLE', desc: 'The large, bold headline text shown in the preview card (e.g. Hotel Sunshine Resort)' },
                                     { key: 'VITE_OG_DESCRIPTION', desc: 'The smaller subtitle text shown under the title in the preview card' },
