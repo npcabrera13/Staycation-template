@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -47,13 +47,18 @@ const SuperAdmin: React.FC = () => {
 
     // Copy toast state
     const [copyToast, setCopyToast] = useState('');
+    const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Favicon preview state
     const [faviconPreview, setFaviconPreview] = useState('');
 
     const copyWithToast = (text: string) => {
         navigator.clipboard.writeText(text);
-        setCopyToast(text);
-        setTimeout(() => setCopyToast(''), 1500);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setCopyToast('');
+        requestAnimationFrame(() => {
+            setCopyToast(text);
+            toastTimer.current = setTimeout(() => setCopyToast(''), 1500);
+        });
     };
 
     // Active Tab State
@@ -271,24 +276,24 @@ const SuperAdmin: React.FC = () => {
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="flex mb-6 bg-white/5 rounded-xl p-1 border border-white/10">
+                <div className="flex flex-col sm:flex-row mb-6 bg-white/5 rounded-xl p-1 border border-white/10 gap-1">
                     <button
                         onClick={() => setActiveSection('subscription')}
-                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === 'subscription' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'subscription' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Power size={16} className="mr-2" /> Subscription
+                        <Power size={16} className="mr-1.5 sm:mr-2" /> Subscription
                     </button>
                     <button
                         onClick={() => setActiveSection('deployment')}
-                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === 'deployment' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'deployment' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Globe size={16} className="mr-2" /> Deployment Checks
+                        <Globe size={16} className="mr-1.5 sm:mr-2" /> Deploy
                     </button>
                     <button
                         onClick={() => setActiveSection('settings')}
-                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === 'settings' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'settings' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Settings size={16} className="mr-2" /> Settings
+                        <Settings size={16} className="mr-1.5 sm:mr-2" /> Settings
                     </button>
                 </div>
 
@@ -310,7 +315,7 @@ const SuperAdmin: React.FC = () => {
                 {activeSection === 'subscription' && (
                     <>
                         {/* Lock Mode Toggles */}
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 mb-6">
                             <h3 className="text-md font-bold text-white mb-4 flex items-center">
                                 <Lock size={18} className="mr-2 text-amber-400" />
                                 Lock Mode
@@ -434,7 +439,7 @@ const SuperAdmin: React.FC = () => {
                             {/* Renewal Options */}
                             {showRenewOptions && (
                                 <div className="mt-3 space-y-3">
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {RENEWAL_OPTIONS.map(({ days, label }) => (
                                             <button
                                                 key={days}
@@ -534,7 +539,7 @@ const SuperAdmin: React.FC = () => {
                             </p>
                         </div>
 
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6">
                             <h4 className="text-md font-bold text-white mb-4 flex items-center">
                                 <Database size={18} className="mr-2 text-blue-400" /> Firebase Database Keys (6)
                             </h4>
@@ -580,7 +585,7 @@ const SuperAdmin: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6">
                             <h4 className="text-md font-bold text-white mb-4 flex items-center">
                                 <ExternalLink size={18} className="mr-2 text-purple-400" /> Branding & SEO Meta Tags (5)
                             </h4>
