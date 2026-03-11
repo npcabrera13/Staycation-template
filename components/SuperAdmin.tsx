@@ -45,14 +45,8 @@ const SuperAdmin: React.FC = () => {
     const [showRenewOptions, setShowRenewOptions] = useState(false);
     const [customDays, setCustomDays] = useState('');
 
-    // Firebase SDK State
-    const [activeSection, setActiveSection] = useState<'subscription' | 'firebase' | 'settings'>('subscription');
-    const [firebaseSnippet, setFirebaseSnippet] = useState('');
-    const [firebaseForm, setFirebaseForm] = useState({
-        apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: ''
-    });
-    const [firebaseStatus, setFirebaseStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'testing' | 'connected'>('idle');
-    const [firebaseError, setFirebaseError] = useState('');
+    // Active Tab State
+    const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings'>('subscription');
 
     // Password change state
     const [storedPassword, setStoredPassword] = useState(SUPERADMIN_PASSWORD);
@@ -80,7 +74,6 @@ const SuperAdmin: React.FC = () => {
     useEffect(() => {
         if (isAuthenticated) {
             loadSubscription();
-            loadFirebaseConfig();
         }
     }, [isAuthenticated]);
 
@@ -173,79 +166,6 @@ const SuperAdmin: React.FC = () => {
 
     const daysRemaining = getDaysRemaining();
 
-    // Firebase SDK functions
-    const loadFirebaseConfig = async () => {
-        try {
-            const res = await fetch('/api/firebase-config');
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.projectId) {
-                    setFirebaseForm(data);
-                    setFirebaseStatus('connected');
-                }
-            }
-        } catch { }
-    };
-
-    const parseFirebaseSnippet = (snippet: string) => {
-        const extract = (key: string) => {
-            const regex = new RegExp(`${key}:\\s*["']([^"']*)["']`);
-            const match = snippet.match(regex);
-            return match ? match[1] : '';
-        };
-        const parsed = {
-            apiKey: extract('apiKey'), authDomain: extract('authDomain'),
-            projectId: extract('projectId'), storageBucket: extract('storageBucket'),
-            messagingSenderId: extract('messagingSenderId'), appId: extract('appId')
-        };
-        if (parsed.apiKey || parsed.projectId) {
-            setFirebaseForm(parsed);
-            setFirebaseError('');
-        } else {
-            setFirebaseError('Could not parse config. Paste the full Firebase config object.');
-        }
-    };
-
-    const saveFirebaseConfig = async () => {
-        setFirebaseStatus('saving');
-        setFirebaseError('');
-        try {
-            const res = await fetch('/api/save-firebase-config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(firebaseForm)
-            });
-            if (!res.ok) throw new Error('Failed to save');
-            setFirebaseStatus('saved');
-            setTimeout(() => {
-                if (firebaseForm.projectId) setFirebaseStatus('connected');
-                else setFirebaseStatus('idle');
-            }, 2000);
-        } catch (e: any) {
-            setFirebaseStatus('error');
-            setFirebaseError(e.message || 'Failed to save');
-        }
-    };
-
-    const testFirebaseConnection = async () => {
-        setFirebaseStatus('testing');
-        try {
-            const { initializeApp, deleteApp } = await import('firebase/app');
-            const { getFirestore, collection, getDocs } = await import('firebase/firestore');
-            const testApp = initializeApp(firebaseForm, 'test-connection');
-            const testDb = getFirestore(testApp);
-            await getDocs(collection(testDb, '__test__'));
-            await deleteApp(testApp);
-            setFirebaseStatus('connected');
-        } catch (e: any) {
-            if (e.code === 'permission-denied' || e.code === 'unavailable') {
-                setFirebaseStatus('connected');
-            } else {
-                setFirebaseStatus('error');
-                setFirebaseError(`Connection failed: ${e.message}`);
-            }
-        }
-    };
 
     // Password Gate
     if (!isAuthenticated) {
@@ -348,11 +268,10 @@ const SuperAdmin: React.FC = () => {
                         <Power size={16} className="mr-2" /> Subscription
                     </button>
                     <button
-                        onClick={() => setActiveSection('firebase')}
-                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === 'firebase' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        onClick={() => setActiveSection('deployment')}
+                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === 'deployment' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Database size={16} className="mr-2" /> Firebase
-                        {firebaseStatus === 'connected' && <span className="ml-2 w-2 h-2 bg-green-400 rounded-full"></span>}
+                        <Globe size={16} className="mr-2" /> Deployment Checks
                     </button>
                     <button
                         onClick={() => setActiveSection('settings')}
@@ -592,110 +511,94 @@ const SuperAdmin: React.FC = () => {
                     </>
                 )}
 
-                {/* ===== FIREBASE SDK TAB ===== */}
-                {activeSection === 'firebase' && (
-                    <>
-                        {firebaseStatus === 'connected' && (
-                            <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 mb-6 flex items-center">
-                                <CheckCircle className="text-green-400 mr-3 flex-shrink-0" size={20} />
-                                <div>
-                                    <p className="font-bold text-green-300 text-sm">Connected to Firebase</p>
-                                    <p className="text-green-400/70 text-xs font-mono">{firebaseForm.projectId}</p>
-                                </div>
-                            </div>
-                        )}
-                        {firebaseStatus === 'saved' && (
-                            <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 mb-6 flex items-center">
-                                <CheckCircle className="text-green-400 mr-3" size={20} />
-                                <p className="text-green-300 text-sm font-medium">Firebase config saved! Refresh the client site to apply.</p>
-                            </div>
-                        )}
-                        {firebaseError && (
-                            <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 mb-6 flex items-center">
-                                <AlertCircle className="text-red-400 mr-3 flex-shrink-0" size={20} />
-                                <p className="text-red-300 text-sm">{firebaseError}</p>
-                            </div>
-                        )}
-
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
-                            <h3 className="text-md font-bold text-white mb-2 flex items-center">
-                                <Copy size={18} className="mr-2 text-amber-400" /> Paste Firebase Config
+                {/* ===== DEPLOYMENT CHEATSHEET TAB ===== */}
+                {activeSection === 'deployment' && (
+                    <div className="space-y-6">
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 mb-2">
+                            <h3 className="font-bold text-amber-400 text-lg mb-2 flex items-center">
+                                <Globe className="mr-2" size={20} /> Launch Checklist
                             </h3>
-                            <p className="text-gray-400 text-xs mb-3">
-                                From <span className="font-mono text-amber-400/80">Firebase Console → Project Settings → Your Apps → SDK snippet</span>
+                            <p className="text-amber-200/80 text-sm">
+                                To deploy a new client's code branch to Vercel or Netlify, you must configure the following exact Environment Variables in their dashboard before hitting Deploy.
                             </p>
-                            <textarea
-                                className="w-full h-36 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                placeholder={`Paste Firebase config here...\n\nconst firebaseConfig = {\n  apiKey: "AIzaSy...",\n  projectId: "your-app",\n  ...\n};`}
-                                value={firebaseSnippet}
-                                onChange={(e) => {
-                                    setFirebaseSnippet(e.target.value);
-                                    if (e.target.value.includes('apiKey') || e.target.value.includes('projectId')) {
-                                        parseFirebaseSnippet(e.target.value);
-                                    }
-                                }}
-                            />
-                            <p className="text-xs text-gray-500 mt-2">Config is auto-parsed when you paste</p>
                         </div>
 
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
-                            <h3 className="text-md font-bold text-white mb-4 flex items-center">
-                                <Database size={18} className="mr-2 text-amber-400" /> Configuration Values
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                            <h4 className="text-md font-bold text-white mb-4 flex items-center">
+                                <Database size={18} className="mr-2 text-blue-400" /> Firebase Database Keys (6)
+                            </h4>
+                            <p className="text-gray-400 text-xs mb-4">
+                                Found in <span className="text-white">console.firebase.google.com &rarr; Project Settings &rarr; Your Apps</span>. Never put these in the codebase!
+                            </p>
+                            <div className="grid grid-cols-1 gap-3">
                                 {[
-                                    { key: 'apiKey', label: 'API Key' }, { key: 'authDomain', label: 'Auth Domain' },
-                                    { key: 'projectId', label: 'Project ID' }, { key: 'storageBucket', label: 'Storage Bucket' },
-                                    { key: 'messagingSenderId', label: 'Messaging Sender ID' }, { key: 'appId', label: 'App ID' }
-                                ].map(({ key, label }) => (
-                                    <div key={key}>
-                                        <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white font-mono text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                            placeholder={label}
-                                            value={(firebaseForm as any)[key]}
-                                            onChange={(e) => setFirebaseForm({ ...firebaseForm, [key]: e.target.value })}
-                                        />
+                                    { key: 'VITE_FIREBASE_API_KEY', desc: 'The apiKey from your Firebase JS snippet' },
+                                    { key: 'VITE_FIREBASE_AUTH_DOMAIN', desc: 'The authDomain from your Firebase JS snippet' },
+                                    { key: 'VITE_FIREBASE_PROJECT_ID', desc: 'The projectId from your Firebase JS snippet' },
+                                    { key: 'VITE_FIREBASE_STORAGE_BUCKET', desc: 'The storageBucket from your Firebase JS snippet' },
+                                    { key: 'VITE_FIREBASE_MESSAGING_SENDER_ID', desc: 'The messagingSenderId from your Firebase JS snippet' },
+                                    { key: 'VITE_FIREBASE_APP_ID', desc: 'The appId from your Firebase JS snippet' }
+                                ].map(({ key, desc }, index) => (
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center group gap-2">
+                                        <div className="flex items-center w-full sm:w-auto overflow-hidden">
+                                            <span className="text-blue-500/50 font-bold mr-2 text-xs">{index + 1}.</span>
+                                            <span className="font-mono text-xs text-blue-300 truncate mr-2">{key}</span>
+                                            <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                                <Copy size={14} />
+                                            </button>
+                                        </div>
+                                        <span className="text-xs text-gray-500 truncate">{desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-5 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                <p className="text-blue-300 font-bold text-xs flex items-center mb-3">
+                                    <ExternalLink size={14} className="mr-1.5" /> Firebase SDK Mapping Example:
+                                </p>
+                                <div className="font-mono text-[10px] sm:text-xs text-blue-200/80 space-y-1.5 p-4 bg-black/40 rounded-lg overflow-x-auto shadow-inner">
+                                    <p><span className="text-pink-400">const</span> <span className="text-purple-300">firebaseConfig</span> <span className="text-gray-400">= {"{"}</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">apiKey:</span> <span className="text-green-400">"AIzaSy..."</span> <span className="text-gray-500 ml-3">&rarr; VITE_FIREBASE_API_KEY</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">authDomain:</span> <span className="text-green-400">"app.firebaseapp.com"</span> <span className="text-gray-500 ml-3">&rarr; VITE_FIREBASE_AUTH_DOMAIN</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">projectId:</span> <span className="text-green-400">"app-123"</span> <span className="text-gray-500 ml-3">&rarr; VITE_FIREBASE_PROJECT_ID</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">storageBucket:</span> <span className="text-green-400">"app.appspot.com"</span> <span className="text-gray-500 ml-3">&rarr; ..._STORAGE_BUCKET</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">messagingSenderId:</span> <span className="text-green-400">"849..."</span> <span className="text-gray-500 ml-3">&rarr; ..._MESSAGING_SENDER_ID</span></p>
+                                    <p className="pl-4"><span className="text-blue-300">appId:</span> <span className="text-green-400">"1:849:web:..."</span> <span className="text-gray-500 ml-3">&rarr; VITE_FIREBASE_APP_ID</span></p>
+                                    <p><span className="text-gray-400">{"}"};</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                            <h4 className="text-md font-bold text-white mb-4 flex items-center">
+                                <ExternalLink size={18} className="mr-2 text-purple-400" /> Open Graph Meta Tags (4)
+                            </h4>
+                            <p className="text-gray-400 text-xs mb-4">
+                                Controls how the website appears when shared on Messenger, Facebook, and Twitter dynamically, preventing Git branch merge conflicts.
+                            </p>
+                            <div className="space-y-3">
+                                {[
+                                    { key: 'VITE_OG_URL', desc: 'e.g. https://client-hotel.com' },
+                                    { key: 'VITE_OG_TITLE', desc: 'e.g. Hotel Sunshine Resort' },
+                                    { key: 'VITE_OG_DESCRIPTION', desc: 'e.g. Book your luxury stay directly with us.' },
+                                    { key: 'VITE_OG_IMAGE', desc: 'Absolute URL to a 1200x630 preview image' },
+                                ].map(({ key, desc }, index) => (
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center group gap-2">
+                                        <div className="flex items-center w-full sm:w-auto overflow-hidden">
+                                            <span className="text-purple-500/50 font-bold mr-2 text-xs">{index + 1 + 6}.</span>
+                                            <span className="font-mono text-xs text-purple-300 truncate mr-2">{key}</span>
+                                            <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                                <Copy size={14} />
+                                            </button>
+                                        </div>
+                                        <span className="text-xs text-gray-500 truncate">{desc}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-
-                        <div className="flex gap-3 mb-6">
-                            <button
-                                onClick={saveFirebaseConfig}
-                                disabled={!firebaseForm.projectId || firebaseStatus === 'saving'}
-                                className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                            >
-                                {firebaseStatus === 'saving' ? <><Loader size={18} className="mr-2 animate-spin" /> Saving...</> : <><Save size={18} className="mr-2" /> Save Config</>}
-                            </button>
-                            <button
-                                onClick={testFirebaseConnection}
-                                disabled={!firebaseForm.projectId || firebaseStatus === 'testing'}
-                                className="flex-1 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                            >
-                                {firebaseStatus === 'testing' ? <><Loader size={18} className="mr-2 animate-spin" /> Testing...</> : <><RefreshCw size={18} className="mr-2" /> Test Connection</>}
-                            </button>
-                        </div>
-
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
-                            <h4 className="font-bold text-amber-300 text-sm mb-2 flex items-center">
-                                <ExternalLink size={14} className="mr-2" /> How to get Firebase config
-                            </h4>
-                            <ol className="text-amber-200/70 text-xs space-y-1.5 list-decimal list-inside">
-                                <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="underline font-mono text-amber-300">console.firebase.google.com</a></li>
-                                <li>Create or select your project</li>
-                                <li>Click ⚙️ → <strong>Project settings</strong></li>
-                                <li>Scroll to <strong>"Your apps"</strong> → Add web app if needed</li>
-                                <li>Copy the <strong>firebaseConfig</strong> object and paste above</li>
-                            </ol>
-                            <p className="text-amber-300/60 text-xs mt-3">
-                                <strong>Don't forget:</strong> Enable <strong>Firestore Database</strong> and <strong>Storage</strong> in the Firebase project!
-                            </p>
-                        </div>
-                    </>
+                    </div>
                 )}
+
 
                 {/* ===== SETTINGS TAB ===== */}
                 {activeSection === 'settings' && (
