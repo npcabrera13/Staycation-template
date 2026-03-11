@@ -45,6 +45,17 @@ const SuperAdmin: React.FC = () => {
     const [showRenewOptions, setShowRenewOptions] = useState(false);
     const [customDays, setCustomDays] = useState('');
 
+    // Copy toast state
+    const [copyToast, setCopyToast] = useState('');
+    // Favicon preview state
+    const [faviconPreview, setFaviconPreview] = useState('');
+
+    const copyWithToast = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopyToast(text);
+        setTimeout(() => setCopyToast(''), 1500);
+    };
+
     // Active Tab State
     const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings'>('subscription');
 
@@ -543,7 +554,7 @@ const SuperAdmin: React.FC = () => {
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
                                             <span className="text-blue-500/50 font-bold mr-2 text-xs">{index + 1}.</span>
                                             <span className="font-mono text-xs text-blue-300 truncate mr-2">{key}</span>
-                                            <button onClick={() => navigator.clipboard.writeText(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                            <button onClick={() => copyWithToast(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
                                                 <Copy size={14} />
                                             </button>
                                         </div>
@@ -595,6 +606,69 @@ const SuperAdmin: React.FC = () => {
                                         <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
                                     </div>
                                 ))}
+                            </div>
+
+                            {/* Favicon Preview Widget */}
+                            <div className="mt-5 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                                <p className="text-purple-300 font-bold text-xs flex items-center mb-3">
+                                    <Monitor size={14} className="mr-1.5" /> Favicon Preview — Test Before You Deploy
+                                </p>
+                                <p className="text-gray-500 text-[10px] mb-3">
+                                    Paste your favicon image URL below to see how it will look on the browser tab. The icon must be square (1:1 ratio) for best results.
+                                </p>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <input
+                                        type="text"
+                                        value={faviconPreview}
+                                        onChange={(e) => setFaviconPreview(e.target.value)}
+                                        placeholder="Paste favicon URL here…"
+                                        className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    {faviconPreview && (
+                                        <button onClick={() => setFaviconPreview('')} className="text-gray-400 hover:text-white text-xs">
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+                                {/* Mock Browser Tab */}
+                                <div className="bg-gray-800 rounded-t-xl p-2 border border-white/10">
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/70"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500/70"></div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className="bg-gray-700 rounded-t-lg px-3 py-1.5 flex items-center gap-2 border border-white/10 border-b-0 max-w-[200px]">
+                                            {faviconPreview ? (
+                                                <img
+                                                    src={faviconPreview}
+                                                    alt="favicon"
+                                                    className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <div className="w-4 h-4 rounded-sm bg-gray-600 flex-shrink-0"></div>
+                                            )}
+                                            <span className="text-gray-300 text-[11px] truncate">
+                                                {faviconPreview ? 'Client Hotel' : 'No favicon set'}
+                                            </span>
+                                        </div>
+                                        <div className="bg-gray-800 rounded-t-lg px-2 py-1.5 ml-1 border border-white/5 border-b-0">
+                                            <span className="text-gray-500 text-[10px]">+</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-900 rounded-b-lg p-3 border border-white/10 border-t-0">
+                                    <div className="flex items-center bg-gray-800 rounded-full px-3 py-1.5">
+                                        <Lock size={10} className="text-gray-500 mr-2" />
+                                        <span className="text-gray-500 text-[10px]">https://client-hotel.com</span>
+                                    </div>
+                                </div>
+                                {faviconPreview && (
+                                    <p className="text-green-400/70 text-[10px] mt-2 flex items-center">
+                                        <CheckCircle size={10} className="mr-1" /> Looking good? Copy the URL above and paste it as your VITE_FAVICON_URL on Vercel.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -841,6 +915,14 @@ const SuperAdmin: React.FC = () => {
                     </>
                 )}
             </div>
+
+            {/* Copy Toast Notification */}
+            {copyToast && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-xl shadow-2xl shadow-green-500/30 flex items-center gap-2 z-50 animate-fade-in-up" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+                    <CheckCircle size={16} />
+                    <span className="text-sm font-medium">Copied <span className="font-mono text-green-200">{copyToast}</span></span>
+                </div>
+            )}
         </div>
     );
 };
