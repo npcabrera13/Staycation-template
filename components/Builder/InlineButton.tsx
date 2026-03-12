@@ -243,7 +243,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                         </div>
 
                         {/* Button Color Palette with Names */}
-                        <div className="flex items-center gap-2 mt-3 -mb-1">
+                        <div className="flex items-center gap-2 mt-3">
                             <select 
                                 value={buttonColorCategory} 
                                 onChange={(e) => setButtonColorCategory(e.target.value)}
@@ -252,7 +252,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                                 {Object.keys(COLOR_CATEGORIES).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                         </div>
-                        <div className="grid grid-cols-7 gap-1.5 mt-2 max-h-32 overflow-y-auto px-1 pb-1 custom-scrollbar">
+                        <div className="grid grid-cols-7 gap-2 mt-2 pt-7 px-2 pb-2">
                             {COLOR_CATEGORIES[buttonColorCategory].map(preset => (
                                 <button
                                     key={preset.color}
@@ -260,7 +260,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                                         e.preventDefault();
                                         onColorChange(preset.color);
                                     }}
-                                    className={`w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${color === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                    className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-125 transition-transform shadow-sm relative group mx-auto ${color === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                                     style={{ backgroundColor: preset.color }}
                                 >
                                     {/* Tooltip */}
@@ -338,7 +338,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                                     {Object.keys(COLOR_CATEGORIES).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                 </select>
                             </div>
-                            <div className="grid grid-cols-7 gap-1.5 mt-2 max-h-32 overflow-y-auto px-1 pb-1 custom-scrollbar">
+                            <div className="grid grid-cols-7 gap-2 mt-2 pt-7 px-2 pb-2">
                                 {COLOR_CATEGORIES[fontColorCategory].map(preset => (
                                     <button
                                         key={preset.color}
@@ -346,7 +346,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                                             e.preventDefault();
                                             onTextColorChange?.(preset.color);
                                         }}
-                                        className={`w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${textColor === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                        className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-125 transition-transform shadow-sm relative group mx-auto ${textColor === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                                         style={{ backgroundColor: preset.color }}
                                     >
                                         {/* Tooltip */}

@@ -126,6 +126,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
             if (workingSettings.theme.primaryColor) {
                 document.documentElement.style.setProperty('--color-primary', workingSettings.theme.primaryColor);
             }
+            if (workingSettings.theme.primaryHoverColor) {
+                document.documentElement.style.setProperty('--color-primary-hover', workingSettings.theme.primaryHoverColor);
+            }
             if (workingSettings.theme.secondaryColor) {
                 document.documentElement.style.setProperty('--color-secondary', workingSettings.theme.secondaryColor);
             }
