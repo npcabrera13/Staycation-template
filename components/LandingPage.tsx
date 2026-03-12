@@ -129,9 +129,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
             if (workingSettings.theme.secondaryColor) {
                 document.documentElement.style.setProperty('--color-secondary', workingSettings.theme.secondaryColor);
             }
-            if (workingSettings.theme.accentColor) {
-                document.documentElement.style.setProperty('--color-accent', workingSettings.theme.accentColor);
-            }
+            // Auto-mirror accent to primary (accent picker removed from builder)
+            document.documentElement.style.setProperty('--color-accent', workingSettings.theme.accentColor || workingSettings.theme.primaryColor);
             if (workingSettings.theme.fontFamily) {
                 document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
                 document.body.classList.add(`font-${workingSettings.theme.fontFamily}`);

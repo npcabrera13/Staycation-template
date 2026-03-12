@@ -1811,7 +1811,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         </div>
 
                                         {/* Security — Admin Passcode */}
-                                        <div className="border-t dark:border-gray-700 pt-6">
+                                        <div id="admin-passcode-section" className="border-t dark:border-gray-700 pt-6">
                                             <h3 className="flex items-center text-lg font-bold text-gray-800 dark:text-white mb-4">
                                                 <Shield className="mr-2 text-primary" size={20} />
                                                 Admin Passcode

@@ -132,7 +132,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                     <div className="h-px w-full bg-gray-100" />
 
                     <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 mt-2">
                             <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
                                 <Palette size={14} /> Button Color (Click box below)
                             </span>
@@ -148,18 +148,36 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-6 gap-1.5 mt-2">
-                            {presetColors.map(preset => (
+                        {/* Button Color Palette with Names */}
+                        <div className="grid grid-cols-5 gap-2 mt-3">
+                            {[
+                                { color: '#E9C46A', name: 'Soft Gold' },
+                                { color: '#2A9D8F', name: 'Teal Green' },
+                                { color: '#E76F51', name: 'Terracotta' },
+                                { color: '#2B2D42', name: 'Navy Black' },
+                                { color: '#8ECAE6', name: 'Sky Blue' },
+                                { color: '#FFB703', name: 'Vibrant Yellow' },
+                                { color: '#FB8500', name: 'Bright Orange' },
+                                { color: '#023047', name: 'Deep Sea Blue' },
+                                { color: '#8338EC', name: 'Neon Purple' },
+                                { color: '#FF006E', name: 'Hot Pink' },
+                                { color: '#000000', name: 'Pure Black' },
+                                { color: '#ffffff', name: 'Pure White' }
+                            ].map(preset => (
                                 <button
-                                    key={preset}
+                                    key={preset.color}
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        onColorChange(preset);
+                                        onColorChange(preset.color);
                                     }}
-                                    className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm ${color === preset ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-                                    style={{ backgroundColor: preset }}
-                                    title={preset}
-                                />
+                                    className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${color === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                    style={{ backgroundColor: preset.color }}
+                                >
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[10000]">
+                                        {preset.name}
+                                    </div>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -172,50 +190,83 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                                 <Type size={14} /> Font Settings
                             </span>
                         </div>
-                        <div className="flex gap-2 items-center">
-                            <select
-                                value={fontFamily}
-                                onChange={(e) => onFontFamilyChange?.(e.target.value)}
-                                className="bg-white border border-gray-200 rounded px-2 py-1.5 text-xs outline-none focus:border-primary flex-1 font-medium cursor-pointer"
-                            >
-                                <optgroup label="Sans-Serif">
-                                    <option value="sans">Arial (Default)</option>
-                                    <option value="helvetica">Helvetica</option>
-                                    <option value="verdana">Verdana</option>
-                                    <option value="trebuchet">Trebuchet MS</option>
-                                    <option value="tahoma">Tahoma</option>
-                                    <option value="segoe">Segoe UI</option>
-                                    <option value="century">Century Gothic</option>
-                                </optgroup>
-                                <optgroup label="Serif (Elegant)">
-                                    <option value="serif">Georgia</option>
-                                    <option value="times">Times New Roman</option>
-                                    <option value="garamond">Garamond</option>
-                                    <option value="palatino">Palatino</option>
-                                    <option value="baskerville">Baskerville</option>
-                                    <option value="cambria">Cambria</option>
-                                </optgroup>
-                                <optgroup label="Monospace">
-                                    <option value="mono">Courier New</option>
-                                    <option value="consolas">Consolas</option>
-                                </optgroup>
-                                <optgroup label="Decorative">
-                                    <option value="impact">Impact</option>
-                                    <option value="comic">Comic Sans</option>
-                                    <option value="brush">Brush Script</option>
-                                    <option value="copperplate">Copperplate</option>
-                                </optgroup>
-                            </select>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex gap-2 items-center">
+                                <select
+                                    value={fontFamily}
+                                    onChange={(e) => onFontFamilyChange?.(e.target.value)}
+                                    className="bg-white border border-gray-200 rounded px-2 py-1.5 text-xs outline-none focus:border-primary flex-1 font-medium cursor-pointer text-gray-800"
+                                >
+                                    <optgroup label="Sans-Serif">
+                                        <option value="sans">Arial (Default)</option>
+                                        <option value="helvetica">Helvetica</option>
+                                        <option value="verdana">Verdana</option>
+                                        <option value="trebuchet">Trebuchet MS</option>
+                                        <option value="tahoma">Tahoma</option>
+                                        <option value="segoe">Segoe UI</option>
+                                        <option value="century">Century Gothic</option>
+                                    </optgroup>
+                                    <optgroup label="Serif (Elegant)">
+                                        <option value="serif">Georgia</option>
+                                        <option value="times">Times New Roman</option>
+                                        <option value="garamond">Garamond</option>
+                                        <option value="palatino">Palatino</option>
+                                        <option value="baskerville">Baskerville</option>
+                                        <option value="cambria">Cambria</option>
+                                    </optgroup>
+                                    <optgroup label="Monospace">
+                                        <option value="mono">Courier New</option>
+                                        <option value="consolas">Consolas</option>
+                                    </optgroup>
+                                    <optgroup label="Decorative">
+                                        <option value="impact">Impact</option>
+                                        <option value="comic">Comic Sans</option>
+                                        <option value="brush">Brush Script</option>
+                                        <option value="copperplate">Copperplate</option>
+                                    </optgroup>
+                                </select>
 
-                            <div className="flex items-center gap-2 border border-gray-200 rounded px-2 py-1 bg-white cursor-pointer hover:border-primary transition-colors">
-                                <span className="text-xs font-medium text-gray-500">Color</span>
-                                <input
-                                    type="color"
-                                    value={textColor || '#ffffff'}
-                                    onChange={(e) => onTextColorChange?.(e.target.value)}
-                                    className="w-5 h-5 rounded cursor-pointer p-0 border-0 bg-transparent"
-                                    title="Custom Text Color"
-                                />
+                                <div className="flex items-center gap-2 border border-gray-200 rounded px-2 py-1 bg-white cursor-pointer hover:border-primary transition-colors">
+                                    <span className="text-xs font-medium text-gray-500">Color</span>
+                                    <input
+                                        type="color"
+                                        value={textColor || '#ffffff'}
+                                        onChange={(e) => onTextColorChange?.(e.target.value)}
+                                        className="w-5 h-5 rounded cursor-pointer p-0 border-0 bg-transparent"
+                                        title="Custom Text Color"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Font Color Palette with Names */}
+                            <div className="grid grid-cols-5 gap-2 mt-1">
+                                {[
+                                    { color: '#ffffff', name: 'Pure White' },
+                                    { color: '#000000', name: 'Pure Black' },
+                                    { color: '#E9C46A', name: 'Soft Gold' },
+                                    { color: '#2A9D8F', name: 'Teal Green' },
+                                    { color: '#E76F51', name: 'Terracotta' },
+                                    { color: '#2B2D42', name: 'Navy Black' },
+                                    { color: '#8ECAE6', name: 'Sky Blue' },
+                                    { color: '#FFB703', name: 'Vibrant Yellow' },
+                                    { color: '#023047', name: 'Deep Sea Blue' },
+                                    { color: '#FF006E', name: 'Hot Pink' },
+                                ].map(preset => (
+                                    <button
+                                        key={preset.color}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onTextColorChange?.(preset.color);
+                                        }}
+                                        className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${textColor === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                        style={{ backgroundColor: preset.color }}
+                                    >
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[10000]">
+                                            {preset.name}
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>

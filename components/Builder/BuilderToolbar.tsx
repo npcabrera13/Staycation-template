@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut } from 'lucide-react';
+import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints } from 'lucide-react';
 import { Settings } from '../../types';
 import InfoTooltip from '../UI/InfoTooltip';
 
@@ -153,18 +153,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             <span className="text-xs font-mono text-gray-600">{settings?.theme.secondaryColor}</span>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1">Accent Color (Buttons)</label>
-                        <div className="flex gap-2 items-center">
-                            <input
-                                type="color"
-                                value={settings?.theme.accentColor || '#E9C46A'}
-                                onChange={(e) => onUpdateSettings?.('theme', 'accentColor', e.target.value)}
-                                className="w-8 h-8 rounded border-0 cursor-pointer"
-                            />
-                            <span className="text-xs font-mono text-gray-600">{settings?.theme.accentColor}</span>
-                        </div>
-                    </div>
+
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Global Font Family</label>
                         <select
@@ -368,6 +357,30 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         >
                             + Add Another Image
                         </button>
+                    </div>
+                </AccordionItem>
+
+                {/* 5. Footer Section */}
+                <AccordionItem
+                    title="Footer"
+                    icon={Footprints}
+                    isOpen={openSection === 'footer'}
+                    onClick={() => setOpenSection(openSection === 'footer' ? null : 'footer')}
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Header Color ("Quick Links", "Contact Us")</label>
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="color"
+                                    value={settings?.footer?.headerColor || settings?.theme.primaryColor || '#E9C46A'}
+                                    onChange={(e) => onUpdateSettings?.('footer', 'headerColor', e.target.value)}
+                                    className="w-8 h-8 rounded border-0 cursor-pointer"
+                                />
+                                <span className="text-xs font-mono text-gray-600">{settings?.footer?.headerColor || settings?.theme.primaryColor || '#E9C46A'}</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Color of section titles in the footer</p>
+                        </div>
                     </div>
                 </AccordionItem>
             </div>

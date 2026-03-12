@@ -105,6 +105,9 @@ export interface Settings {
     };
     footer?: {
         copyrightText?: string;
+        headerColor?: string;
+        quickLinksText?: string;
+        contactUsText?: string;
     };
     theme: {
         primaryColor: string;

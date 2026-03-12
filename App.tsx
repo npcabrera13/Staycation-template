@@ -73,10 +73,9 @@ function AppContent() {
           }
           document.documentElement.style.setProperty('--color-secondary', fetchedSettings.theme.secondaryColor);
           localStorage.setItem('theme-secondary', fetchedSettings.theme.secondaryColor);
-          if (fetchedSettings.theme.accentColor) {
-            document.documentElement.style.setProperty('--color-accent', fetchedSettings.theme.accentColor);
-            localStorage.setItem('theme-accent', fetchedSettings.theme.accentColor);
-          }
+          // Auto-mirror accent to primary color (accent picker removed from builder)
+          document.documentElement.style.setProperty('--color-accent', fetchedSettings.theme.accentColor || fetchedSettings.theme.primaryColor);
+          localStorage.setItem('theme-accent', fetchedSettings.theme.accentColor || fetchedSettings.theme.primaryColor);
 
           // Apply font family
           document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
@@ -209,10 +208,9 @@ function AppContent() {
       }
       document.documentElement.style.setProperty('--color-secondary', newSettings.theme.secondaryColor);
       localStorage.setItem('theme-secondary', newSettings.theme.secondaryColor);
-      if (newSettings.theme.accentColor) {
-        document.documentElement.style.setProperty('--color-accent', newSettings.theme.accentColor);
-        localStorage.setItem('theme-accent', newSettings.theme.accentColor);
-      }
+      // Auto-mirror accent to primary color (accent picker removed from builder)
+      document.documentElement.style.setProperty('--color-accent', newSettings.theme.accentColor || newSettings.theme.primaryColor);
+      localStorage.setItem('theme-accent', newSettings.theme.accentColor || newSettings.theme.primaryColor);
     } catch (e) {
       console.error(e);
       showToast("Failed to update settings", "error");

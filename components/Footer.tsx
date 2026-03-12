@@ -75,7 +75,13 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
 
           {/* Links */}
           <div>
-            <h4 className="font-bold text-accent mb-4">Quick Links</h4>
+            <h4 className="font-bold mb-4" style={{ color: settings?.footer?.headerColor || 'var(--color-primary)' }}>
+              <InlineText
+                value={settings?.footer?.quickLinksText || "Quick Links"}
+                isEditing={!!isEditing}
+                onChange={(val) => onSettingChange && onSettingChange('footer', 'quickLinksText', val)}
+              />
+            </h4>
             <ul className="space-y-2 text-sm text-gray-300">
               {/* Static links usually don't need editing, just the text maybe? Skipping for now as user asked for 'footer text' mostly */}
               <li><span className="hover:text-white transition-colors cursor-pointer">Home</span></li>
@@ -87,7 +93,13 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
 
           {/* Contact */}
           <div>
-            <h4 className="font-bold text-accent mb-4">Contact Us</h4>
+            <h4 className="font-bold mb-4" style={{ color: settings?.footer?.headerColor || 'var(--color-primary)' }}>
+              <InlineText
+                value={settings?.footer?.contactUsText || "Contact Us"}
+                isEditing={!!isEditing}
+                onChange={(val) => onSettingChange && onSettingChange('footer', 'contactUsText', val)}
+              />
+            </h4>
             <ul className="space-y-3 text-sm text-gray-300">
               <li className="flex items-start">
                 <MapPin size={16} className="mr-2 mt-1 flex-shrink-0" />
