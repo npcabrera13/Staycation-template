@@ -1,6 +1,98 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Palette, Type } from 'lucide-react';
 
+const COLOR_CATEGORIES: Record<string, { color: string, name: string }[]> = {
+    "Theme Basics": [
+        { color: '#ffffff', name: 'White' },
+        { color: '#f8f9fa', name: 'Off White' },
+        { color: '#e9ecef', name: 'Light Gray' },
+        { color: '#ced4da', name: 'Gray' },
+        { color: '#6c757d', name: 'Dark Gray' },
+        { color: '#343a40', name: 'Charcoal' },
+        { color: '#212529', name: 'Near Black' },
+        { color: '#000000', name: 'Black' },
+    ],
+    "Reds & Pinks": [
+        { color: '#fff0f3', name: 'Provincinal Pink' },
+        { color: '#ffb3c1', name: 'Light Pink' },
+        { color: '#ff8fa3', name: 'Pink' },
+        { color: '#ff4d6d', name: 'Bright Pink' },
+        { color: '#c9184a', name: 'Ruby' },
+        { color: '#a4133c', name: 'Dark Ruby' },
+        { color: '#800f2f', name: 'Bordeaux' },
+        { color: '#590d22', name: 'Dark Maroon' },
+        { color: '#ff99c8', name: 'Cotton Candy' },
+        { color: '#f15bb5', name: 'Magenta' },
+        { color: '#e5383b', name: 'Fire Engine Red' },
+        { color: '#ba1826', name: 'Crimson' },
+        { color: '#a11d33', name: 'Carmine' },
+        { color: '#660708', name: 'Blood Red' },
+    ],
+    "Oranges & Yellows": [
+        { color: '#ffba08', name: 'Yellow' },
+        { color: '#faa307', name: 'Orange Yellow' },
+        { color: '#f48c06', name: 'Tangerine' },
+        { color: '#e85d04', name: 'Pumpkin' },
+        { color: '#dc2f02', name: 'Burnt Orange' },
+        { color: '#d00000', name: 'Candy Apple' },
+        { color: '#9d0208', name: 'Mahogany' },
+        { color: '#ffb703', name: 'Vibrant Yellow' },
+        { color: '#fb8500', name: 'Bright Orange' },
+        { color: '#e9c46a', name: 'Soft Gold' },
+        { color: '#f4a261', name: 'Sandy Brown' },
+        { color: '#e76f51', name: 'Terracotta' },
+        { color: '#d4a373', name: 'Camel' },
+        { color: '#faedcd', name: 'Cream' },
+    ],
+    "Greens": [
+        { color: '#d8f3dc', name: 'Mint' },
+        { color: '#b7e4c7', name: 'Light Green' },
+        { color: '#95d5b2', name: 'Seafoam' },
+        { color: '#74c69d', name: 'Emerald' },
+        { color: '#52b788', name: 'Green' },
+        { color: '#40916c', name: 'Forest Green' },
+        { color: '#2d6a4f', name: 'Dark Green' },
+        { color: '#1b4332', name: 'Hunter Green' },
+        { color: '#081c15', name: 'Very Dark Green' },
+        { color: '#2a9d8f', name: 'Teal Green' },
+        { color: '#8cb369', name: 'Sage' },
+        { color: '#a7c957', name: 'Olivine' },
+        { color: '#6a994e', name: 'Moss Green' },
+        { color: '#386641', name: 'Fern Green' },
+    ],
+    "Blues & Cyans": [
+        { color: '#caf0f8', name: 'Light Cyan' },
+        { color: '#90e0ef', name: 'Sky Blue' },
+        { color: '#00b4d8', name: 'Cerulean' },
+        { color: '#0096c7', name: 'Ocean Blue' },
+        { color: '#0077b6', name: 'Blue' },
+        { color: '#023e8a', name: 'Cobalt' },
+        { color: '#03045e', name: 'Navy' },
+        { color: '#8ecae6', name: 'Light Blue' },
+        { color: '#219ebc', name: 'Blue Green' },
+        { color: '#023047', name: 'Deep Sea Blue' },
+        { color: '#a2d2ff', name: 'Baby Blue' },
+        { color: '#bde0fe', name: 'Pastel Blue' },
+        { color: '#cdb4db', name: 'Thistle' },
+    ],
+    "Purples": [
+        { color: '#e0aaff', name: 'Mauve' },
+        { color: '#c77dff', name: 'Light Purple' },
+        { color: '#9d4edd', name: 'Purple' },
+        { color: '#7b2cbf', name: 'Deep Purple' },
+        { color: '#5a189a', name: 'Dark Purple' },
+        { color: '#3c096c', name: 'Indigo' },
+        { color: '#240046', name: 'Very Dark Purple' },
+        { color: '#10002b', name: 'Midnight Purple' },
+        { color: '#8338ec', name: 'Neon Purple' },
+        { color: '#b5179e', name: 'Fuchsia' },
+        { color: '#7209b7', name: 'Violet' },
+        { color: '#4361ee', name: 'Majorelle Blue' },
+        { color: '#4cc9f0', name: 'Vivid Sky' },
+        { color: '#3a0ca3', name: 'Zaffre' },
+    ]
+};
+
 interface InlineButtonProps {
     text: string;
     onTextChange: (val: string) => void;
@@ -36,6 +128,8 @@ const InlineButton: React.FC<InlineButtonProps> = ({
     const [showColorPicker, setShowColorPicker] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [buttonColorCategory, setButtonColorCategory] = useState("Theme Basics");
+    const [fontColorCategory, setFontColorCategory] = useState("Theme Basics");
 
     // Map fontFamily key to actual CSS font-family string
     const fontFamilyMap: Record<string, string> = {
@@ -149,28 +243,24 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                         </div>
 
                         {/* Button Color Palette with Names */}
-                        <div className="grid grid-cols-5 gap-2 mt-3">
-                            {[
-                                { color: '#E9C46A', name: 'Soft Gold' },
-                                { color: '#2A9D8F', name: 'Teal Green' },
-                                { color: '#E76F51', name: 'Terracotta' },
-                                { color: '#2B2D42', name: 'Navy Black' },
-                                { color: '#8ECAE6', name: 'Sky Blue' },
-                                { color: '#FFB703', name: 'Vibrant Yellow' },
-                                { color: '#FB8500', name: 'Bright Orange' },
-                                { color: '#023047', name: 'Deep Sea Blue' },
-                                { color: '#8338EC', name: 'Neon Purple' },
-                                { color: '#FF006E', name: 'Hot Pink' },
-                                { color: '#000000', name: 'Pure Black' },
-                                { color: '#ffffff', name: 'Pure White' }
-                            ].map(preset => (
+                        <div className="flex items-center gap-2 mt-3 -mb-1">
+                            <select 
+                                value={buttonColorCategory} 
+                                onChange={(e) => setButtonColorCategory(e.target.value)}
+                                className="text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:border-primary w-full cursor-pointer text-gray-700 font-medium"
+                            >
+                                {Object.keys(COLOR_CATEGORIES).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1.5 mt-2 max-h-32 overflow-y-auto px-1 pb-1 custom-scrollbar">
+                            {COLOR_CATEGORIES[buttonColorCategory].map(preset => (
                                 <button
                                     key={preset.color}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         onColorChange(preset.color);
                                     }}
-                                    className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${color === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                    className={`w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${color === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                                     style={{ backgroundColor: preset.color }}
                                 >
                                     {/* Tooltip */}
@@ -239,26 +329,24 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                             </div>
                             
                             {/* Font Color Palette with Names */}
-                            <div className="grid grid-cols-5 gap-2 mt-1">
-                                {[
-                                    { color: '#ffffff', name: 'Pure White' },
-                                    { color: '#000000', name: 'Pure Black' },
-                                    { color: '#E9C46A', name: 'Soft Gold' },
-                                    { color: '#2A9D8F', name: 'Teal Green' },
-                                    { color: '#E76F51', name: 'Terracotta' },
-                                    { color: '#2B2D42', name: 'Navy Black' },
-                                    { color: '#8ECAE6', name: 'Sky Blue' },
-                                    { color: '#FFB703', name: 'Vibrant Yellow' },
-                                    { color: '#023047', name: 'Deep Sea Blue' },
-                                    { color: '#FF006E', name: 'Hot Pink' },
-                                ].map(preset => (
+                            <div className="flex items-center gap-2 mt-2">
+                                <select 
+                                    value={fontColorCategory} 
+                                    onChange={(e) => setFontColorCategory(e.target.value)}
+                                    className="text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:border-primary w-full cursor-pointer text-gray-700 font-medium"
+                                >
+                                    {Object.keys(COLOR_CATEGORIES).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-7 gap-1.5 mt-2 max-h-32 overflow-y-auto px-1 pb-1 custom-scrollbar">
+                                {COLOR_CATEGORIES[fontColorCategory].map(preset => (
                                     <button
                                         key={preset.color}
                                         onClick={(e) => {
                                             e.preventDefault();
                                             onTextColorChange?.(preset.color);
                                         }}
-                                        className={`w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${textColor === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                        className={`w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform shadow-sm relative group mx-auto ${textColor === preset.color ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                                         style={{ backgroundColor: preset.color }}
                                     >
                                         {/* Tooltip */}
