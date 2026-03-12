@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type, Palette, Highlighter } from 'lucide-react';
+import { userInfo } from 'os';
 
 interface RichTextToolbarProps {
     onFormat: (command: string, value?: string) => void;
@@ -34,7 +35,9 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ onFormat, className =
         '#14b8a6', '#0d9488', '#06b6d4', '#0891b2',
         '#3b82f6', '#2563eb', '#1d4ed8', '#6366f1', '#4f46e5',
         '#8b5cf6', '#7c3aed', '#a855f7', '#9333ea',
-        '#ec4899', '#db2777', '#be185d', '#f43f5e', '#e11d48',
+        '#ec4899', '#db2777', '#be185d', '#f43f5e', '#e11d48'
+     
+        
     ];
 
     const handleColorClick = (color: string) => {

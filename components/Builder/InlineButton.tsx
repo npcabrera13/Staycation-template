@@ -60,6 +60,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         'comic': '"Comic Sans MS", cursive, sans-serif',
         'brush': '"Brush Script MT", cursive',
         'copperplate': 'Copperplate, "Copperplate Gothic Light", fantasy',
+    
     };
     const resolvedFont = fontFamilyMap[fontFamily] || fontFamilyMap['sans'];
 

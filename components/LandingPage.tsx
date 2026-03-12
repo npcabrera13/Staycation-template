@@ -553,7 +553,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                 <div
                                     ref={scrollContainerRef}
-                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'}`}
+                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'} ${filteredRooms.length === 1 ? 'justify-center' : ''}`}
                                     onScroll={handleScroll}
                                     onMouseDown={handleMouseDown}
                                     onMouseLeave={handleMouseLeave}
