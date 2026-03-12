@@ -130,6 +130,20 @@ const InlineButton: React.FC<InlineButtonProps> = ({
     const inputRef = useRef<HTMLInputElement>(null);
     const [buttonColorCategory, setButtonColorCategory] = useState("Theme Basics");
     const [fontColorCategory, setFontColorCategory] = useState("Theme Basics");
+    const [popupPosition, setPopupPosition] = useState<'above' | 'below'>('above');
+
+    // Smart positioning: detect if there's room above or should flip below
+    useEffect(() => {
+        if (isFocused && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            // If button is in the top 55% of viewport, open below; otherwise above
+            if (rect.top < window.innerHeight * 0.55) {
+                setPopupPosition('below');
+            } else {
+                setPopupPosition('above');
+            }
+        }
+    }, [isFocused]);
 
     // Map fontFamily key to actual CSS font-family string
     const fontFamilyMap: Record<string, string> = {
@@ -209,7 +223,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         <div className="relative inline-block hover:z-[40] focus-within:z-[50]" ref={wrapperRef}>
             {/* Custom Toolbar Popup */}
             {isFocused && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-[9999] animate-fade-in-up md:w-max min-w-[280px] flex flex-col gap-3">
+                <div className={`absolute ${popupPosition === 'above' ? 'bottom-full mb-4' : 'top-full mt-4'} left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-[9999] animate-fade-in-up w-[320px] max-w-[90vw] flex flex-col gap-3 max-h-[70vh] overflow-y-auto`}>
                     <div className="flex items-center gap-2">
                         <Type size={16} className="text-gray-400" />
                         <input
@@ -360,7 +374,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                     </div>
 
                     {/* Triangle pointer */}
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b border-r border-gray-100 transform rotate-45 shadow-sm"></div>
+                    <div className={`absolute ${popupPosition === 'above' ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'} left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-gray-100 transform rotate-45 shadow-sm`}></div>
                 </div>
             )}
 
