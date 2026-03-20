@@ -100,7 +100,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             text={buttonText || "Check Availability"}
             defaultText="Check Availability"
             onTextChange={onButtonTextChange || (() => { })}
-            color={buttonColor || 'var(--color-accent)'}
+            color={buttonColor || 'var(--color-primary)'}
             onColorChange={onButtonColorChange || (() => { })}
             textColor={buttonTextColor || ''}
             onTextColorChange={onButtonTextColorChange || (() => { })}

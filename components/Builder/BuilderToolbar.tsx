@@ -117,6 +117,51 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     isOpen={openSection === 'theme'}
                     onClick={() => setOpenSection(openSection === 'theme' ? null : 'theme')}
                 >
+                    {/* Theme Presets */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2">🎨 Quick Theme Presets</label>
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            {[
+                                { name: 'Navy & Gold', primary: '#1B2A4A', hover: '#142038', secondary: '#B8860B' },
+                                { name: 'Ocean Breeze', primary: '#0077B6', hover: '#005F8A', secondary: '#0096C7' },
+                                { name: 'Emerald Luxe', primary: '#064E3B', hover: '#043D2E', secondary: '#059669' },
+                                { name: 'Sunset Coral', primary: '#E76F51', hover: '#D45A3C', secondary: '#264653' },
+                                { name: 'Royal Purple', primary: '#6D28D9', hover: '#5B21B6', secondary: '#4C1D95' },
+                                { name: 'Classic Black', primary: '#111827', hover: '#000000', secondary: '#374151' },
+                                { name: 'Rose Garden', primary: '#BE185D', hover: '#9D174D', secondary: '#831843' },
+                                { name: 'Teal Modern', primary: '#0D9488', hover: '#0F766E', secondary: '#115E59' },
+                                { name: 'Warm Earth', primary: '#92400E', hover: '#78350F', secondary: '#78350F' },
+                                { name: 'Sky Fresh', primary: '#2563EB', hover: '#1D4ED8', secondary: '#1E40AF' },
+                                { name: 'Forest Pine', primary: '#166534', hover: '#14532D', secondary: '#064E3B' },
+                                { name: 'Crimson Bold', primary: '#DC2626', hover: '#B91C1C', secondary: '#991B1B' },
+                            ].map(preset => (
+                                <button
+                                    key={preset.name}
+                                    onClick={() => {
+                                        onUpdateSettings?.('theme', 'primaryColor', preset.primary);
+                                        onUpdateSettings?.('theme', 'primaryHoverColor', preset.hover);
+                                        onUpdateSettings?.('theme', 'secondaryColor', preset.secondary);
+                                        // Clear overrides so they inherit the new preset theme colors
+                                        onUpdateSettings?.('hero', 'buttonColor', '');
+                                        onUpdateSettings?.('roomsSection', 'accentColor', '');
+                                        onUpdateSettings?.('searchBar', 'buttonColor', '');
+                                    }}
+                                    className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all hover:shadow-md hover:scale-[1.02] ${
+                                        settings?.theme.primaryColor === preset.primary ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 bg-white'
+                                    }`}
+                                >
+                                    <div className="flex -space-x-1 flex-shrink-0">
+                                        <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: preset.primary }}></div>
+                                        <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: preset.hover }}></div>
+                                        <div className="w-5 h-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: preset.secondary }}></div>
+                                    </div>
+                                    <span className="text-[10px] font-semibold text-gray-600 leading-tight">{preset.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="h-px w-full bg-gray-200 mb-3"></div>
+                        <label className="block text-xs font-bold text-gray-400 mb-2">Or customize individually:</label>
+                    </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1">Primary Color</label>
                         <div className="flex gap-2 items-center">

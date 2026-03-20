@@ -149,8 +149,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 // Top-level property update (e.g. siteName, logo)
                 (updated as any)[section] = value;
             } else if (typeof updated[section] === 'object' && updated[section] !== null) {
-                // Nested property update (e.g. theme.primaryColor, hero.image)
-                (updated[section] as any)[field] = value;
+                // Nested property update — create new object reference so useEffect detects changes
+                (updated as any)[section] = { ...(updated[section] as any), [field]: value };
             }
 
             return updated;
@@ -448,7 +448,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             <InlineButton
                                 text={workingSettings.hero?.ctaText || "Explore Rooms"}
                                 onTextChange={(val) => handleSettingChange('hero', 'ctaText', val)}
-                                color={workingSettings.hero?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                color={workingSettings.hero?.buttonColor || workingSettings.theme.primaryColor}
                                 onColorChange={(newColor) => handleSettingChange('hero', 'buttonColor', newColor)}
                                 textColor={workingSettings.hero?.buttonTextColor || ''}
                                 onTextColorChange={(val) => handleSettingChange('hero', 'buttonTextColor', val)}
@@ -491,7 +491,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     />
                                 </h2>
                                 <InlineColorBlock
-                                    color={workingSettings.roomsSection?.accentColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                    color={workingSettings.roomsSection?.accentColor || workingSettings.theme.primaryColor}
                                     onChange={(color) => handleSettingChange('roomsSection', 'accentColor', color)}
                                     className="w-24 h-1 mx-auto mb-8 rounded-full"
                                     isEditing={isEditing}
@@ -610,7 +610,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 isEditing={isEditing}
                                 buttonText={workingSettings.searchBar?.buttonText}
                                 onButtonTextChange={(val) => handleSettingChange('searchBar', 'buttonText', val)}
-                                buttonColor={workingSettings.searchBar?.buttonColor || workingSettings.theme.accentColor || '#E9C46A'}
+                                buttonColor={workingSettings.searchBar?.buttonColor || ''}
                                 onButtonColorChange={(val) => handleSettingChange('searchBar', 'buttonColor', val)}
                                 buttonTextColor={workingSettings.searchBar?.buttonTextColor}
                                 onButtonTextColorChange={(val) => handleSettingChange('searchBar', 'buttonTextColor', val)}

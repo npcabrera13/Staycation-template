@@ -206,12 +206,27 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         }
     };
 
+    // Helper to determine if text should be white or black based on background color
+    const getContrastColor = (hexcolor: string) => {
+        if (!hexcolor || hexcolor.startsWith('var')) return '#ffffff'; // Default to white for theme vars usually
+        const hex = hexcolor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? '#000000' : '#ffffff';
+    };
+
     if (!isEditing) {
         return (
             <button
                 onClick={onClick}
                 className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-pointer ${className}`}
-                style={{ backgroundColor: color, color: textColor || (color === '#ffffff' ? '#000000' : 'var(--color-secondary)'), fontFamily: resolvedFont }}
+                style={{ 
+                    backgroundColor: color, 
+                    color: textColor || getContrastColor(color), 
+                    fontFamily: resolvedFont 
+                }}
             >
                 {icon}
                 {text || defaultText}
@@ -384,7 +399,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                 className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 transform shadow-2xl group cursor-pointer border-2 border-dashed ${isFocused ? 'border-primary/50 scale-105 shadow-primary/20 bg-white' : 'border-white/50 hover:border-white hover:scale-105'} ${className}`}
                 style={{
                     backgroundColor: isFocused ? '#ffffff' : color,
-                    color: isFocused ? 'var(--color-primary)' : (textColor || (color === '#ffffff' ? '#000000' : 'var(--color-secondary)')),
+                    color: isFocused ? 'var(--color-primary)' : (textColor || getContrastColor(color)),
                     fontFamily: resolvedFont
                 }}
             >

@@ -96,11 +96,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
         <div className="mt-auto space-y-5">
           {/* Amenities Badges */}
           <div className="flex flex-wrap gap-2 min-h-[72px] content-start">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-surface dark:bg-gray-700 text-secondary dark:text-gray-200 border border-secondary/10 dark:border-gray-600">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-surface dark:bg-gray-700 text-primary dark:text-gray-200 border border-primary/10 dark:border-gray-600">
               <Users size={12} className="mr-1.5" /> {room.capacity} Guests
             </span>
             {room.amenities.slice(0, 3).map((am, idx) => (
-              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-50/50 dark:bg-transparent text-primary border border-primary/10 dark:border-primary/40">
+              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/5 dark:bg-transparent text-primary border border-primary/10 dark:border-primary/40">
                 {renderIcon(am)} <span className="ml-1.5">{am.name}</span>
               </span>
             ))}
