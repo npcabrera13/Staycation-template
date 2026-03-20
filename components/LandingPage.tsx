@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus, Info } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
@@ -902,9 +902,41 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={200}>
-                            <div className="w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative">
+                            <div className="w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative group">
+                                {isEditing && (
+                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                                        <h3 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
+                                            <MapPin className="w-6 h-6" /> Edit Google Map 
+                                        </h3>
+                                        <div className="w-full max-w-2xl bg-white/10 p-6 rounded-xl border border-white/20 backdrop-blur-md">
+                                            <label className="block text-sm font-medium text-gray-200 mb-2">Google Maps Embed URL (src link)</label>
+                                            <input 
+                                                type="text" 
+                                                className="w-full px-4 py-3 rounded-lg text-black mb-4 focus:ring-2 focus:ring-primary outline-none"
+                                                placeholder="https://www.google.com/maps/embed?pb=..."
+                                                value={workingSettings.map?.embedUrl || ''}
+                                                onChange={(e) => handleSettingChange('map', 'embedUrl', e.target.value)}
+                                            />
+                                            <div className="bg-black/30 p-4 rounded-lg flex gap-3 text-sm text-gray-300">
+                                                <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="mb-2">
+                                                        Go to Google Maps → Share → Embed a map → Copy HTML. <br/>
+                                                        Extract only the URL inside the <code className="text-primary bg-primary/10 px-1 rounded">src="..."</code> attribute.
+                                                    </p>
+                                                    <div className="bg-black/40 p-3 rounded text-xs font-mono mb-2 overflow-x-auto whitespace-nowrap border border-white/10">
+                                                        <span className="text-gray-500">&lt;iframe src="</span><span className="text-green-400">https://www.google.com/maps/embed?pb=...</span><span className="text-gray-500">" width="600" ...&gt;&lt;/iframe&gt;</span>
+                                                    </div>
+                                                    <a href="https://support.google.com/maps/answer/144361?hl=en#zippy=%2Cembed-a-map-or-directions" target="_blank" rel="noreferrer" className="text-primary hover:text-white underline inline-block transition-colors">
+                                                        View Tutorial
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <iframe
-                                    src={settings?.map?.embedUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125181.43388055636!2d119.34637195647923!3d11.224378310234497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33b7accd159567c7%3A0x64464a2a15c2823!2sEl%20Nido%2C%20Palawan!5e0!3m2!1sen!2sph!4v1709536251859!5m2!1sen!2sph"}
+                                    src={workingSettings.map?.embedUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125181.43388055636!2d119.34637195647923!3d11.224378310234497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33b7accd159567c7%3A0x64464a2a15c2823!2sEl%20Nido%2C%20Palawan!5e0!3m2!1sen!2sph!4v1709536251859!5m2!1sen!2sph"}
                                     width="100%"
                                     height="100%"
                                     style={{ border: 0 }}
@@ -912,6 +944,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
                                     title="Serenity Staycation Location"
+                                    className={isEditing ? 'pointer-events-none' : ''}
                                 ></iframe>
                             </div>
                         </RevealOnScroll>

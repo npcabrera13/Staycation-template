@@ -1355,46 +1355,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Theme Settings */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                                        <Palette size={20} className="mr-2 text-primary" /> Visual Theme
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Color</label>
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="color"
-                                                    className="h-10 w-20 rounded cursor-pointer"
-                                                    value={settingsForm.theme.primaryColor}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        theme: { ...settingsForm.theme, primaryColor: e.target.value }
-                                                    })}
-                                                />
-                                                <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{settingsForm.theme.primaryColor}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for buttons, highlights, and icons.</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secondary Color</label>
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="color"
-                                                    className="h-10 w-20 rounded cursor-pointer"
-                                                    value={settingsForm.theme.secondaryColor}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        theme: { ...settingsForm.theme, secondaryColor: e.target.value }
-                                                    })}
-                                                />
-                                                <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{settingsForm.theme.secondaryColor}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for backgrounds, headers, and text accents.</p>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* Payment Methods */}
                                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
