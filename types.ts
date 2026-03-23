@@ -12,6 +12,7 @@ export interface Room {
     image: string;
     images: string[];
     amenities: Amenity[];
+    dayUsePrice?: number;
     depositAmount?: number; // Optional per-room fixed deposit amount (overrides global settings)
 }
 

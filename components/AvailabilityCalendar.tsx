@@ -7,9 +7,10 @@ interface AvailabilityCalendarProps {
   roomId: string;
   bookings: Booking[];
   onDateSelect: (start: Date | null, end: Date | null) => void;
+  allowDayUse?: boolean;
 }
 
-const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, bookings, onDateSelect }) => {
+const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, bookings, onDateSelect, allowDayUse }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -17,6 +18,8 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
 
   // Filter bookings for this room
   const roomBookings = bookings.filter(b => b.roomId === roomId && b.status !== 'cancelled');
+
+
 
   const getDaysInMonth = () => {
     const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -68,8 +71,14 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
     // 2. No Start Date Selected yet -> Set Start
     if (!startDate) {
       setStartDate(date);
-      setEndDate(null);
-      onDateSelect(date, null);
+      if (allowDayUse) {
+        // If Day Use is enabled, immediately treat the first click as a single-day booking
+        setEndDate(date);
+        onDateSelect(date, date);
+      } else {
+        setEndDate(null);
+        onDateSelect(date, null);
+      }
       return;
     }
 

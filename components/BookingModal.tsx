@@ -92,10 +92,20 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     };
 
     const nights = (selectedStart && selectedEnd) ? differenceInDays(selectedEnd, selectedStart) : 0;
-    // Day Use Logic: If 0 nights (same day), charge for 1 night (or could be 75% if we wanted a policy). 
-    // For now, treat as 1 unit of "stay".
-    const billableNights = Math.max(1, nights);
-    const totalPrice = billableNights * room.price;
+    
+    let billableNights = nights;
+    let totalPrice = 0;
+    
+    if (nights === 0 && selectedStart && selectedEnd) {
+        // Automatically a Day Use stay if start and end are the same day
+        const baseDayPrice = room.dayUsePrice || room.price;
+        billableNights = 0;
+        totalPrice = baseDayPrice;
+    } else {
+        // Normal overnight calculation
+        billableNights = Math.max(1, nights);
+        totalPrice = billableNights * room.price;
+    }
 
     // Calculate deposit for display (same logic as in confirmPayment)
     let displayDeposit = 0;
@@ -430,6 +440,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             roomId={room.id}
                                             bookings={bookings}
                                             onDateSelect={handleDateSelect}
+                                            allowDayUse={room.dayUsePrice !== undefined && room.dayUsePrice > 0}
                                         />
 
                                         <div className="space-y-4 mt-6 pb-4">
@@ -534,12 +545,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                     </div>
 
                                     {/* Sticky Footer - Always Visible */}
-                                    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-2 flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800">
+                                    <div className="sticky bottom-0 border-t border-gray-100 dark:border-gray-700 pt-4 mt-2 flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 z-10 shadow-[0_-8px_16px_-6px_rgba(0,0,0,0.08)]">
                                         <div className="text-center sm:text-left">
                                             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Total Price</p>
                                             <div className="text-2xl md:text-3xl font-bold text-secondary dark:text-white">
                                                 {selectedStart && selectedEnd ? (
-                                                    <>₱{totalPrice.toLocaleString()} <span className="text-sm font-normal text-gray-400">for {nights === 0 ? 'Day Use' : `${nights} night${nights > 1 ? 's' : ''}`}</span></>
+                                                    <>₱{totalPrice.toLocaleString()} <span className="text-sm font-normal text-gray-400">for {nights === 0 ? 'Day Use' : `${billableNights} night${billableNights > 1 ? 's' : ''}`}</span></>
                                                 ) : (
                                                     <span className="text-gray-400 dark:text-gray-500 text-base font-normal">Select dates to see price</span>
                                                 )}
@@ -578,8 +589,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 </div>
                                                 <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
                                                     <span>Dates</span>
-                                                    <span className="font-semibold">
-                                                        {selectedStart?.toLocaleDateString()} - {nights === 0 ? 'Same Day' : selectedEnd?.toLocaleDateString()}
+                                                    <span className="font-semibold text-right">
+                                                        {selectedStart?.toLocaleDateString()} {nights > 0 && selectedEnd ? `- ${selectedEnd.toLocaleDateString()}` : ''}
                                                         <br />
                                                         <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
                                                             Time: {estimatedArrival} - {estimatedDeparture}
@@ -703,7 +714,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 flex flex-col-reverse sm:flex-row gap-4">
+                                    <div className="sticky bottom-0 mt-4 flex flex-col-reverse sm:flex-row gap-4 bg-white dark:bg-gray-800 pt-4 border-t border-gray-100 dark:border-gray-700 z-10 shadow-[0_-8px_16px_-6px_rgba(0,0,0,0.08)]">
                                         <button
                                             onClick={() => setStep(1)}
                                             className="flex-1 py-3 rounded-full font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition"

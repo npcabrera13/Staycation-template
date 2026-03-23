@@ -175,6 +175,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         name: '',
         description: '',
         price: 0,
+        dayUsePrice: undefined,
         capacity: 2,
         image: 'https://picsum.photos/800/600',
         images: [],
@@ -535,13 +536,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             name: newRoom.name || 'New Room',
             description: newRoom.description || '',
             price: newRoom.price || 0,
+            dayUsePrice: newRoom.dayUsePrice,
             capacity: newRoom.capacity || 2,
             image: newRoom.image || 'https://picsum.photos/800/600',
             images: newRoom.images || [],
             amenities: newRoom.amenities || []
         });
         setIsAddingRoom(false);
-        setNewRoom({ name: '', description: '', price: 0, capacity: 2, image: '', images: [], amenities: [] });
+        setNewRoom({ name: '', description: '', price: 0, dayUsePrice: undefined, capacity: 2, image: '', images: [], amenities: [] });
         setNewRoomCustomAmenity('');
         setNewRoomCustomIcon('sparkles');
     };
@@ -968,7 +970,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     <div className="font-bold text-gray-800 dark:text-white text-sm truncate">{booking.guestName}</div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{room?.name || 'Unknown Room'}</div>
                                                     <div className="text-xs text-gray-400 mt-1">
-                                                        {booking.nights} night{booking.nights > 1 ? 's' : ''} • {booking.guests} guest{booking.guests > 1 ? 's' : ''}
+                                                        {booking.nights === 0 ? 'Day Use' : `${booking.nights} night${booking.nights > 1 ? 's' : ''}`} • {booking.guests} guest{booking.guests > 1 ? 's' : ''}
                                                     </div>
                                                     <div className="text-[10px] text-gray-400 flex items-center mt-0.5">
                                                         <Clock size={10} className="mr-1" />
@@ -2485,14 +2487,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         placeholder="e.g. Sunset Villa"
                                                     />
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Overnight Price (₱)</label>
                                                         <input
                                                             type="number"
                                                             value={isAddingRoom ? newRoom.price : editForm.price}
                                                             onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, price: Number(e.target.value) }) : setEditForm({ ...editForm, price: Number(e.target.value) })}
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Day Use Price (₱) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                                                        <input
+                                                            type="number"
+                                                            value={isAddingRoom ? (newRoom.dayUsePrice || '') : (editForm.dayUsePrice || '')}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                                                isAddingRoom ? setNewRoom({ ...newRoom, dayUsePrice: val }) : setEditForm({ ...editForm, dayUsePrice: val });
+                                                            }}
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                            placeholder="e.g. 1500"
                                                         />
                                                     </div>
                                                     <div>
