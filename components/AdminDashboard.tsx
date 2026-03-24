@@ -5,10 +5,10 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { format, isValid, differenceInDays, addDays, addMonths, subMonths, isAfter, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import {
-    LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar as CalendarIcon, Plus, Image as ImageIcon,
+    LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award
 } from 'lucide-react';
 
 import { useNotification } from '../contexts/NotificationContext';
@@ -88,6 +88,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onEnterVisualBuilder
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>('calendar');
+    const [showHelpModal, setShowHelpModal] = useState(false);
+    const [activeHelpTab, setActiveHelpTab] = useState(0);
 
 
     const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
@@ -1106,6 +1108,986 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
     };
 
+    const renderHelpModal = () => {
+        if (!showHelpModal) return null;
+
+        // Custom UI Components for the Tutorial
+        const JumpToTab = ({ tab, label, icon }: { tab: 'overview' | 'calendar' | 'rooms' | 'settings', label: string, icon?: React.ReactNode }) => (
+            <button 
+                onClick={() => {
+                    setActiveTab(tab);
+                    setShowHelpModal(false);
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-full transition-all font-bold text-[10px] uppercase tracking-wider border border-primary/20 hover:border-primary shadow-sm group mx-1 align-middle"
+            >
+                {icon}
+                {label}
+                <ChevronRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+        );
+
+        const ProTip = ({ children, icon }: { children: React.ReactNode, icon?: React.ReactNode }) => (
+            <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400 p-4 rounded-r-xl my-6 flex gap-3 shadow-sm">
+                <div className="text-amber-500 shrink-0 mt-0.5">{icon || <Sparkles size={20} />}</div>
+                <div className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                    <span className="font-black uppercase text-[10px] tracking-widest block mb-1 opacity-60">Success Strategy</span>
+                    {children}
+                </div>
+            </div>
+        );
+
+        const StepCard = ({ number, title, desc, icon, color }: { number: number, title: string, desc: string, icon: React.ReactNode, color: string }) => (
+            <div className="relative p-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md transition-all group overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity scale-150 rotate-12" style={{ color: color }}>
+                    {icon}
+                </div>
+                <div className="flex gap-4 items-start relative z-10">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 text-white" style={{ backgroundColor: color }}>
+                        {number}
+                    </div>
+                    <div>
+                        <h5 className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm mb-1">{title}</h5>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const sections = [
+            {
+                id: "how-it-works",
+                title: "1. How the System Works",
+                icon: <Zap size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <div className="bg-gradient-to-r from-primary/20 to-transparent p-6 rounded-2xl border border-primary/10">
+                            <h4 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">Welcome to your Dashboard!</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                This system is designed to automate your bookings, organize your calendar, and give your guests a premium booking experience. Below is the quick map of your business areas:
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            {[
+                                { name: "Guest Portal", user: "Customers", access: "Live Website", icon: <Globe size={16}/>, color: "blue" },
+                                { name: "Admin Panel", user: "Staff / You", access: "This Dashboard", icon: <Lock size={16}/>, color: "purple" },
+                                { name: "Visual Builder", user: "Design Mode", access: "Edit Mode", icon: <Palette size={16}/>, color: "orange" }
+                            ].map((area, i) => (
+                                <div key={i} className="bg-white dark:bg-gray-950 border dark:border-gray-800 p-5 rounded-2xl shadow-sm hover:border-primary/20 transition-colors">
+                                    <div className={`w-8 h-8 rounded-lg bg-${area.color}-500/10 text-${area.color}-500 flex items-center justify-center mb-3`}>
+                                        {area.icon}
+                                    </div>
+                                    <h5 className="font-extrabold text-gray-900 dark:text-white text-xs uppercase tracking-widest mb-3">{area.name}</h5>
+                                    <div className="space-y-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                                        <p className="flex justify-between"><span>Primary User:</span> <span className="text-gray-900 dark:text-white">{area.user}</span></p>
+                                        <p className="flex justify-between"><span>Access Via:</span> <span className="text-gray-900 dark:text-white">{area.access}</span></p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm shrink-0">The Guest Journey</h4>
+                                <div className="h-px bg-gray-100 dark:bg-gray-800 flex-1" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <StepCard number={1} title="Select Room" desc="Guest browses your beautiful rooms and clicks 'Book Now'." icon={<BedDouble />} color="#3b82f6" />
+                                <StepCard number={2} title="Pick Dates" desc="They select dates on your interactive calendar logic." icon={<Calendar />} color="#8b5cf6" />
+                                <StepCard number={3} title="Payment" desc="They scan your pre-set QR codes to pay the deposit." icon={<CreditCard />} color="#10b981" />
+                                <StepCard number={4} title="Confirmation" desc="You receive a notification and confirm the booking here." icon={<CheckCircle />} color="#f59e0b" />
+                            </div>
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "getting-started",
+                title: "2. Getting Started",
+                icon: <Rocket size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                                    <Lock size={20} />
+                                </div>
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-tight">Step 1: Secure Your Dashboard</h4>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed ml-11">
+                                Go to the <JumpToTab tab="settings" label="Settings" icon={<SettingsIcon size={12}/>} /> tab and set a robust 6-digit passcode. This prevents unauthorized access to your revenue data.
+                            </p>
+                        </section>
+                        
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
+                                    <PlusCircle size={20} />
+                                </div>
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-tight">Step 2: Add Your Inventory</h4>
+                            </div>
+                            <div className="ml-11 space-y-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Head over to <JumpToTab tab="rooms" label="Manage Rooms" icon={<BedDouble size={12}/>} /> to list your properties.</p>
+                                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {["Use high-res photos", "Define capacity limits", "Set nightly rates", "List all amenities"].map((text, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border dark:border-gray-700">
+                                            <CheckCircle size={14} className="text-green-500" /> {text}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </section>
+
+                        <ProTip>
+                            Before going live, visit the <JumpToTab tab="settings" label="Payments" icon={<CreditCard size={12}/>} /> section and upload your QR codes. Testing a fake booking yourself is the best way to see what your clients experience!
+                        </ProTip>
+                    </div>
+                )
+            },
+            {
+                id: "visual-builder",
+                title: "3. Visual Builder",
+                icon: <Palette size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <div className="relative aspect-video rounded-2xl bg-gray-900 overflow-hidden group shadow-lg border dark:border-gray-800">
+                            <div className="absolute inset-0 flex items-center justify-center bg-indigo-600/10 backdrop-blur-[1px]">
+                                <div className="text-center p-8">
+                                    <Palette size={64} className="text-white mb-4 mx-auto drop-shadow-sm" />
+                                    <h4 className="text-white text-xl font-black uppercase tracking-widest drop-shadow-md">No-Code Website Editor</h4>
+                                    <button 
+                                        onClick={() => {
+                                            onEnterVisualBuilder?.();
+                                            setShowHelpModal(false);
+                                        }}
+                                        className="mt-6 px-8 py-3 bg-white text-indigo-600 rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-transform shadow-xl flex items-center gap-2 mx-auto"
+                                    >
+                                        Launch Editor <ExternalLink size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {[
+                                { title: "Direct Text Edit", desc: "Click any text on the live site to change it instantly." },
+                                { title: "Media Swap", desc: "Click images to upload your own property gallery." },
+                                { title: "Color Profiles", desc: "Change the primary color to update all buttons and highlights." },
+                                { title: "Real-Time Preview", desc: "What you see is exactly what your guests will see." }
+                            ].map((tip, i) => (
+                                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border dark:border-gray-700">
+                                    <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-inner text-indigo-500 shrink-0 uppercase font-black text-xs">0{i+1}</div>
+                                    <div>
+                                        <h5 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{tip.title}</h5>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">{tip.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "dashboard",
+                title: "4. Dashboard Mastery",
+                icon: <LayoutDashboard size={18} />,
+                content: (
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-gray-950 border dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+                            <div className="p-8 md:w-1/2 border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
+                                <h4 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-tight">
+                                    <Calendar className="text-blue-500" /> The Master Calendar
+                                </h4>
+                                <div className="space-y-4">
+                                    <p className="text-sm text-gray-500">New bookings arrive as <span className="text-yellow-500 font-black italic">PENDING</span> blocks. You must verify payment before clicking confirm.</p>
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        <div className="px-3 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-black rounded-lg uppercase tracking-widest border border-yellow-200 shadow-sm">🟡 Pending</div>
+                                        <div className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-lg uppercase tracking-widest border border-green-200 shadow-sm">🟢 Confirmed</div>
+                                        <div className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-black rounded-lg uppercase tracking-widest border border-red-200 shadow-sm">🔴 Cancelled</div>
+                                    </div>
+                                    <div className="pt-4">
+                                        <JumpToTab tab="calendar" label="Go to Calendar" icon={<CalendarIcon size={12}/>} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-8 md:w-1/2">
+                                <h4 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-tight">
+                                    <TrendingUp className="text-purple-500" /> Business Analytics
+                                </h4>
+                                <div className="space-y-4">
+                                    <p className="text-sm text-gray-500">Track your total revenue, upcoming arrivals, and occupancy. Use the 'Export' feature to get your paperwork done in seconds.</p>
+                                    <div className="pt-4 flex gap-2">
+                                        <JumpToTab tab="overview" label="View Analytics" icon={<BarChart size={12}/>} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "room-expert",
+                title: "5. Room Management",
+                icon: <BedDouble size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <h4 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Listing Magic</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                        Your <JumpToTab tab="rooms" label="Rooms Tab" icon={<BedDouble size={12}/>} /> is where you generate income. To maximize bookings:
+                                    </p>
+                                </div>
+                                <ul className="space-y-4">
+                                    {[
+                                        { t: "Photo Order", d: "First photo is your 'Hero'. Use your best shot of the villa or room view." },
+                                        { t: "Amenity Icons", d: "Don't skip icons like Pool or AC—visual cues sell better than text." },
+                                        { t: "Descriptive Titles", d: "Use names like 'Serenity Ocean Suite' instead of 'Room 1'." }
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex gap-4">
+                                            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5"><Sparkles size={12}/></div>
+                                            <div>
+                                                <h6 className="font-black text-xs text-gray-900 dark:text-white uppercase">{item.t}</h6>
+                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">{item.d}</p>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="bg-gray-900 rounded-3xl p-8 relative overflow-hidden group shadow-2xl min-h-[300px] flex flex-col justify-end">
+                                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <BedDouble size={120} />
+                                </div>
+                                <div className="relative z-10 space-y-4">
+                                    <div className="px-4 py-1.5 bg-green-500 text-white text-[10px] font-black rounded-full w-fit uppercase tracking-widest">Revenue Hack</div>
+                                    <h4 className="text-white text-xl font-black uppercase tracking-tight">The "Day Use" Strategy</h4>
+                                    <p className="text-gray-400 text-xs leading-relaxed italic">
+                                        Set a separate <strong>Day Use Price</strong> to allow guests to book for swimming or group events without staying overnight. This doubles your occupancy potential!
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                )
+            },
+            {
+                id: "booking-mechanics",
+                title: "6. Guest Booking Mechanics",
+                icon: <MessageCircle size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <div className="text-center mb-4">
+                            <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-widest mb-2">The Conversion Funnel</h4>
+                            <p className="text-sm text-gray-400">Understanding exactly what your guest sees at checkout</p>
+                        </div>
+                        
+                        <div className="relative flex flex-col gap-6 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100 dark:before:bg-gray-800">
+                            {[
+                                { title: "Room Discovery", desc: "Guest browses the landing page and selects their perfect stay.", icon: <Eye /> },
+                                { title: "Dynamic Calendar", desc: "Our system calculates total price based on Nightly vs Day Use rates automatically.", icon: <Calendar /> },
+                                { title: "Instant QR Payment", desc: "They scan your custom GCash/Bank codes provided in Settings.", icon: <CreditCard /> },
+                                { title: "Guest Handshake", desc: "Request submitted! Guest gets a Reference ID and stays on the page until you confirm.", icon: <Users /> }
+                            ].map((step, i) => (
+                                <div key={i} className="flex gap-6 relative z-10">
+                                    <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+                                        {step.icon}
+                                    </div>
+                                    <div className="py-2">
+                                        <h5 className="font-extrabold text-gray-900 dark:text-white uppercase tracking-tight text-sm mb-1">{step.title}</h5>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 max-w-lg">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "payment-vault",
+                title: "7. Payment & Vault Setup",
+                icon: <CreditCard size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <div className="p-8 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent border border-indigo-200 dark:border-indigo-800 rounded-3xl relative overflow-hidden">
+                             <CreditCard className="absolute -bottom-4 -right-4 size-48 opacity-[0.03] rotate-12" />
+                             <div className="space-y-6 relative z-10">
+                                <h4 className="text-lg font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-tight">Your Digital Cashier</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
+                                    Configure how you get paid in <JumpToTab tab="settings" label="Payment Settings" icon={<CreditCard size={12}/>} />. 
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl border dark:border-gray-800 shadow-sm">
+                                        <h5 className="font-black text-xs uppercase mb-1 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> GCash</h5>
+                                        <p className="text-[10px] text-gray-400">Upload your QR + Account Name & Number</p>
+                                    </div>
+                                    <div className="p-4 bg-white dark:bg-gray-900 rounded-2xl border dark:border-gray-800 shadow-sm">
+                                        <h5 className="font-black text-xs uppercase mb-1 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Bank Transfer</h5>
+                                        <p className="text-[10px] text-gray-400">Works with Maya, BPI, BDO, etc.</p>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-6 bg-gray-50 dark:bg-gray-950 rounded-2xl border dark:border-gray-800 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-2 h-full bg-primary" />
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase text-xs mb-3 tracking-widest">Deposit Control</h4>
+                                <p className="text-xs text-gray-500 leading-relaxed mb-4">Securing bookings with a partial deposit (e.g., 50%) is the best way to prevent no-shows.</p>
+                                <JumpToTab tab="settings" label="Adjust Deposits" />
+                            </div>
+                            <div className="p-6 bg-gray-50 dark:bg-gray-950 rounded-2xl border dark:border-gray-800 relative overflow-hidden group font-medium">
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase text-xs mb-3 tracking-widest">Verify Manually</h4>
+                                <p className="text-xs text-gray-500 leading-relaxed">Guests scan your code but the system doesn't "know" they paid until you verify. Always wait for payment proof before confirming!</p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "operations",
+                title: "8. Admin Operations",
+                icon: <SettingsIcon size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <section className="space-y-6">
+                             <div className="flex items-center gap-4">
+                                <Clock className="text-primary" />
+                                <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm">Operations & Logistics</h4>
+                                <div className="h-px bg-gray-100 dark:bg-gray-800 flex-1" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="p-6 bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-3xl hover:border-primary/20 transition-colors group">
+                                    <h5 className="font-black text-xs uppercase mb-2 group-hover:text-primary transition-colors">Check-in / Check-out</h5>
+                                    <p className="text-[11px] text-gray-500 mb-4">Set your standard check-in/out times. Guests can see these during the booking process.</p>
+                                    <JumpToTab tab="settings" label="Change Times" />
+                                </div>
+                                <div className="p-6 bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-3xl hover:border-primary/20 transition-colors group">
+                                    <h5 className="font-black text-xs uppercase mb-2 group-hover:text-primary transition-colors">Safety & Security</h5>
+                                    <p className="text-[11px] text-gray-500 mb-4">Regularly update your <JumpToTab tab="settings" label="Admin Passcode" /> to keep your records private.</p>
+                                </div>
+                            </div>
+               </div>
+                        </section>
+
+                        <ProTip icon={<AlertCircle size={20} className="text-red-500" />}>
+                            <span className="text-red-800 dark:text-red-300 uppercase font-black text-[10px] block mb-1">Action Required</span>
+                             Wait for the guest to send their payment screenshot via your preferred chat (Messenger, Email). Use the <JumpToTab tab="calendar" label="Calendar Details" /> to see their contact info!
+                        </ProTip>
+                    </div>
+                )
+            },
+            {
+                id: "day-use-deep",
+                title: "9. Day Use Logic",
+                icon: <Sun size={18} />,
+                content: (
+                    <div className="space-y-8 text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        <div className="p-10 bg-gradient-to-br from-amber-400/10 to-transparent border dark:border-gray-800 rounded-[2.5rem] relative overflow-hidden text-center flex flex-col items-center">
+                            <Sun size={80} className="text-amber-500 mb-6 opacity-60" />
+                            <h4 className="text-2xl font-black text-amber-900 dark:text-amber-500 uppercase tracking-widest mb-4">Solar Bookings</h4>
+                            <p className="text-amber-800 dark:text-amber-200/60 italic leading-relaxed max-w-md mx-auto">
+                                "The Day Use feature is your secret weapon for mid-week occupancy. It lets you rent the property while your overnight calendar is empty!"
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                            <div className="space-y-4">
+                                <h5 className="font-black text-gray-900 dark:text-white uppercase tracking-tight border-b-2 border-amber-400/30 pb-2 w-fit">How It Triggers</h5>
+                                <p className="text-sm">When a guest clicks <strong>ONCE</strong> on the calendar, the system checks for a 'Day Use Price' in <JumpToTab tab="rooms" label="Manage Rooms" />. If found, it selects that single date as a Day Use booking.</p>
+                                <p className="text-sm">If you don't provide a Day Use price, the system forces a minimum 1-night stay (requires selecting 2 dates).</p>
+                            </div>
+                            <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                                <h6 className="font-black text-xs mb-3 text-gray-400 uppercase">Ideal for:</h6>
+                                <ul className="space-y-3">
+                                    {["Pool Access (8am - 5pm)", "Pool House Venues", "Corporate Outings", "Family Reunions"].map((t, i) => (
+                                        <li key={i} className="flex gap-2 items-center text-xs text-gray-900 dark:text-white font-bold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {t}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )
+            },
+            {
+                id: "awards",
+                title: "10. Tips for Success",
+                icon: <Award size={18} />,
+                content: (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { t: "Photo Magic", c: "blue", d: "Guests book based on visuals. Invest in good lighting and clear property shots." },
+                                { t: "Speed Factor", c: "green", d: "Confirming a booking within 30 minutes increases guest loyalty tenfold." },
+                                { t: "The Theme", c: "purple", d: "Use the Visual Builder to make the website feel like 'Home' for your brand." },
+                                { t: "Deposit Logic", c: "amber", d: "Always require at least ₱500 to keep the booking firm and reduce no-shows." }
+                            ].map((tip, i) => (
+                                <div key={i} className={`p-6 bg-white dark:bg-gray-800 border border-${tip.c}-500/20 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-default`}>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className={`p-2 bg-${tip.c}-500/10 text-${tip.c}-500 rounded-lg`}>
+                                            <Award size={18}/>
+                                        </div>
+                                        <h5 className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">{tip.t}</h5>
+                                    </div>
+                                    <p className="text-xs text-gray-500 leading-relaxed">{tip.d}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+        ];
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4" onClick={() => setShowHelpModal(false)}>
+                <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-md transition-opacity" />
+                <div
+                    className="relative bg-white dark:bg-gray-900 w-full max-w-6xl h-full sm:h-[85vh] sm:rounded-3xl shadow-2xl flex overflow-hidden animate-pop border dark:border-gray-800"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Internal Sidebar */}
+                    <div className="w-16 sm:w-72 bg-gray-50/50 dark:bg-gray-950/50 border-r dark:border-gray-800 flex flex-col shrink-0 backdrop-blur-lg">
+                        <div className="px-6 py-10 hidden sm:block">
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tighter italic">
+                                <div className="p-1.5 bg-primary text-white rounded-lg -rotate-6 shadow-lg shadow-primary/20"><HelpCircle size={20} /></div> TUTORIAL
+                            </h2>
+                            <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-2 font-black opacity-60">Admin Companion v2.0</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+                            {sections.map((s, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setActiveHelpTab(idx)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all ${activeHelpTab === idx 
+                                        ? 'bg-white dark:bg-primary text-primary dark:text-white shadow-xl shadow-primary/10 border-2 border-primary scale-102 font-black' 
+                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800/50'}`}
+                                >
+                                    <div className="shrink-0">{s.icon}</div>
+                                    <span className="hidden sm:block text-[11px] truncate uppercase tracking-widest">{s.title.split('. ')[1]}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="p-6 border-t dark:border-gray-800 hidden sm:block text-center opacity-40">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Built for Excellence</p>
+                        </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900/50">
+                        <header className="px-10 py-8 flex justify-between items-center sticky top-0 z-10">
+                            <div className="animate-fade-in-left">
+                                <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
+                                    {sections[activeHelpTab].title}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                     <div className="h-1 w-6 bg-primary rounded-full" />
+                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest opacity-80">Operational Mastery Series</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowHelpModal(false)} 
+                                className="bg-gray-100 dark:bg-gray-800 p-3 rounded-full hover:bg-red-500 hover:text-white transition-all transform hover:rotate-90 group shadow-inner border dark:border-gray-700"
+                            >
+                                <X size={24} />
+                            </button>
+                        </header>
+                        
+                        <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                            <div className="max-w-4xl mx-auto">
+                                {sections[activeHelpTab].content}
+                                
+                                <div className="mt-16 pt-16 border-t font-medium dark:border-gray-800 text-center space-y-4 animate-fade-in-up">
+                                    <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs">Need Direct Assistance?</h4>
+                                    <div className="flex justify-center gap-4">
+                                        <button className="flex items-center gap-2 px-6 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-colors">
+                                            <MessageCircle size={14}/> Support Chat
+                                        </button>
+                                        <button className="flex items-center gap-2 px-6 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-colors">
+                                            <FileText size={14}/> Full Manual
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <footer className="px-10 py-6 border-t dark:border-gray-800 bg-white dark:bg-gray-950 flex justify-between items-center shrink-0">
+                             <div className="flex gap-2">
+                                {sections.map((_, i) => (
+                                    <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === activeHelpTab ? 'w-10 bg-primary shadow-lg shadow-primary/20' : 'w-1.5 bg-gray-200 dark:bg-gray-800'}`} />
+                                ))}
+                             </div>
+                             <div className="flex gap-3">
+                                {activeHelpTab > 0 && (
+                                    <button 
+                                        onClick={() => setActiveHelpTab(prev => prev - 1)}
+                                        className="px-6 py-3 border-2 dark:border-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
+                                    >
+                                        Back
+                                    </button>
+                                )}
+                                {activeHelpTab < sections.length - 1 ? (
+                                    <button 
+                                        onClick={() => setActiveHelpTab(prev => prev + 1)}
+                                        className="px-10 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-gray-100 shadow-2xl shadow-blue-500/10 active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        Next Chapter <ChevronRight size={14} />
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => setShowHelpModal(false)}
+                                        className="px-12 py-3 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all font-bold"
+                                    >
+                                        Mastered! Close
+                                    </button>
+                                )}
+                             </div>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderSettingsView = () => {
+        if (!settingsForm) return (
+            <div className="flex flex-col justify-center items-center h-64 animate-fade-in">
+                <Loader className="animate-spin text-primary mb-4" size={48} />
+                <p className="text-gray-500 text-lg">Loading Settings...</p>
+                <p className="text-gray-400 text-sm mt-2">If this persists, try refreshing the page.</p>
+            </div>
+        );
+
+        return (
+            <div className="animate-fade-in max-w-4xl mx-auto pb-12">
+                <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
+                        <SettingsIcon className="mr-3 text-primary" size={28} />
+                        Site Settings
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Customize your white-label application</p>
+                </div>
+
+                <div className="space-y-6 text-left">
+                    {/* Brand Settings */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between border-b dark:border-gray-700 pb-2 mb-4">
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                <Globe size={20} className="mr-2 text-primary" /> Brand Identity
+                            </h3>
+                            <button
+                                onClick={() => onUpdateSettings(settingsForm)}
+                                className="px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                            >
+                                Save Settings
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Name</label>
+                                <input
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.siteName}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, siteName: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <input
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.description}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hero & Features Note */}
+                    <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-800 flex items-start">
+                        <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mr-4 text-blue-600 dark:text-blue-300">
+                            <Edit size={24} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-1">Visual Builder Enabled</h3>
+                            <p className="text-blue-600 dark:text-blue-300 mb-3">
+                                The <strong>Hero Section</strong>, <strong>Features</strong>, and <strong>Why Choose Us</strong> content can now be edited directly on the Home Page using the visual editor.
+                            </p>
+                            {onEnterVisualBuilder && (
+                                <button
+                                    onClick={onEnterVisualBuilder}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-sm flex items-center"
+                                >
+                                    <Palette size={16} className="mr-2" /> Launch Visual Editor
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Map Configuration */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
+                            <Globe size={20} className="mr-2 text-primary" /> Map Configuration
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Maps Embed URL</label>
+                                <input
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.map?.embedUrl || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, map: { ...settingsForm.map, embedUrl: e.target.value } })}
+                                    placeholder="https://www.google.com/maps/embed?..."
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Paste the 'src' attribute from the Google Maps Embed code.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payment Methods */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
+                            <CreditCard size={20} className="mr-2 text-primary" /> Payment Methods
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Upload QR codes for customers to scan and pay. They will see these after booking.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* GCash */}
+                            <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
+                                        <span className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">G</span>
+                                        GCash
+                                    </h4>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={settingsForm.paymentMethods?.gcash?.enabled ?? true}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    gcash: { ...settingsForm.paymentMethods?.gcash, enabled: e.target.checked }
+                                                }
+                                            })}
+                                            className="w-4 h-4 text-primary rounded"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
+                                    </label>
+                                </div>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Juan Dela Cruz"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.gcash?.accountName ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    gcash: { ...settingsForm.paymentMethods?.gcash, accountName: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. 09XX XXX XXXX"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.gcash?.accountNumber ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    gcash: { ...settingsForm.paymentMethods?.gcash, accountNumber: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Paste image URL here"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.gcash?.qrImage ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    gcash: { ...settingsForm.paymentMethods?.gcash, qrImage: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                        {settingsForm.paymentMethods?.gcash?.qrImage && (
+                                            <img src={settingsForm.paymentMethods.gcash.qrImage} alt="GCash QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bank Transfer */}
+                            <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
+                                        <span className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">₱</span>
+                                        Bank Transfer
+                                    </h4>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={settingsForm.paymentMethods?.bankTransfer?.enabled ?? false}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, enabled: e.target.checked }
+                                                }
+                                            })}
+                                            className="w-4 h-4 text-primary rounded"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
+                                    </label>
+                                </div>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Bank Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. BDO, BPI, UnionBank"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.bankTransfer?.bankName ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, bankName: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Juan Dela Cruz"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.bankTransfer?.accountName ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, accountName: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. 1234 5678 9012"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.bankTransfer?.accountNumber ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, accountNumber: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Paste image URL here"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.bankTransfer?.qrImage ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, qrImage: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                        {settingsForm.paymentMethods?.bankTransfer?.qrImage && (
+                                            <img src={settingsForm.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reservation & Deposit Settings */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <CreditCard className="mr-2 text-primary" size={20} />
+                            Reservation & Deposit Settings
+                        </h3>
+
+                        {/* Require Deposit Toggle */}
+                        <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <p className="font-medium text-gray-800 dark:text-white">Require Deposit</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={settingsForm.reservationPolicy?.requireDeposit ?? true}
+                                    onChange={(e) => setSettingsForm({
+                                        ...settingsForm,
+                                        reservationPolicy: {
+                                            ...settingsForm.reservationPolicy,
+                                            requireDeposit: e.target.checked
+                                        }
+                                    })}
+                                />
+                                <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+
+                        {settingsForm.reservationPolicy?.requireDeposit && (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deposit Type</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                name="depositType"
+                                                value="percentage"
+                                                checked={settingsForm.reservationPolicy?.depositType === 'percentage'}
+                                                onChange={() => setSettingsForm({
+                                                    ...settingsForm,
+                                                    reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'percentage' }
+                                                })}
+                                                className="mr-2 text-primary"
+                                            />
+                                            <span className="text-gray-700 dark:text-gray-300">Percentage</span>
+                                        </label>
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                name="depositType"
+                                                value="fixed"
+                                                checked={settingsForm.reservationPolicy?.depositType === 'fixed'}
+                                                onChange={() => setSettingsForm({
+                                                    ...settingsForm,
+                                                    reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'fixed' }
+                                                })}
+                                                className="mr-2 text-primary"
+                                            />
+                                            <span className="text-gray-700 dark:text-gray-300">Fixed Amount</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {settingsForm.reservationPolicy?.depositType === 'percentage' ? (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Deposit Percentage: <span className="text-primary font-bold">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="100"
+                                            step="5"
+                                            value={settingsForm.reservationPolicy?.depositPercentage ?? 50}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositPercentage: parseInt(e.target.value) }
+                                            })}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fixed Deposit Amount (₱)</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                            value={settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                reservationPolicy: { ...settingsForm.reservationPolicy!, fixedDepositAmount: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Email Passcode Section */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <Shield className="mr-2 text-primary" size={20} /> Security & Notifications
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Admin Notification Email</label>
+                                <input
+                                    type="email"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.notifications?.adminEmail ?? ''}
+                                    onChange={(e) => setSettingsForm({
+                                        ...settingsForm,
+                                        notifications: { ...settingsForm.notifications!, adminEmail: e.target.value }
+                                    })}
+                                />
+                            </div>
+
+                            <div className="pt-4 border-t dark:border-gray-700">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Passcode</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        placeholder="New 6-digit passcode"
+                                        className="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg font-mono outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                                        value={newPasscode}
+                                        onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    />
+                                    <button
+                                        onClick={async () => {
+                                            if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
+                                            await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
+                                            setAdminPasscode(newPasscode);
+                                            setNewPasscode('');
+                                            showToast('Passcode updated', 'success');
+                                        }}
+                                        className="px-4 py-2 bg-primary text-white rounded-lg font-bold"
+                                    >
+                                        Update
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Save Changes Button */}
+                    <div className="pt-4">
+                        <button
+                            onClick={handleSaveSettings}
+                            className="w-full flex items-center justify-center px-6 py-4 bg-primary text-white rounded-xl hover:bg-primary-dark transition-all shadow-lg font-bold text-lg"
+                        >
+                            <Save size={20} className="mr-2" /> Save All Settings
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col md:flex-row relative">
             {/* Sidebar Navigation */}
@@ -1142,6 +2124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     >
                         <SettingsIcon size={20} className="mr-3" /> Settings
                     </button>
+
 
                 </nav>
                 <div className="p-4 border-t border-gray-700 hidden md:block space-y-3">
@@ -1272,649 +2255,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {activeTab === 'calendar' && renderCalendarView()}
 
                 {activeTab === 'settings' && (
-                    settingsForm ? (
-                        <div className="animate-fade-in max-w-4xl mx-auto pb-12">
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                                    <SettingsIcon className="mr-3 text-primary" size={28} />
-                                    Site Settings
-                                </h2>
-                                <p className="text-gray-500 dark:text-gray-400 text-sm">Customize your white-label application</p>
-                            </div>
-
-                            <div className="space-y-6">
-                                {/* Brand Settings */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <div className="flex items-center justify-between border-b dark:border-gray-700 pb-2 mb-4">
-                                        <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
-                                            <Globe size={20} className="mr-2 text-primary" /> Brand Identity
-                                        </h3>
-                                        <button
-                                            onClick={() => onUpdateSettings(settingsForm)}
-                                            className="px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-                                        >
-                                            Save Settings
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Name</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.siteName}
-                                                onChange={(e) => setSettingsForm({ ...settingsForm, siteName: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.description}
-                                                onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
-                                            />
-                                        </div>
-
-                                    </div>
-                                </div>
-
-                                {/* Hero & Features Note */}
-                                <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-800 flex items-start">
-                                    <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mr-4 text-blue-600 dark:text-blue-300">
-                                        <Edit size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-1">Visual Builder Enabled</h3>
-                                        <p className="text-blue-600 dark:text-blue-300 mb-3">
-                                            The <strong>Hero Section</strong>, <strong>Features</strong>, and <strong>Why Choose Us</strong> content can now be edited directly on the Home Page using the visual editor.
-                                        </p>
-                                        {onEnterVisualBuilder && (
-                                            <button
-                                                onClick={onEnterVisualBuilder}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-sm flex items-center"
-                                            >
-                                                <Palette size={16} className="mr-2" /> Launch Visual Editor
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Map Configuration */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                                        <Globe size={20} className="mr-2 text-primary" /> Map Configuration
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Maps Embed URL</label>
-                                            <input
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.map?.embedUrl || ''}
-                                                onChange={(e) => setSettingsForm({ ...settingsForm, map: { ...settingsForm.map, embedUrl: e.target.value } })}
-                                                placeholder="https://www.google.com/maps/embed?..."
-                                            />
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Paste the 'src' attribute from the Google Maps Embed code.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                                {/* Payment Methods */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                                        <CreditCard size={20} className="mr-2 text-primary" /> Payment Methods
-                                    </h3>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Upload QR codes for customers to scan and pay. They will see these after booking.</p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* GCash */}
-                                        <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
-                                                    <span className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">G</span>
-                                                    GCash
-                                                </h4>
-                                                <label className="flex items-center cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={settingsForm.paymentMethods?.gcash?.enabled ?? true}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                gcash: { ...settingsForm.paymentMethods?.gcash, enabled: e.target.checked }
-                                                            }
-                                                        })}
-                                                        className="w-4 h-4 text-primary rounded"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
-                                                </label>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. Juan Dela Cruz"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.gcash?.accountName ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                gcash: { ...settingsForm.paymentMethods?.gcash, accountName: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. 09XX XXX XXXX"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.gcash?.accountNumber ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                gcash: { ...settingsForm.paymentMethods?.gcash, accountNumber: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Paste image URL here"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.gcash?.qrImage ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                gcash: { ...settingsForm.paymentMethods?.gcash, qrImage: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                    {settingsForm.paymentMethods?.gcash?.qrImage && (
-                                                        <img src={settingsForm.paymentMethods.gcash.qrImage} alt="GCash QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Bank Transfer */}
-                                        <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
-                                                    <span className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">₱</span>
-                                                    Bank Transfer
-                                                </h4>
-                                                <label className="flex items-center cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={settingsForm.paymentMethods?.bankTransfer?.enabled ?? false}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, enabled: e.target.checked }
-                                                            }
-                                                        })}
-                                                        className="w-4 h-4 text-primary rounded"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
-                                                </label>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Bank Name</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. BDO, BPI, UnionBank"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.bankTransfer?.bankName ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, bankName: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. Juan Dela Cruz"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.bankTransfer?.accountName ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, accountName: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. 1234 5678 9012"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.bankTransfer?.accountNumber ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, accountNumber: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Paste image URL here"
-                                                        className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                        value={settingsForm.paymentMethods?.bankTransfer?.qrImage ?? ''}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            paymentMethods: {
-                                                                ...settingsForm.paymentMethods,
-                                                                bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, qrImage: e.target.value }
-                                                            }
-                                                        })}
-                                                    />
-                                                    {settingsForm.paymentMethods?.bankTransfer?.qrImage && (
-                                                        <img src={settingsForm.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Reservation & Deposit Settings */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                                        <CreditCard className="mr-2 text-primary" size={20} />
-                                        Reservation & Deposit Settings
-                                    </h3>
-
-                                    {/* Require Deposit Toggle */}
-                                    <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                        <div>
-                                            <p className="font-medium text-gray-800 dark:text-white">Require Deposit</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={settingsForm.reservationPolicy?.requireDeposit ?? true}
-                                                onChange={(e) => setSettingsForm({
-                                                    ...settingsForm,
-                                                    reservationPolicy: {
-                                                        ...settingsForm.reservationPolicy,
-                                                        requireDeposit: e.target.checked,
-                                                        depositType: settingsForm.reservationPolicy?.depositType ?? 'percentage',
-                                                        depositPercentage: settingsForm.reservationPolicy?.depositPercentage ?? 50,
-                                                        fixedDepositAmount: settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000,
-                                                        autoConfirmOnDeposit: settingsForm.reservationPolicy?.autoConfirmOnDeposit ?? true,
-                                                        cancellationPolicy: settingsForm.reservationPolicy?.cancellationPolicy ?? '',
-                                                        paymentDeadlineHours: settingsForm.reservationPolicy?.paymentDeadlineHours ?? 24
-                                                    }
-                                                })}
-                                            />
-                                            <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
-                                    </div>
-
-                                    {settingsForm.reservationPolicy?.requireDeposit && (
-                                        <div className="space-y-4">
-                                            {/* Deposit Type */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deposit Type</label>
-                                                <div className="flex gap-4">
-                                                    <label className="flex items-center">
-                                                        <input
-                                                            type="radio"
-                                                            name="depositType"
-                                                            value="percentage"
-                                                            checked={settingsForm.reservationPolicy?.depositType === 'percentage'}
-                                                            onChange={() => setSettingsForm({
-                                                                ...settingsForm,
-                                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'percentage' }
-                                                            })}
-                                                            className="mr-2 text-primary"
-                                                        />
-                                                        <span className="text-gray-700 dark:text-gray-300">Percentage of Total</span>
-                                                    </label>
-                                                    <label className="flex items-center">
-                                                        <input
-                                                            type="radio"
-                                                            name="depositType"
-                                                            value="fixed"
-                                                            checked={settingsForm.reservationPolicy?.depositType === 'fixed'}
-                                                            onChange={() => setSettingsForm({
-                                                                ...settingsForm,
-                                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'fixed' }
-                                                            })}
-                                                            className="mr-2 text-primary"
-                                                        />
-                                                        <span className="text-gray-700 dark:text-gray-300">Fixed Amount</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            {/* Percentage Slider or Fixed Amount */}
-                                            {settingsForm.reservationPolicy?.depositType === 'percentage' ? (
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                        Deposit Percentage: <span className="text-primary font-bold">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
-                                                    </label>
-                                                    <input
-                                                        type="range"
-                                                        min="10"
-                                                        max="100"
-                                                        step="5"
-                                                        value={settingsForm.reservationPolicy?.depositPercentage ?? 50}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            reservationPolicy: { ...settingsForm.reservationPolicy!, depositPercentage: parseInt(e.target.value) }
-                                                        })}
-                                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                    />
-                                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                                        <span>10%</span>
-                                                        <span>50%</span>
-                                                        <span>100%</span>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fixed Deposit Amount (₱)</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="100"
-                                                        className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                        value={settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000}
-                                                        onChange={(e) => setSettingsForm({
-                                                            ...settingsForm,
-                                                            reservationPolicy: { ...settingsForm.reservationPolicy!, fixedDepositAmount: parseInt(e.target.value) || 0 }
-                                                        })}
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {/* Payment Deadline */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Deadline (hours)</label>
-                                                <select
-                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                    value={settingsForm.reservationPolicy?.paymentDeadlineHours ?? 24}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        reservationPolicy: { ...settingsForm.reservationPolicy!, paymentDeadlineHours: parseInt(e.target.value) }
-                                                    })}
-                                                >
-                                                    <option value={12}>12 hours</option>
-                                                    <option value={24}>24 hours</option>
-                                                    <option value={48}>48 hours</option>
-                                                    <option value={72}>72 hours (3 days)</option>
-                                                </select>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unpaid bookings can be cancelled after this time</p>
-                                            </div>
-
-                                            {/* Cancellation Policy */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cancellation Policy</label>
-                                                <textarea
-                                                    rows={3}
-                                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                                                    placeholder="Describe your cancellation and refund policy..."
-                                                    value={settingsForm.reservationPolicy?.cancellationPolicy ?? ''}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        reservationPolicy: { ...settingsForm.reservationPolicy!, cancellationPolicy: e.target.value }
-                                                    })}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Email Notification Settings */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                                        <Bell className="mr-2 text-primary" size={20} />
-                                        Email Notifications
-                                    </h3>
-
-                                    <div className="space-y-4">
-                                        {/* Admin Email */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Admin Notification Email</label>
-                                            <input
-                                                type="email"
-                                                placeholder="admin@yourresort.com"
-                                                className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                value={settingsForm.notifications?.adminEmail ?? ''}
-                                                onChange={(e) => setSettingsForm({
-                                                    ...settingsForm,
-                                                    notifications: {
-                                                        ...settingsForm.notifications,
-                                                        adminEmail: e.target.value,
-                                                        sendUserConfirmation: settingsForm.notifications?.sendUserConfirmation ?? true,
-                                                        sendAdminAlert: settingsForm.notifications?.sendAdminAlert ?? true,
-                                                        sendCheckInReminder: settingsForm.notifications?.sendCheckInReminder ?? true
-                                                    }
-                                                })}
-                                            />
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Receive notifications about new bookings here</p>
-                                        </div>
-
-                                        {/* Notification Toggles */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="mr-3 w-4 h-4 text-primary rounded"
-                                                    checked={settingsForm.notifications?.sendUserConfirmation ?? true}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        notifications: { ...settingsForm.notifications!, sendUserConfirmation: e.target.checked }
-                                                    })}
-                                                />
-                                                <div>
-                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">User Confirmations</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Email guests on booking</p>
-                                                </div>
-                                            </label>
-
-                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="mr-3 w-4 h-4 text-primary rounded"
-                                                    checked={settingsForm.notifications?.sendAdminAlert ?? true}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        notifications: { ...settingsForm.notifications!, sendAdminAlert: e.target.checked }
-                                                    })}
-                                                />
-                                                <div>
-                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">Admin Alerts</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Notify on new bookings</p>
-                                                </div>
-                                            </label>
-
-                                            <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="mr-3 w-4 h-4 text-primary rounded"
-                                                    checked={settingsForm.notifications?.sendCheckInReminder ?? true}
-                                                    onChange={(e) => setSettingsForm({
-                                                        ...settingsForm,
-                                                        notifications: { ...settingsForm.notifications!, sendCheckInReminder: e.target.checked }
-                                                    })}
-                                                />
-                                                <div>
-                                                    <p className="font-medium text-gray-800 dark:text-white text-sm">Check-in Reminders</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Remind guests 1 day before</p>
-                                                </div>
-                                            </label>
-                                        </div>
-
-                                        {/* Security — Admin Passcode */}
-                                        <div id="admin-passcode-section" className="border-t dark:border-gray-700 pt-6">
-                                            <h3 className="flex items-center text-lg font-bold text-gray-800 dark:text-white mb-4">
-                                                <Shield className="mr-2 text-primary" size={20} />
-                                                Admin Passcode
-                                            </h3>
-                                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                                                {adminPasscode
-                                                    ? 'A 6-digit passcode is set. Staff must enter it to access the admin panel.'
-                                                    : 'No passcode set. Anyone with access to the link can open the admin panel.'}
-                                            </p>
-
-                                            {adminPasscode && (
-                                                <div className="mb-4 flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400">Current:</span>
-                                                    <span className="font-mono text-lg font-bold text-gray-800 dark:text-white tracking-widest">
-                                                        {showPasscode ? adminPasscode : '••••••'}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => setShowPasscode(!showPasscode)}
-                                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                                    >
-                                                        {showPasscode ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                        {adminPasscode ? 'New Passcode' : 'Set Passcode'} (6 digits)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        maxLength={6}
-                                                        placeholder="e.g. 123456"
-                                                        value={newPasscode}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                                            setNewPasscode(val);
-                                                            setPasscodeError('');
-                                                        }}
-                                                        className="w-full px-4 py-2.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono tracking-widest text-lg"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                        Confirm Passcode
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        maxLength={6}
-                                                        placeholder="Re-enter passcode"
-                                                        value={confirmPasscode}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                                            setConfirmPasscode(val);
-                                                            setPasscodeError('');
-                                                        }}
-                                                        className="w-full px-4 py-2.5 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-mono tracking-widest text-lg"
-                                                    />
-                                                </div>
-                                                {passcodeError && <p className="text-red-500 text-sm">{passcodeError}</p>}
-                                                {passcodeStatus === 'saved' && <p className="text-green-500 text-sm">✓ Passcode saved!</p>}
-
-                                                <div className="flex gap-3">
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (newPasscode.length !== 6) {
-                                                                setPasscodeError('Passcode must be exactly 6 digits');
-                                                                return;
-                                                            }
-                                                            if (newPasscode !== confirmPasscode) {
-                                                                setPasscodeError('Passcodes do not match');
-                                                                return;
-                                                            }
-                                                            setPasscodeStatus('saving');
-                                                            try {
-                                                                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
-                                                                setAdminPasscode(newPasscode);
-                                                                setNewPasscode('');
-                                                                setConfirmPasscode('');
-                                                                setPasscodeStatus('saved');
-                                                                showToast('Admin passcode saved!', 'success');
-                                                                setTimeout(() => setPasscodeStatus('idle'), 3000);
-                                                            } catch {
-                                                                setPasscodeStatus('error');
-                                                                setPasscodeError('Failed to save passcode');
-                                                            }
-                                                        }}
-                                                        disabled={passcodeStatus === 'saving'}
-                                                        className="flex-1 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-semibold disabled:opacity-50"
-                                                    >
-                                                        {passcodeStatus === 'saving' ? 'Saving...' : adminPasscode ? 'Update Passcode' : 'Set Passcode'}
-                                                    </button>
-                                                    {adminPasscode && (
-                                                        <button
-                                                            onClick={async () => {
-                                                                const confirmed = await showConfirm('Are you sure you want to remove the admin passcode? The admin panel will be accessible without a passcode.');
-                                                                if (!confirmed) return;
-                                                                try {
-                                                                    await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
-                                                                    setAdminPasscode('');
-                                                                    setNewPasscode('');
-                                                                    setConfirmPasscode('');
-                                                                    showToast('Passcode removed', 'success');
-                                                                } catch {
-                                                                    showToast('Failed to remove passcode', 'error');
-                                                                }
-                                                            }}
-                                                            className="px-4 py-2.5 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Save Button */}
-                                        <div className="mt-6 pt-4 border-t dark:border-gray-700">
-                                            <button
-                                                onClick={handleSaveSettings}
-                                                className="w-full flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-md font-bold"
-                                            >
-                                                <Save size={18} className="mr-2" /> Save Changes
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col justify-center items-center h-64 animate-fade-in">
-                            <Loader className="animate-spin text-primary mb-4" size={48} />
-                            <p className="text-gray-500 text-lg">Loading Settings...</p>
-                            <p className="text-gray-400 text-sm mt-2">If this persists, try refreshing the page.</p>
-                        </div>
-                    )
+                    <div className="animate-fade-in-up">
+                        {renderSettingsView()}
+                    </div>
                 )}
 
+                {/* Floating Help Button */}
+                <button
+                    onClick={() => setShowHelpModal(true)}
+                    className="fixed bottom-6 right-6 z-[60] w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center group"
+                    title="Quick Guide"
+                >
+                    <HelpCircle size={22} />
+                    <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                        Quick Guide
+                    </span>
+                </button>
+
+                {/* Help Modal */}
+                {renderHelpModal()}
 
 
                 {
