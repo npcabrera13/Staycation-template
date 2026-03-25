@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -16,6 +17,13 @@ interface LicenseContextType {
     contactEmail: string;
     contactPhone: string;
     providerName: string;
+    expiryDays: number | null;
+    expiryDate: string | null;
+    showExpiryWarning: boolean;
+    setShowExpiryWarning: (show: boolean) => void;
+    showMissingPasscodeWarning: boolean;
+    setShowMissingPasscodeWarning: (show: boolean) => void;
+    licenseKey: string;
 }
 
 const LicenseContext = createContext<LicenseContextType>({
@@ -27,6 +35,13 @@ const LicenseContext = createContext<LicenseContextType>({
     contactEmail: 'support@example.com',
     contactPhone: '',
     providerName: '',
+    expiryDays: null,
+    expiryDate: null,
+    showExpiryWarning: false,
+    setShowExpiryWarning: () => { },
+    showMissingPasscodeWarning: false,
+    setShowMissingPasscodeWarning: () => { },
+    licenseKey: '',
 });
 
 export const useLicense = () => useContext(LicenseContext);
@@ -42,6 +57,11 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     const [contactEmail, setContactEmail] = useState('support@example.com');
     const [contactPhone, setContactPhone] = useState('');
     const [providerName, setProviderName] = useState('');
+    const [expiryDays, setExpiryDays] = useState<number | null>(null);
+    const [expiryDate, setExpiryDate] = useState<string | null>(null);
+    const [showExpiryWarning, setShowExpiryWarning] = useState(false);
+    const [showMissingPasscodeWarning, setShowMissingPasscodeWarning] = useState(false);
+    const [licenseKey, setLicenseKey] = useState('');
     const location = useLocation();
 
     // Skip license check on /superadmin route
@@ -83,6 +103,7 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
             }
 
             const data = docSnap.data();
+            if (data.licenseKey) setLicenseKey(data.licenseKey);
 
             // Backward compat: convert old `active` boolean to lockMode
             let mode: LockMode = 'none';
@@ -108,15 +129,34 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
 
             // Check if expired
             if (data.expiresAt) {
-                const expiryDate = new Date(data.expiresAt);
-                if (expiryDate < serverNow) {
+                const expDate = new Date(data.expiresAt);
+                setExpiryDate(data.expiresAt);
+                
+                const diffTime = expDate.getTime() - serverNow.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                setExpiryDays(diffDays);
+
+                if (expDate < serverNow) {
                     setIsExpired(true);
+                    setLockMode('both'); // Force lock when mathematically expired
                     setIsChecking(false);
                     return;
+                }
+
+                // If not expired but within warning threshold (e.g. 7 days), check if we should show warning
+                if (diffDays <= 7 && isAdminRoute) {
+                    // Check local storage so we don't show it EVERY visit during the day
+                    const lastWarning = localStorage.getItem('last_expiry_warning');
+                    const todayStr = serverNow.toISOString().split('T')[0];
+                    if (lastWarning !== todayStr) {
+                        setShowExpiryWarning(true);
+                        localStorage.setItem('last_expiry_warning', todayStr);
+                    }
                 }
             } else {
                 // Subscription doc exists but no expiresAt = cleared/revoked → treat as expired
                 setIsExpired(true);
+                setLockMode('both');
                 setIsChecking(false);
                 return;
             }
@@ -133,19 +173,36 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     };
 
     // Derive lock status
-    const isHomepageLocked = isExpired || lockMode === 'homepage' || lockMode === 'both';
-    const isAdminLocked = isExpired || lockMode === 'admin' || lockMode === 'both';
+    const isHomepageLockedDerived = isExpired || lockMode === 'homepage' || lockMode === 'both';
+    const isAdminLockedDerived = isExpired || lockMode === 'admin' || lockMode === 'both';
+    
     // Overall: is the current route licensed?
     const isLicensed = isSuperAdminRoute
         ? true
         : isAdminRoute
-            ? !isAdminLocked
-            : !isHomepageLocked;
+            ? !isAdminLockedDerived
+            : !isHomepageLockedDerived;
 
     // Always allow /superadmin
     if (isSuperAdminRoute) {
         return (
-            <LicenseContext.Provider value={{ isLicensed: true, isChecking: false, lockMode: 'none', isHomepageLocked: false, isAdminLocked: false, contactEmail, contactPhone, providerName }}>
+            <LicenseContext.Provider value={{ 
+                isLicensed: true, 
+                isChecking: false, 
+                lockMode: 'none', 
+                isHomepageLocked: false, 
+                isAdminLocked: false, 
+                contactEmail, 
+                contactPhone, 
+                providerName,
+                expiryDays: null,
+                expiryDate: null,
+                showExpiryWarning: false,
+                setShowExpiryWarning: () => {},
+                showMissingPasscodeWarning: false,
+                setShowMissingPasscodeWarning: () => {},
+                licenseKey: ''
+            }}>
                 {children}
             </LicenseContext.Provider>
         );
@@ -174,11 +231,24 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
         );
     }
 
-    // Homepage locked: render children with overlay (same as admin), so homepage is visible behind
-    // Admin locked: render children — App.tsx will add the overlay popup
-    // Not locked: render children normally
     return (
-        <LicenseContext.Provider value={{ isLicensed, isChecking, lockMode, isHomepageLocked, isAdminLocked, contactEmail, contactPhone, providerName }}>
+        <LicenseContext.Provider value={{ 
+            isLicensed, 
+            isChecking, 
+            lockMode, 
+            isHomepageLocked: isHomepageLockedDerived, 
+            isAdminLocked: isAdminLockedDerived, 
+            contactEmail, 
+            contactPhone, 
+            providerName,
+            expiryDays,
+            expiryDate,
+            showExpiryWarning,
+            setShowExpiryWarning,
+            showMissingPasscodeWarning,
+            setShowMissingPasscodeWarning,
+            licenseKey
+        }}>
             {children}
         </LicenseContext.Provider>
     );

@@ -40,6 +40,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
     // Upload State
     const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full'>('deposit');
@@ -75,6 +76,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             setZoomedQr(null);
         }
     }, [room, initialGalleryOpen]);
+
+    useEffect(() => {
+        if (!paymentProofFile) {
+            setPreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(paymentProofFile);
+        setPreviewUrl(url);
+        // Clean up memory
+        return () => URL.revokeObjectURL(url);
+    }, [paymentProofFile]);
 
     if (!room) return null;
 
@@ -129,8 +141,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         }
     };
 
-    const handleProceedToPayment = () => {
-        // Validation
+    const handleContinue = () => {
         const newErrors: { name?: string, email?: string, phone?: string, guests?: string, date?: string } = {};
 
         if (!selectedStart || !selectedEnd) {
@@ -138,13 +149,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         }
 
         if (!guestName.trim()) {
-            newErrors.name = "Guest name is required.";
+            newErrors.name = "Full name is required.";
         }
 
-        if (!email.trim()) {
-            newErrors.email = "Email address is required.";
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = "Please enter a valid email.";
+        if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+            newErrors.email = "Valid email is required.";
         }
 
         if (!phoneNumber.trim()) {
@@ -163,6 +172,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         }
 
         setErrors({});
+        // Immediately start preparing the booking data
+        confirmPayment();
         setStep(2);
     };
 
@@ -224,68 +235,57 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                 depositPaid: false,
                 paymentType: calculatedDeposit > 0 ? paymentChoice : undefined
             };
-            onBook(newBooking);
+            
             setNewBookingId(id);
-            setCreatedBooking(newBooking); // Store locally for upload
+            setCreatedBooking(newBooking); // Store locally for final submission
+            setIsProcessing(false);
+            // We NO LONGER call onBook here. 
+            // We just proceed to the payment instructions step.
+        }, 1000);
+    };
 
-            // Send email notifications
-            // NOTE: User confirmation email is now sent ONLY when admin accepts the booking
+    const handleCompleteBooking = async () => {
+        if (!paymentProofFile || !createdBooking) {
+            alert("Please upload your payment proof first.");
+            return;
+        }
+
+        // Check file size (max 5MB before compression for safety)
+        if (paymentProofFile.size > 5 * 1024 * 1024) {
+            alert("File is too large. Please upload an image smaller than 5MB.");
+            return;
+        }
+
+        setIsProcessing(true);
+        setUploading(true);
+
+        try {
+            // 1. Compress and convert to Base64
+            const base64Image = await compressImageToBase64(paymentProofFile, 800, 0.7);
+
+            // 2. Prepare full booking with proof
+            const fullBooking: Booking = {
+                ...createdBooking,
+                paymentProof: base64Image
+            };
+
+            // 3. Save to database for the first time
+            await onBook(fullBooking);
+            
+            // 4. Send email notifications (Admin only for now)
             if (settings) {
-                // Send admin notification email
                 if (settings.notifications?.sendAdminAlert && settings.notifications?.adminEmail) {
-                    sendAdminNotificationEmail(newBooking, room, settings);
+                    sendAdminNotificationEmail(fullBooking, room, settings);
                 }
             }
 
-            setIsProcessing(false);
-            setStep(3); // Move to Success Step
-        }, 2000);
-    };
-
-    const handleUploadProof = async () => {
-        if (!paymentProofFile || !newBookingId || !onUpdateBooking) {
-            console.log('Upload requirements not met:', { paymentProofFile: !!paymentProofFile, newBookingId, onUpdateBooking: !!onUpdateBooking });
-            return;
-        }
-
-        // Check file size (max 10MB before compression)
-        if (paymentProofFile.size > 10 * 1024 * 1024) {
-            alert("File is too large. Please upload an image smaller than 10MB.");
-            return;
-        }
-
-        setUploading(true);
-        console.log('Starting Base64 upload for booking:', newBookingId);
-        console.log('File details:', { name: paymentProofFile.name, size: paymentProofFile.size, type: paymentProofFile.type });
-
-        try {
-            // Compress and convert to Base64
-            console.log('Compressing image...');
-            const base64Image = await compressImageToBase64(paymentProofFile, 800, 0.7);
-            console.log('Image compressed successfully, length:', base64Image.length);
-
-            // Update booking with Base64 image data
-            // First try the locally stored booking, then fall back to searching in props
-            const bookingToUpdate = createdBooking || bookings.find(b => b.id === newBookingId);
-            if (bookingToUpdate) {
-                await onUpdateBooking({ ...bookingToUpdate, paymentProof: base64Image });
-                setUploadSuccess(true);
-                console.log('Booking updated with Base64 payment proof');
-            } else {
-                console.error('Booking not found:', newBookingId);
-                alert('Booking not found. Please try again or send proof via Messenger.');
-            }
+            setUploadSuccess(true);
+            setStep(3); // Success step
         } catch (error: any) {
-            console.error("Error processing image:", error);
-            // Check for Firestore-specific errors
-            if (error.code === 'invalid-argument' || error.message?.includes('bytes')) {
-                alert("Image is too large for storage. Please use a smaller image (under 2MB) or send via Messenger.");
-            } else if (error.code === 'permission-denied') {
-                alert("Permission denied. Please try again or send proof via Messenger.");
-            } else {
-                alert(error.message || "Failed to upload image. Please try a smaller image or send via Messenger.");
-            }
+            console.error("Error creating booking with proof:", error);
+            alert(error.message || "Failed to submit booking. Please try again.");
         } finally {
+            setIsProcessing(false);
             setUploading(false);
         }
     };
@@ -558,7 +558,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             {errors.date && <p className="text-red-500 text-sm mt-2 animate-fade-in flex items-center justify-center sm:justify-start"><AlertCircle size={14} className="mr-1" /> {errors.date}</p>}
                                         </div>
                                         <button
-                                            onClick={handleProceedToPayment}
+                                            onClick={handleContinue}
                                             className="w-full sm:w-auto bg-secondary text-white px-8 py-3 rounded-full font-bold hover:bg-primary transition-all transform hover:scale-105 shadow-lg"
                                         >
                                             Continue
@@ -568,7 +568,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                             )}
 
                             {step === 2 && (
-                                <div className="flex flex-col h-full justify-between animate-slide-in-right">
+                                <div className="flex flex-col animate-slide-in-right">
                                     <div>
                                         <h3 className="text-xl md:text-2xl font-serif font-bold text-secondary dark:text-white mb-6">Payment Details</h3>
 
@@ -669,7 +669,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                                 Scan QR to Pay
                                             </h4>
-                                            <p className="text-blue-600 dark:text-blue-400 text-xs mb-4">Scan the QR code below with your GCash or Banking app. After payment, send the screenshot to our Messenger to confirm your booking.</p>
+                                            <p className="text-blue-600 dark:text-blue-400 text-xs mb-4">Scan the QR code below with your payment app. After payment, send the screenshot to our Messenger to confirm your booking.</p>
 
                                             {settings?.paymentMethods && (settings.paymentMethods.gcash?.enabled || settings.paymentMethods.bankTransfer?.enabled) ? (
                                                 <div className="flex gap-6 justify-center flex-wrap">
@@ -681,7 +681,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     <Maximize2 className="text-white" size={24} />
                                                                 </div>
                                                             </div>
-                                                            <div className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block">GCash</div>
+                                                            <div className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block">
+                                                                {settings.paymentMethods.gcash.label || 'E-Wallet'}
+                                                            </div>
                                                             {settings.paymentMethods.gcash.accountName && (
                                                                 <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">{settings.paymentMethods.gcash.accountName}</p>
                                                             )}
@@ -698,7 +700,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     <Maximize2 className="text-white" size={24} />
                                                                 </div>
                                                             </div>
-                                                            <div className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block">{settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}</div>
+                                                            <div className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block">
+                                                                {settings.paymentMethods.bankTransfer.label || settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}
+                                                            </div>
                                                             {settings.paymentMethods.bankTransfer.accountName && (
                                                                 <p className="text-xs text-green-700 dark:text-green-400 mt-1">{settings.paymentMethods.bankTransfer.accountName}</p>
                                                             )}
@@ -712,28 +716,87 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-4">Payment methods not configured. Please contact us directly.</p>
                                             )}
                                         </div>
-                                    </div>
-
-                                    <div className="sticky bottom-0 mt-4 flex flex-col-reverse sm:flex-row gap-4 bg-white dark:bg-gray-800 pt-4 border-t border-gray-100 dark:border-gray-700 z-10 shadow-[0_-8px_16px_-6px_rgba(0,0,0,0.08)]">
+                                            <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                                         <button
                                             onClick={() => setStep(1)}
-                                            className="flex-1 py-3 rounded-full font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                            className="w-full sm:w-auto px-8 py-3 rounded-full font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-100 dark:border-gray-700"
                                         >
                                             Back
                                         </button>
-                                        <button
-                                            onClick={confirmPayment}
-                                            disabled={isProcessing}
-                                            className="flex-[2] bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center"
-                                        >
-                                            {isProcessing ? (
-                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                            ) : 'Confirm Booking'}
-                                        </button>
+                                        <div className="flex-[2] flex flex-col gap-3">
+                                            {/* Final Proof Upload at the end of Step 2 */}
+                                            <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <label className="block text-[10px] font-black uppercase text-primary">Upload Payment Screenshot</label>
+                                                    {paymentProofFile && (
+                                                        <button 
+                                                            onClick={() => setPaymentProofFile(null)}
+                                                            className="text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors flex items-center"
+                                                        >
+                                                            <X size={10} className="mr-1" /> Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {previewUrl ? (
+                                                    <div className="relative group rounded-lg overflow-hidden border border-primary/20 bg-white">
+                                                        <div 
+                                                            className="cursor-zoom-in group-relative"
+                                                            onClick={() => setZoomedQr(previewUrl)}
+                                                        >
+                                                            <img src={previewUrl} alt="Payment Proof Preview" className="w-full h-32 object-cover" />
+                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                                <Maximize2 className="text-white" size={20} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="absolute bottom-2 right-2 flex gap-2">
+                                                            <label 
+                                                                htmlFor="payment-upload" 
+                                                                className="cursor-pointer bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/30 hover:bg-black/80 transition-all shadow-lg"
+                                                            >
+                                                                Change Image
+                                                            </label>
+                                                        </div>
+                                                        <input
+                                                            id="payment-upload"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                if (e.target.files && e.target.files[0]) {
+                                                                    setPaymentProofFile(e.target.files[0]);
+                                                                }
+                                                            }}
+                                                            className="hidden"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => {
+                                                            if (e.target.files && e.target.files[0]) {
+                                                                setPaymentProofFile(e.target.files[0]);
+                                                            }
+                                                        }}
+                                                        className="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white hover:file:bg-primary/80 transition-all cursor-pointer"
+                                                    />
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={handleCompleteBooking}
+                                                disabled={isProcessing || !paymentProofFile}
+                                                className="w-full bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center disabled:opacity-50 disabled:scale-100"
+                                            >
+                                                {isProcessing ? (
+                                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                ) : 'Submit Proof & Book Now'}
+                                            </button>
+                                        </div>
                                     </div>
+                     </div>
                                 </div>
                             )}
 
@@ -776,12 +839,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 {settings.paymentMethods.gcash?.enabled && settings.paymentMethods.gcash.qrImage && (
                                                     <div className="text-center">
                                                         <div className="relative group mx-auto w-28 h-28 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
-                                                            <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-full h-full object-contain border rounded-lg bg-white" />
+                                                            <img src={settings.paymentMethods.gcash.qrImage} alt={`${settings.paymentMethods.gcash.label || 'E-Wallet'} QR`} className="w-full h-full object-contain border rounded-lg bg-white" />
                                                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                                                                 <Maximize2 className="text-white" size={20} />
                                                             </div>
                                                         </div>
-                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300">GCash</p>
+                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300">
+                                                            {settings.paymentMethods.gcash.label || 'E-Wallet'}
+                                                        </p>
                                                         {settings.paymentMethods.gcash.accountName && (
                                                             <p className="text-xs text-blue-600 dark:text-blue-400">{settings.paymentMethods.gcash.accountName}</p>
                                                         )}
@@ -804,47 +869,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             </div>
                                         </div>
                                     )}
-                                    {/* Upload Payment Proof Section */}
-                                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 w-full max-w-md mb-6 shadow-sm">
-                                        <h4 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center text-sm">
-                                            <ImageIcon size={16} className="mr-2 text-primary" />
-                                            Upload Payment Proof
-                                        </h4>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                                            Already paid? Upload your receipt screenshot here to speed up confirmation.
-                                        </p>
-
-                                        {!uploadSuccess ? (
-                                            <div className="flex flex-col gap-3">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => {
-                                                        if (e.target.files && e.target.files[0]) {
-                                                            setPaymentProofFile(e.target.files[0]);
-                                                        }
-                                                    }}
-                                                    className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                                />
-                                                <button
-                                                    onClick={handleUploadProof}
-                                                    disabled={!paymentProofFile || uploading}
-                                                    className="w-full py-2 bg-primary text-white rounded-lg font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-dark transition-colors flex justify-center items-center"
-                                                >
-                                                    {uploading ? (
-                                                        <>
-                                                            <Loader className="animate-spin mr-2" size={14} /> Uploading...
-                                                        </>
-                                                    ) : 'Submit Proof'}
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center justify-center text-sm font-medium">
-                                                <CheckCircle size={16} className="mr-2" />
-                                                Proof Uploaded Successfully!
-                                            </div>
-                                        )}
-                                    </div>
 
                                     <div className="flex gap-4 w-full max-w-md">
                                         <button onClick={() => alert("Downloading receipt...")} className="flex-1 flex items-center justify-center py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -854,7 +878,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             Done
                                         </button>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-6">Use "Find My Booking" in the menu to check status later.</p>
+                                    <p className="text-xs text-gray-400 mt-6 italic">You can find your booking later using the "Find My Booking" menu.</p>
                                 </div>
                             )}
 

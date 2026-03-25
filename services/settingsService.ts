@@ -80,12 +80,14 @@ export const DEFAULT_SETTINGS: Settings = {
     paymentMethods: {
         gcash: {
             enabled: true,
+            label: "E-Wallet",
             accountName: "",
             accountNumber: "",
             qrImage: ""
         },
         bankTransfer: {
             enabled: false,
+            label: "Bank Transfer",
             bankName: "",
             accountName: "",
             accountNumber: "",

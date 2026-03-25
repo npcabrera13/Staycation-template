@@ -120,12 +120,14 @@ export interface Settings {
     paymentMethods?: {
         gcash?: {
             enabled: boolean;
+            label?: string;
             accountName?: string;
             accountNumber?: string;
             qrImage?: string;
         };
         bankTransfer?: {
             enabled: boolean;
+            label?: string;
             bankName?: string;
             accountName?: string;
             accountNumber?: string;

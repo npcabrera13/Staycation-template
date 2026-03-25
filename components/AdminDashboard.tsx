@@ -33,6 +33,15 @@ interface AdminDashboardProps {
     onUpdateSettings?: (settings: Settings) => Promise<void>;
     onExit: () => void;
     onEnterVisualBuilder?: () => void;
+    // Subscription Props
+    showExpiryWarning: boolean;
+    expiryDays: number | null;
+    expiryDate: string | null;
+    contactInfo: { email: string; phone: string; providerName: string };
+    showMissingPasscodeWarning: boolean;
+    setShowMissingPasscodeWarning: (show: boolean) => void;
+    licenseKey: string;
+    setShowExpiryWarning: (show: boolean) => void;
 }
 
 
@@ -70,6 +79,16 @@ const getStartOfWeek = (date: Date) => {
     return d;
 };
 
+const HelpTooltip: React.FC<{ text: string }> = ({ text }) => (
+    <div className="group relative inline-block ml-1.5 cursor-help align-middle">
+        <HelpCircle size={13} className="text-gray-400 hover:text-primary transition-colors" />
+        <div className="invisible group-hover:visible absolute z-[9999] bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900/95 backdrop-blur-md text-white text-[10px] leading-relaxed rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none text-center font-medium">
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900/95"></div>
+        </div>
+    </div>
+);
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
     bookings,
     rooms,
@@ -85,7 +104,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     settings,
     onUpdateSettings,
     onExit,
-    onEnterVisualBuilder
+    onEnterVisualBuilder,
+    showExpiryWarning,
+    expiryDays,
+    expiryDate,
+    contactInfo,
+    showMissingPasscodeWarning,
+    setShowMissingPasscodeWarning,
+    licenseKey,
+    setShowExpiryWarning
 }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>('calendar');
     const [showHelpModal, setShowHelpModal] = useState(false);
@@ -94,13 +121,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
     const { showToast, showConfirm } = useNotification();
-
-    // Expiry tracker state
-    const [expiryDays, setExpiryDays] = useState<number | null>(null);
-    const [expiryDate, setExpiryDate] = useState<string | null>(null);
-    const [showExpiryWarning, setShowExpiryWarning] = useState(false);
-    const [showMissingPasscodeWarning, setShowMissingPasscodeWarning] = useState(false);
-    const [contactInfo, setContactInfo] = useState({ providerName: '', email: '', phone: '' });
 
     // Passcode state
     const [adminPasscode, setAdminPasscode] = useState('');
@@ -111,26 +131,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [passcodeError, setPasscodeError] = useState('');
 
     useEffect(() => {
-        const fetchExpiry = async () => {
-            try {
-                const snap = await getDoc(doc(db, '_superadmin', 'subscription'));
-                if (snap.exists() && snap.data().expiresAt) {
-                    const exp = snap.data().expiresAt;
-                    setExpiryDate(exp);
-                    const days = Math.ceil((new Date(exp).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    setExpiryDays(days);
-                    if (days <= 7) setShowExpiryWarning(true);
-                }
-            } catch { }
-        };
-        const fetchContact = async () => {
-            try {
-                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
-                if (snap.exists() && snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
-            } catch { }
-        };
-        fetchExpiry();
-        fetchContact();
         // Load admin passcode
         const fetchPasscode = async () => {
             try {
@@ -1684,7 +1684,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Name</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Site Name
+                                    <HelpTooltip text="The name of your staycation business displayed throughout the site" />
+                                </label>
                                 <input
                                     className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     value={settingsForm.siteName}
@@ -1692,11 +1695,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Description
+                                    <HelpTooltip text="A short tagline or description for your website (Meta information)" />
+                                </label>
                                 <input
                                     className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     value={settingsForm.description}
                                     onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Logo URL
+                                    <HelpTooltip text="Direct link to your logo image (recommended size: 200x50px)" />
+                                </label>
+                                <input
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.logo || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, logo: e.target.value })}
+                                    placeholder="https://example.com/logo.png"
                                 />
                             </div>
                         </div>
@@ -1730,7 +1748,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Maps Embed URL</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Google Maps Embed URL
+                                    <HelpTooltip text="The 'src' value from the Google Maps 'Share > Embed a map' HTML code" />
+                                </label>
                                 <input
                                     className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     value={settingsForm.map?.embedUrl || ''}
@@ -1754,8 +1775,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
-                                        <span className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">G</span>
-                                        GCash
+                                        <span className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">
+                                            {settingsForm.paymentMethods?.gcash?.label?.charAt(0) || 'G'}
+                                        </span>
+                                        {settingsForm.paymentMethods?.gcash?.label || 'E-Wallet'}
                                     </h4>
                                     <label className="flex items-center cursor-pointer">
                                         <input
@@ -1770,10 +1793,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             })}
                                             className="w-4 h-4 text-primary rounded"
                                         />
-                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
+                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                                            Enabled
+                                            <HelpTooltip text="Toggle this off to temporarily hide GCash as a payment option" />
+                                        </span>
                                     </label>
                                 </div>
                                 <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                            Account Type / Label
+                                            <HelpTooltip text="Customize the name (e.g. GCash, Maya, PayPal)" />
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. E-Wallet"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.gcash?.label ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    gcash: { ...settingsForm.paymentMethods?.gcash, label: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
                                         <input
@@ -1822,7 +1867,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             })}
                                         />
                                         {settingsForm.paymentMethods?.gcash?.qrImage && (
-                                            <img src={settingsForm.paymentMethods.gcash.qrImage} alt="GCash QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
+                                            <img src={settingsForm.paymentMethods.gcash.qrImage} alt="E-Wallet QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
                                         )}
                                     </div>
                                 </div>
@@ -1832,8 +1877,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="border dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
-                                        <span className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">₱</span>
-                                        Bank Transfer
+                                        <span className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center mr-2 text-xs font-bold">
+                                            {settingsForm.paymentMethods?.bankTransfer?.label?.charAt(0) || '₱'}
+                                        </span>
+                                        {settingsForm.paymentMethods?.bankTransfer?.label || 'Bank Transfer'}
                                     </h4>
                                     <label className="flex items-center cursor-pointer">
                                         <input
@@ -1848,10 +1895,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             })}
                                             className="w-4 h-4 text-primary rounded"
                                         />
-                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">Enabled</span>
+                                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                                            Enabled
+                                            <HelpTooltip text="Toggle this off to temporarily hide Bank Transfer as a payment option" />
+                                        </span>
                                     </label>
                                 </div>
                                 <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                            Account Type / Label
+                                            <HelpTooltip text="Customize the name (e.g. Bank Transfer, BPI, PayMaya)" />
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Bank Transfer"
+                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            value={settingsForm.paymentMethods?.bankTransfer?.label ?? ''}
+                                            onChange={(e) => setSettingsForm({
+                                                ...settingsForm,
+                                                paymentMethods: {
+                                                    ...settingsForm.paymentMethods,
+                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, label: e.target.value }
+                                                }
+                                            })}
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Bank Name</label>
                                         <input
@@ -1933,10 +2002,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {/* Require Deposit Toggle */}
                         <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-white">Require Deposit</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
-                            </div>
+                                <div>
+                                    <p className="font-medium text-gray-800 dark:text-white flex items-center">
+                                        Require Deposit
+                                        <HelpTooltip text="If enabled, guests must upload a payment proof before their booking is saved" />
+                                    </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
+                                </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -1957,7 +2029,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {settingsForm.reservationPolicy?.requireDeposit && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Deposit Type</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                        Deposit Type
+                                        <HelpTooltip text="Choose between a percentage of the total price or a fixed amount per booking" />
+                                    </label>
                                     <div className="flex gap-4">
                                         <label className="flex items-center">
                                             <input
@@ -1992,8 +2067,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                 {settingsForm.reservationPolicy?.depositType === 'percentage' ? (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Deposit Percentage: <span className="text-primary font-bold">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                            Deposit Percentage: <span className="text-primary font-bold ml-1">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
+                                            <HelpTooltip text="Slide to adjust the percentage of total price required for deposit" />
                                         </label>
                                         <input
                                             type="range"
@@ -2010,7 +2086,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 ) : (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fixed Deposit Amount (₱)</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+                                            Fixed Deposit Amount (₱)
+                                            <HelpTooltip text="The exact amount in Pesos required for every reservation" />
+                                        </label>
                                         <input
                                             type="number"
                                             className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -2835,29 +2914,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                         <div className="space-y-6">
                                             {/* Basic Details */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                                                    <input
-                                                        type="text"
-                                                        value={isAddingRoom ? newRoom.name : editForm.name}
-                                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, name: e.target.value }) : setEditForm({ ...editForm, name: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                                                        placeholder="e.g. Sunset Villa"
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                    <div className="lg:col-span-2">
+                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                            Room Name
+                                                            <HelpTooltip text="The display name of the unit (e.g. 'Sunset Villa')" />
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={isAddingRoom ? newRoom.name : editForm.name}
+                                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, name: e.target.value }) : setEditForm({ ...editForm, name: e.target.value })}
+                                                            placeholder="e.g. Sunset Villa"
+                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                                        />
+                                                    </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Overnight Price (₱)</label>
+                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                            Overnight Price (₱)
+                                                            <HelpTooltip text="Base price for a standard one-night stay" />
+                                                        </label>
                                                         <input
                                                             type="number"
                                                             value={isAddingRoom ? newRoom.price : editForm.price}
                                                             onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, price: Number(e.target.value) }) : setEditForm({ ...editForm, price: Number(e.target.value) })}
-                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Day Use Price (₱) <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
+                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                            Day Use Price (₱)
+                                                            <HelpTooltip text="Optional price for daytime-only stays. Leave empty or 0 if not supported." />
+                                                        </label>
                                                         <input
                                                             type="number"
                                                             value={isAddingRoom ? (newRoom.dayUsePrice || '') : (editForm.dayUsePrice || '')}
@@ -2865,63 +2953,77 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                 const val = e.target.value ? Number(e.target.value) : undefined;
                                                                 isAddingRoom ? setNewRoom({ ...newRoom, dayUsePrice: val }) : setEditForm({ ...editForm, dayUsePrice: val });
                                                             }}
-                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                                                             placeholder="e.g. 1500"
+                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                                         />
+                                                        <p className="text-[10px] text-gray-400 mt-1 italic">(Optional)</p>
                                                     </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                            Capacity
+                                                            <HelpTooltip text="Maximum number of guests allowed in this unit" />
+                                                        </label>
                                                         <input
                                                             type="number"
                                                             value={isAddingRoom ? newRoom.capacity : editForm.capacity}
                                                             onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, capacity: Number(e.target.value) }) : setEditForm({ ...editForm, capacity: Number(e.target.value) })}
-                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                                        />
+                                                    </div>
+                                                    <div className="lg:col-span-2">
+                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                            Fixed Deposit Amount (₱)
+                                                            <HelpTooltip text="Overrides global deposit settings for this room only. Set to 0 to use global defaults." />
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                                                isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
+                                                            }}
+                                                            placeholder="e.g. 2000 (leave empty to use global setting)"
+                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                                         />
                                                     </div>
                                                 </div>
-                                                {/* Per-Room Deposit Amount */}
+
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fixed Deposit Amount (₱) <span className="text-gray-400 text-xs font-normal">(Optional - overrides global)</span></label>
-                                                    <input
-                                                        type="number"
-                                                        value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value ? Number(e.target.value) : undefined;
-                                                            isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
-                                                        }}
-                                                        placeholder="e.g. 2000 (leave empty to use global setting)"
-                                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                        Description
+                                                        <HelpTooltip text="Brief highlights of the room features and view" />
+                                                    </label>
+                                                    <textarea
+                                                        value={isAddingRoom ? newRoom.description : editForm.description}
+                                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, description: e.target.value }) : setEditForm({ ...editForm, description: e.target.value })}
+                                                        rows={3}
+                                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                                     />
-                                                    <p className="text-xs text-gray-400 mt-1">Leave empty to use the global deposit setting instead.</p>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                                        Main Image URL
+                                                        <HelpTooltip text="Direct link to the main photo of this unit" />
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={isAddingRoom ? newRoom.image : editForm.image}
+                                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, image: e.target.value }) : setEditForm({ ...editForm, image: e.target.value })}
+                                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                                    />
                                                 </div>
                                             </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                                <textarea
-                                                    value={isAddingRoom ? newRoom.description : editForm.description}
-                                                    onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, description: e.target.value }) : setEditForm({ ...editForm, description: e.target.value })}
-                                                    rows={3}
-                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                                                />
-                                            </div>
-
-                                            {/* Image Handling */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Main Image URL</label>
-                                                <input
-                                                    type="text"
-                                                    value={isAddingRoom ? newRoom.image : editForm.image}
-                                                    onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, image: e.target.value }) : setEditForm({ ...editForm, image: e.target.value })}
-                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none mb-2"
-                                                />
                                                 {/* Image Preview */}
                                                 {(isAddingRoom ? newRoom.image : editForm.image) && (
                                                     <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden relative">
                                                         <img src={isAddingRoom ? newRoom.image : editForm.image} alt="Preview" className="w-full h-full object-cover" />
                                                     </div>
                                                 )}
-                                            </div>
+                                            
 
                                             {/* Gallery Images */}
                                             <div>

@@ -24,7 +24,20 @@ import { NotificationProvider, useNotification } from './contexts/NotificationCo
 
 function AppContent() {
   const navigate = useNavigate();
-  const { isAdminLocked, isHomepageLocked, contactEmail, contactPhone, providerName } = useLicense();
+  const { 
+    isAdminLocked, 
+    isHomepageLocked, 
+    contactEmail, 
+    contactPhone, 
+    providerName,
+    expiryDays,
+    expiryDate,
+    showExpiryWarning,
+    setShowExpiryWarning,
+    showMissingPasscodeWarning,
+    setShowMissingPasscodeWarning,
+    licenseKey
+  } = useLicense();
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [startEditing, setStartEditing] = useState(false);
   const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
@@ -285,6 +298,18 @@ function AppContent() {
                   setStartEditing(true);
                   navigate('/');
                 }}
+                showExpiryWarning={showExpiryWarning}
+                expiryDays={expiryDays}
+                expiryDate={expiryDate}
+                contactInfo={{
+                  email: contactEmail,
+                  phone: contactPhone,
+                  providerName: providerName
+                }}
+                showMissingPasscodeWarning={showMissingPasscodeWarning}
+                setShowMissingPasscodeWarning={setShowMissingPasscodeWarning}
+                licenseKey={licenseKey}
+                setShowExpiryWarning={setShowExpiryWarning}
               />
               {/* Admin Lockout Overlay */}
               {isAdminLocked && (
