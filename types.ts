@@ -58,6 +58,8 @@ export interface Settings {
         slideInterval?: number;
         overlayOpacity: number;
         imagePosition: string;
+        imageFocusPoint?: 'top' | 'center' | 'bottom';
+        mobileImage?: string;
         textShadow?: 'none' | 'sm' | 'lg';
     };
     features: {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints } from 'lucide-react';
+import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints, SlidersHorizontal } from 'lucide-react';
 import { Settings } from '../../types';
 import InfoTooltip from '../UI/InfoTooltip';
 
@@ -16,6 +16,21 @@ interface BuilderToolbarProps {
     isMinimized?: boolean;
     onToggleMinimize?: (minimized: boolean) => void;
 }
+
+const THEME_PRESETS = [
+    { name: 'Navy & Gold', primary: '#1B2A4A', hover: '#142038', secondary: '#B8860B' },
+    { name: 'Ocean Breeze', primary: '#0077B6', hover: '#005F8A', secondary: '#0096C7' },
+    { name: 'Emerald Luxe', primary: '#064E3B', hover: '#043D2E', secondary: '#059669' },
+    { name: 'Sunset Coral', primary: '#E76F51', hover: '#D45A3C', secondary: '#264653' },
+    { name: 'Royal Purple', primary: '#6D28D9', hover: '#5B21B6', secondary: '#4C1D95' },
+    { name: 'Classic Black', primary: '#111827', hover: '#000000', secondary: '#374151' },
+    { name: 'Rose Garden', primary: '#BE185D', hover: '#9D174D', secondary: '#831843' },
+    { name: 'Teal Modern', primary: '#0D9488', hover: '#0F766E', secondary: '#115E59' },
+    { name: 'Warm Earth', primary: '#92400E', hover: '#78350F', secondary: '#78350F' },
+    { name: 'Sky Fresh', primary: '#2563EB', hover: '#1D4ED8', secondary: '#1E40AF' },
+    { name: 'Forest Pine', primary: '#166534', hover: '#14532D', secondary: '#064E3B' },
+    { name: 'Crimson Bold', primary: '#DC2626', hover: '#B91C1C', secondary: '#991B1B' },
+];
 
 const AccordionItem: React.FC<{
     title: string;
@@ -52,7 +67,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     onToggleMinimize
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
-    // Internal state removed in favor of props
+    const [mobileExpanded, setMobileExpanded] = useState(false);
 
 
     if (!isEditing) {
@@ -95,19 +110,18 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
         );
     }
 
-    return (
-        <div className="fixed bottom-0 md:top-0 left-0 w-full h-[55vh] md:h-screen md:w-80 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-2xl z-50 flex flex-col md:border-r border-gray-200 animate-slide-up md:animate-slide-right rounded-t-[2rem] md:rounded-none mt-auto">
-            {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10 rounded-t-[2rem] md:rounded-none">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                    <Edit size={20} />
-                    <span>Visual Builder</span>
-                </div>
-                <button onClick={() => onToggleMinimize?.(true)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                    <X size={20} />
-                </button>
-            </div>
+    const applyPreset = (preset: typeof THEME_PRESETS[0]) => {
+        onUpdateSettings?.('theme', 'primaryColor', preset.primary);
+        onUpdateSettings?.('theme', 'primaryHoverColor', preset.hover);
+        onUpdateSettings?.('theme', 'secondaryColor', preset.secondary);
+        onUpdateSettings?.('hero', 'buttonColor', '');
+        onUpdateSettings?.('roomsSection', 'accentColor', '');
+        onUpdateSettings?.('searchBar', 'buttonColor', '');
+    };
 
+    // --- Full Panel Content (shared between desktop sidebar and mobile expanded) ---
+    const renderFullPanel = () => (
+        <>
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                 {/* 1. Theme Settings */}
@@ -121,31 +135,10 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-2">🎨 Quick Theme Presets</label>
                         <div className="grid grid-cols-2 gap-2 mb-4">
-                            {[
-                                { name: 'Navy & Gold', primary: '#1B2A4A', hover: '#142038', secondary: '#B8860B' },
-                                { name: 'Ocean Breeze', primary: '#0077B6', hover: '#005F8A', secondary: '#0096C7' },
-                                { name: 'Emerald Luxe', primary: '#064E3B', hover: '#043D2E', secondary: '#059669' },
-                                { name: 'Sunset Coral', primary: '#E76F51', hover: '#D45A3C', secondary: '#264653' },
-                                { name: 'Royal Purple', primary: '#6D28D9', hover: '#5B21B6', secondary: '#4C1D95' },
-                                { name: 'Classic Black', primary: '#111827', hover: '#000000', secondary: '#374151' },
-                                { name: 'Rose Garden', primary: '#BE185D', hover: '#9D174D', secondary: '#831843' },
-                                { name: 'Teal Modern', primary: '#0D9488', hover: '#0F766E', secondary: '#115E59' },
-                                { name: 'Warm Earth', primary: '#92400E', hover: '#78350F', secondary: '#78350F' },
-                                { name: 'Sky Fresh', primary: '#2563EB', hover: '#1D4ED8', secondary: '#1E40AF' },
-                                { name: 'Forest Pine', primary: '#166534', hover: '#14532D', secondary: '#064E3B' },
-                                { name: 'Crimson Bold', primary: '#DC2626', hover: '#B91C1C', secondary: '#991B1B' },
-                            ].map(preset => (
+                            {THEME_PRESETS.map(preset => (
                                 <button
                                     key={preset.name}
-                                    onClick={() => {
-                                        onUpdateSettings?.('theme', 'primaryColor', preset.primary);
-                                        onUpdateSettings?.('theme', 'primaryHoverColor', preset.hover);
-                                        onUpdateSettings?.('theme', 'secondaryColor', preset.secondary);
-                                        // Clear overrides so they inherit the new preset theme colors
-                                        onUpdateSettings?.('hero', 'buttonColor', '');
-                                        onUpdateSettings?.('roomsSection', 'accentColor', '');
-                                        onUpdateSettings?.('searchBar', 'buttonColor', '');
-                                    }}
+                                    onClick={() => applyPreset(preset)}
                                     className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all hover:shadow-md hover:scale-[1.02] ${
                                         settings?.theme.primaryColor === preset.primary ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 bg-white'
                                     }`}
@@ -259,6 +252,45 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         >
                             + Add Another Image
                         </button>
+                    </div>
+
+                    {/* Mobile Hero Image */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 flex items-center">
+                            📱 Mobile Hero Image (Optional)
+                            <InfoTooltip text="Upload a portrait-oriented image optimized for phones. If empty, the desktop image will be used." />
+                        </label>
+                        <input
+                            type="text"
+                            value={settings?.hero.mobileImage || ''}
+                            onChange={(e) => onUpdateSettings?.('hero', 'mobileImage', e.target.value)}
+                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
+                            placeholder="Portrait image URL for mobile..."
+                        />
+                        {settings?.hero.mobileImage && settings.hero.mobileImage.trim() !== '' && (
+                            <div className="mt-2 h-20 w-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mx-auto">
+                                <img src={settings.hero.mobileImage} alt="Mobile preview" className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Image Focus Point */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2 flex items-center">
+                            🎯 Image Focus Point
+                            <InfoTooltip text="Controls which part of the image stays visible when cropped on different screen sizes." />
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['top', 'center', 'bottom'] as const).map(opt => (
+                                <button
+                                    key={opt}
+                                    onClick={() => onUpdateSettings?.('hero', 'imageFocusPoint', opt)}
+                                    className={`px-2 py-2 text-xs capitalize rounded border text-center transition-all ${settings?.hero.imageFocusPoint === opt || (!settings?.hero.imageFocusPoint && opt === 'center') ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                                >
+                                    {opt === 'top' ? '⬆️ Top' : opt === 'bottom' ? '⬇️ Bottom' : '⏺️ Center'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div>
@@ -451,7 +483,106 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     {hasChanges ? "Discard & Exit" : "Exit Builder"}
                 </button>
             </div>
-        </div>
+        </>
+    );
+
+    return (
+        <>
+            {/* ===== DESKTOP: Standard Left Sidebar ===== */}
+            <div className="hidden md:flex fixed top-0 left-0 h-screen w-80 bg-white shadow-2xl z-50 flex-col border-r border-gray-200 animate-slide-right">
+                {/* Header */}
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10">
+                    <div className="flex items-center gap-2 text-primary font-bold">
+                        <Edit size={20} />
+                        <span>Visual Builder</span>
+                    </div>
+                    <button onClick={() => onToggleMinimize?.(true)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                {renderFullPanel()}
+            </div>
+
+            {/* ===== MOBILE: Top Mini Palette (collapsed) ===== */}
+            {!mobileExpanded && (
+                <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg animate-slide-down">
+                    {/* Mini Header */}
+                    <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">🎨 Themes</span>
+                        <div className="flex items-center gap-1">
+                            {hasChanges && (
+                                <button
+                                    onClick={onSave}
+                                    className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm hover:bg-primary-hover transition-all"
+                                >
+                                    <Save size={12} className="inline mr-1" />Save
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setMobileExpanded(true)}
+                                className="text-gray-500 hover:text-primary p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                title="More Settings"
+                            >
+                                <SlidersHorizontal size={18} />
+                            </button>
+                            <button
+                                onClick={() => onToggleMinimize?.(true)}
+                                className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                title="Close Builder"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Scrollable Theme Presets Row */}
+                    <div className="flex gap-2 overflow-x-auto px-3 pb-2 scrollbar-hide">
+                        {THEME_PRESETS.map(preset => (
+                            <button
+                                key={preset.name}
+                                onClick={() => applyPreset(preset)}
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all text-[10px] font-semibold whitespace-nowrap ${
+                                    settings?.theme.primaryColor === preset.primary
+                                        ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary shadow-sm'
+                                        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:shadow-sm active:scale-95'
+                                }`}
+                            >
+                                <div className="flex -space-x-1">
+                                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: preset.primary }}></div>
+                                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: preset.secondary }}></div>
+                                </div>
+                                {preset.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ===== MOBILE: Expanded Full Panel (bottom sheet) ===== */}
+            {mobileExpanded && (
+                <div className="md:hidden fixed inset-0 z-50 flex flex-col">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileExpanded(false)} />
+                    {/* Panel */}
+                    <div className="relative mt-auto w-full h-[80vh] bg-white rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col animate-slide-up">
+                        {/* Handle & Header */}
+                        <div className="flex flex-col items-center pt-3 pb-2 border-b border-gray-200 rounded-t-[2rem]">
+                            <div className="w-10 h-1 bg-gray-300 rounded-full mb-3" />
+                            <div className="flex items-center justify-between w-full px-4">
+                                <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                                    <Edit size={18} />
+                                    <span>Visual Builder</span>
+                                </div>
+                                <button onClick={() => setMobileExpanded(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        {renderFullPanel()}
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

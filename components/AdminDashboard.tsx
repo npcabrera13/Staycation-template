@@ -247,6 +247,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     // Add Booking State
     const [isAddingBooking, setIsAddingBooking] = useState(false);
 
+    // Zoomed Image State
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
 
     // Export State
     const [showExportModal, setShowExportModal] = useState(false);
@@ -3032,15 +3035,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
                                                         <div key={idx} className="flex gap-2 items-center group">
                                                             {img && (
-                                                                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                                                <div 
+                                                                    className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 cursor-zoom-in hover:border-primary transition-all relative group/thumb shadow-sm hover:shadow-md"
+                                                                    onClick={() => setZoomedImage(img)}
+                                                                    title="Click to Zoom"
+                                                                >
                                                                     <img 
                                                                         src={img} 
                                                                         alt="" 
-                                                                        className="w-full h-full object-cover" 
+                                                                        className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-300" 
                                                                         onError={(e) => {
                                                                             (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
                                                                         }} 
                                                                     />
+                                                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <Maximize2 size={14} className="text-white" />
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                             <div className="flex-1 relative">
@@ -3390,6 +3400,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Zoomed Image Overlay */}
+            {zoomedImage && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center animate-pop" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => setZoomedImage(null)}
+                            className="absolute -top-12 right-0 p-2 text-white hover:text-red-400 transition-colors bg-white/10 hover:bg-white/20 rounded-full z-10"
+                        >
+                            <X size={24} />
+                        </button>
+                        <img
+                            src={zoomedImage}
+                            alt="Zoomed Preview"
+                            className="w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl bg-white/5 p-1"
+                        />
                     </div>
                 </div>
             )}

@@ -327,10 +327,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onUpdateSettings={handleSettingChange}
                 />
                 {/* Hero Section */}
-                <div id="hero" className="relative h-[100vh] min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
+                <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
                     <div className="absolute inset-0">
                         {/* Get valid images array */}
                         {(() => {
+                            const focusPoint = workingSettings.hero?.imageFocusPoint || 'center';
+                            const focusPosition = focusPoint === 'top' ? 'top' : focusPoint === 'bottom' ? 'bottom' : 'center';
+                            const mobileImage = workingSettings.hero?.mobileImage;
                             const validImages = (workingSettings.hero?.images || [workingSettings.hero?.image]).filter(img => img && img.trim() !== '' && img.includes('http'));
 
                             if (validImages.length === 0) {
@@ -343,7 +346,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             isEditing={isEditing}
                                             onChange={(val) => handleSettingChange('hero', 'image', val)}
                                             className="w-full h-full object-cover"
-                                            style={{ objectPosition: 'center' }}
+                                            style={{ objectPosition: focusPosition }}
                                         />
                                     </div>
                                 );
@@ -353,6 +356,15 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 // Single image - no carousel
                                 return (
                                     <div className="absolute inset-0">
+                                        {/* Mobile hero image (if set) */}
+                                        {mobileImage && mobileImage.trim() !== '' && (
+                                            <img
+                                                src={mobileImage}
+                                                alt="Hero Background"
+                                                className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
+                                                style={{ objectPosition: focusPosition }}
+                                            />
+                                        )}
                                         <InlineImage
                                             src={validImages[0]}
                                             alt="Hero Background"
@@ -361,8 +373,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 handleSettingChange('hero', 'image', val);
                                                 handleSettingChange('hero', 'images', [val]);
                                             }}
-                                            className="w-full h-full object-cover"
-                                            style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
+                                            className={`w-full h-full object-cover ${mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            style={{ objectPosition: focusPosition }}
                                         />
                                     </div>
                                 );
@@ -376,6 +388,15 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         key={index}
                                         className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
                                     >
+                                        {/* Mobile hero image override (only on active slide 0) */}
+                                        {index === 0 && mobileImage && mobileImage.trim() !== '' && (
+                                            <img
+                                                src={mobileImage}
+                                                alt="Hero Background"
+                                                className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
+                                                style={{ objectPosition: focusPosition }}
+                                            />
+                                        )}
                                         <InlineImage
                                             src={img}
                                             alt={`Hero Background ${index + 1}`}
@@ -385,8 +406,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 newImages[index] = val;
                                                 handleSettingChange('hero', 'images', newImages);
                                             }}
-                                            className="w-full h-full object-cover"
-                                            style={{ objectPosition: workingSettings.hero?.imagePosition || 'center' }}
+                                            className={`w-full h-full object-cover ${index === 0 && mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            style={{ objectPosition: focusPosition }}
                                         />
                                     </div>
                                 );
