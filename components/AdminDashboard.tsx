@@ -3030,15 +3030,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Gallery Images</label>
                                                 <div className="space-y-2">
                                                     {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
-                                                        <div key={idx} className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={img}
-                                                                onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
-                                                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                                                placeholder="Image URL"
-                                                            />
-                                                            <button onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)} className="text-red-500 hover:bg-red-50 p-2 rounded"><Trash2 size={16} /></button>
+                                                        <div key={idx} className="flex gap-2 items-center group">
+                                                            {img && (
+                                                                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                                                    <img 
+                                                                        src={img} 
+                                                                        alt="" 
+                                                                        className="w-full h-full object-cover" 
+                                                                        onError={(e) => {
+                                                                            (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
+                                                                        }} 
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex-1 relative">
+                                                                <input
+                                                                    type="text"
+                                                                    value={img}
+                                                                    onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
+                                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                                                    placeholder="Image URL"
+                                                                />
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)} 
+                                                                className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                                                title="Remove Image"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
                                                         </div>
                                                     ))}
                                                     <button
