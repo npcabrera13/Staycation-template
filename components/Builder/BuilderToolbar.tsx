@@ -96,14 +96,14 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     }
 
     return (
-        <div className="fixed top-0 left-0 bottom-0 w-full md:w-80 bg-white shadow-2xl z-50 flex flex-col border-r border-gray-200 animate-slide-right">
+        <div className="fixed bottom-0 md:top-0 left-0 w-full h-[55vh] md:h-screen md:w-80 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-2xl z-50 flex flex-col md:border-r border-gray-200 animate-slide-up md:animate-slide-right rounded-t-[2rem] md:rounded-none mt-auto">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10 rounded-t-[2rem] md:rounded-none">
                 <div className="flex items-center gap-2 text-primary font-bold">
                     <Edit size={20} />
                     <span>Visual Builder</span>
                 </div>
-                <button onClick={() => onToggleMinimize?.(true)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => onToggleMinimize?.(true)} className="text-gray-400 hover:text-gray-600 transition-colors">
                     <X size={20} />
                 </button>
             </div>
