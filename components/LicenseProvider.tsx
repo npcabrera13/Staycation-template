@@ -80,13 +80,28 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     const loadContactInfo = async () => {
         try {
             const snap = await getDoc(doc(db, '_superadmin', 'settings'));
-            if (snap.exists() && snap.data().contactInfo) {
-                const c = snap.data().contactInfo;
-                if (c.email) setContactEmail(c.email);
-                if (c.phone) setContactPhone(c.phone);
-                if (c.providerName) setProviderName(c.providerName);
+            if (snap.exists()) {
+                const data = snap.data();
+                
+                // Track contact info
+                if (data.contactInfo) {
+                    const c = data.contactInfo;
+                    if (c.email) setContactEmail(c.email);
+                    if (c.phone) setContactPhone(c.phone);
+                    if (c.providerName) setProviderName(c.providerName);
+                }
+
+                // CHECK FOR MISSING PASSCODE
+                // If the doc exists but adminPasscode is missing or empty, show warning
+                if (!data.adminPasscode || data.adminPasscode.trim() === '') {
+                    setShowMissingPasscodeWarning(true);
+                } else {
+                    setShowMissingPasscodeWarning(false);
+                }
             }
-        } catch { }
+        } catch (err) {
+            console.error("Error loading superadmin settings:", err);
+        }
     };
 
     const checkLicense = async () => {

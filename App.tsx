@@ -388,7 +388,12 @@ function AppContent() {
               onExitAdmin={() => setIsAdminAuthenticated(false)}
               startEditing={startEditing}
               onEditingStarted={() => setStartEditing(false)}
-              onUpdateRoom={handleUpdateRoom}
+              onUpdateRoom={async (roomId, updates) => {
+                const existingRoom = rooms.find(r => r.id === roomId);
+                if (existingRoom) {
+                  await handleUpdateRoom({ ...existingRoom, ...updates } as Room);
+                }
+              }}
             />
             {/* Homepage Lockout Overlay */}
             {isHomepageLocked && (

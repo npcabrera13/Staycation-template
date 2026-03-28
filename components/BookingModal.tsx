@@ -4,7 +4,7 @@ import {
     X, Wifi, Wind, Coffee, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
     ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users, Printer, Download, Star,
-    Info, Grid, Image as ImageIcon, Loader, Clock
+    Info, Grid, Image as ImageIcon, Loader, Clock, Copy
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
@@ -45,6 +45,39 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full'>('deposit');
     const [zoomedQr, setZoomedQr] = useState<string | null>(null);
+    const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
+
+    const handleCopy = (text: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedNumber(text);
+        setTimeout(() => setCopiedNumber(null), 2000);
+    };
+
+    const handleDownloadQr = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+            console.error("Failed to download image", e);
+            // Fallback for cross-origin images
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = "_blank";
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
 
     // Error State
     const [errors, setErrors] = useState<{ name?: string, email?: string, phone?: string, guests?: string, date?: string }>({});
@@ -675,39 +708,73 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 <div className="flex gap-6 justify-center flex-wrap">
                                                     {settings.paymentMethods.gcash?.enabled && settings.paymentMethods.gcash.qrImage && (
                                                         <div className="text-center">
-                                                            <div className="relative group mx-auto w-36 h-36 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
-                                                                <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-full h-full object-contain border-2 border-blue-200 rounded-xl bg-white" />
-                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                                                                    <Maximize2 className="text-white" size={24} />
+                                                            <div className="relative mx-auto w-36 mb-2">
+                                                                <div className="relative group h-36 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
+                                                                    <img src={settings.paymentMethods.gcash.qrImage} alt="GCash QR" className="w-full h-full object-contain border-2 border-blue-200 rounded-xl bg-white" />
+                                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                                                        <Maximize2 className="text-white" size={24} />
+                                                                    </div>
                                                                 </div>
+                                                                <button 
+                                                                    onClick={() => handleDownloadQr(settings.paymentMethods!.gcash!.qrImage!, 'gcash-qr.png')}
+                                                                    className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 py-1.5 rounded-lg transition-colors"
+                                                                >
+                                                                    <Download size={12} /> Download QR
+                                                                </button>
                                                             </div>
-                                                            <div className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block">
+                                                            <div className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block mt-1">
                                                                 {settings.paymentMethods.gcash.label || 'E-Wallet'}
                                                             </div>
                                                             {settings.paymentMethods.gcash.accountName && (
-                                                                <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">{settings.paymentMethods.gcash.accountName}</p>
+                                                                <p className="text-xs text-blue-700 dark:text-blue-400 mt-2">{settings.paymentMethods.gcash.accountName}</p>
                                                             )}
                                                             {settings.paymentMethods.gcash.accountNumber && (
-                                                                <p className="text-xs text-blue-600 dark:text-blue-500 font-mono">{settings.paymentMethods.gcash.accountNumber}</p>
+                                                                <div className="flex items-center justify-center gap-2 mt-1">
+                                                                    <p className="text-xs text-blue-600 dark:text-blue-500 font-mono bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{settings.paymentMethods.gcash.accountNumber}</p>
+                                                                    <button 
+                                                                        onClick={() => handleCopy(settings.paymentMethods!.gcash!.accountNumber!)}
+                                                                        className="text-blue-500 hover:text-blue-700 transition-colors bg-white hover:bg-blue-50 rounded p-1 shadow-sm border border-blue-100"
+                                                                        title="Copy Account Number"
+                                                                    >
+                                                                        {copiedNumber === settings.paymentMethods.gcash.accountNumber ? <CheckCircle size={14} className="text-green-500" /> : <Copy size={14} />}
+                                                                    </button>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     )}
                                                     {settings.paymentMethods.bankTransfer?.enabled && settings.paymentMethods.bankTransfer.qrImage && (
                                                         <div className="text-center">
-                                                            <div className="relative group mx-auto w-36 h-36 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
-                                                                <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border-2 border-green-200 rounded-xl bg-white" />
-                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                                                                    <Maximize2 className="text-white" size={24} />
+                                                            <div className="relative mx-auto w-36 mb-2">
+                                                                <div className="relative group h-36 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
+                                                                    <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border-2 border-green-200 rounded-xl bg-white" />
+                                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                                                        <Maximize2 className="text-white" size={24} />
+                                                                    </div>
                                                                 </div>
+                                                                <button 
+                                                                    onClick={() => handleDownloadQr(settings.paymentMethods!.bankTransfer!.qrImage!, 'bank-qr.png')}
+                                                                    className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 hover:bg-green-200 py-1.5 rounded-lg transition-colors"
+                                                                >
+                                                                    <Download size={12} /> Download QR
+                                                                </button>
                                                             </div>
-                                                            <div className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block">
+                                                            <div className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full inline-block mt-1">
                                                                 {settings.paymentMethods.bankTransfer.label || settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}
                                                             </div>
                                                             {settings.paymentMethods.bankTransfer.accountName && (
-                                                                <p className="text-xs text-green-700 dark:text-green-400 mt-1">{settings.paymentMethods.bankTransfer.accountName}</p>
+                                                                <p className="text-xs text-green-700 dark:text-green-400 mt-2">{settings.paymentMethods.bankTransfer.accountName}</p>
                                                             )}
                                                             {settings.paymentMethods.bankTransfer.accountNumber && (
-                                                                <p className="text-xs text-green-600 dark:text-green-500 font-mono">{settings.paymentMethods.bankTransfer.accountNumber}</p>
+                                                                <div className="flex items-center justify-center gap-2 mt-1">
+                                                                    <p className="text-xs text-green-700 dark:text-green-500 font-mono bg-green-50 dark:bg-green-900/40 px-2 py-0.5 rounded">{settings.paymentMethods.bankTransfer.accountNumber}</p>
+                                                                    <button 
+                                                                        onClick={() => handleCopy(settings.paymentMethods!.bankTransfer!.accountNumber!)}
+                                                                        className="text-green-600 hover:text-green-700 transition-colors bg-white hover:bg-green-50 rounded p-1 shadow-sm border border-green-100"
+                                                                        title="Copy Account Number"
+                                                                    >
+                                                                        {copiedNumber === settings.paymentMethods.bankTransfer.accountNumber ? <CheckCircle size={14} className="text-green-500" /> : <Copy size={14} />}
+                                                                    </button>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     )}
@@ -838,31 +905,71 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             <div className="flex gap-4 justify-center flex-wrap">
                                                 {settings.paymentMethods.gcash?.enabled && settings.paymentMethods.gcash.qrImage && (
                                                     <div className="text-center">
-                                                        <div className="relative group mx-auto w-28 h-28 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
-                                                            <img src={settings.paymentMethods.gcash.qrImage} alt={`${settings.paymentMethods.gcash.label || 'E-Wallet'} QR`} className="w-full h-full object-contain border rounded-lg bg-white" />
-                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                                <Maximize2 className="text-white" size={20} />
+                                                        <div className="relative mx-auto w-32 mb-2">
+                                                            <div className="relative group h-32 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.gcash!.qrImage)}>
+                                                                <img src={settings.paymentMethods.gcash.qrImage} alt={`${settings.paymentMethods.gcash.label || 'E-Wallet'} QR`} className="w-full h-full object-contain border rounded-lg bg-white" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                                    <Maximize2 className="text-white" size={20} />
+                                                                </div>
                                                             </div>
+                                                            <button 
+                                                                onClick={() => handleDownloadQr(settings.paymentMethods!.gcash!.qrImage!, 'gcash-qr.png')}
+                                                                className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 py-1.5 rounded-lg transition-colors border border-blue-200"
+                                                            >
+                                                                <Download size={12} /> Download
+                                                            </button>
                                                         </div>
-                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300">
+                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mt-2">
                                                             {settings.paymentMethods.gcash.label || 'E-Wallet'}
                                                         </p>
                                                         {settings.paymentMethods.gcash.accountName && (
                                                             <p className="text-xs text-blue-600 dark:text-blue-400">{settings.paymentMethods.gcash.accountName}</p>
                                                         )}
+                                                        {settings.paymentMethods.gcash.accountNumber && (
+                                                            <div className="flex items-center justify-center gap-1 mt-1">
+                                                                <p className="text-[10px] text-blue-600 dark:text-blue-500 font-mono bg-blue-50/50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">{settings.paymentMethods.gcash.accountNumber}</p>
+                                                                <button 
+                                                                    onClick={() => handleCopy(settings.paymentMethods!.gcash!.accountNumber!)}
+                                                                    className="text-blue-500 hover:text-blue-700 transition-colors p-1"
+                                                                    title="Copy Account Number"
+                                                                >
+                                                                    {copiedNumber === settings.paymentMethods.gcash.accountNumber ? <CheckCircle size={12} className="text-green-500" /> : <Copy size={12} />}
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                                 {settings.paymentMethods.bankTransfer?.enabled && settings.paymentMethods.bankTransfer.qrImage && (
                                                     <div className="text-center">
-                                                        <div className="relative group mx-auto w-28 h-28 mb-2 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
-                                                            <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border rounded-lg bg-white" />
-                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                                <Maximize2 className="text-white" size={20} />
+                                                        <div className="relative mx-auto w-32 mb-2">
+                                                            <div className="relative group h-32 cursor-zoom-in" onClick={() => setZoomedQr(settings.paymentMethods!.bankTransfer!.qrImage)}>
+                                                                <img src={settings.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="w-full h-full object-contain border rounded-lg bg-white" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                                    <Maximize2 className="text-white" size={20} />
+                                                                </div>
                                                             </div>
+                                                            <button 
+                                                                onClick={() => handleDownloadQr(settings.paymentMethods!.bankTransfer!.qrImage!, 'bank-qr.png')}
+                                                                className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 hover:bg-green-200 py-1.5 rounded-lg transition-colors border border-green-200"
+                                                            >
+                                                                <Download size={12} /> Download
+                                                            </button>
                                                         </div>
-                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300">{settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}</p>
+                                                        <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mt-2">{settings.paymentMethods.bankTransfer.bankName || 'Bank Transfer'}</p>
                                                         {settings.paymentMethods.bankTransfer.accountName && (
                                                             <p className="text-xs text-blue-600 dark:text-blue-400">{settings.paymentMethods.bankTransfer.accountName}</p>
+                                                        )}
+                                                        {settings.paymentMethods.bankTransfer.accountNumber && (
+                                                            <div className="flex items-center justify-center gap-1 mt-1">
+                                                                <p className="text-[10px] text-green-700 dark:text-green-500 font-mono bg-green-50/50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">{settings.paymentMethods.bankTransfer.accountNumber}</p>
+                                                                <button 
+                                                                    onClick={() => handleCopy(settings.paymentMethods!.bankTransfer!.accountNumber!)}
+                                                                    className="text-green-600 hover:text-green-700 transition-colors p-1"
+                                                                    title="Copy Account Number"
+                                                                >
+                                                                    {copiedNumber === settings.paymentMethods.bankTransfer.accountNumber ? <CheckCircle size={12} className="text-green-500" /> : <Copy size={12} />}
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 )}

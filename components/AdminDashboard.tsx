@@ -8,13 +8,15 @@ import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2
 } from 'lucide-react';
 
+import { useLocation } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 import StatsSummaryModal from './Admin/StatsSummaryModal';
 import BookingEditModal from './Admin/BookingEditModal';
 import { sendUserConfirmationEmail } from '../services/emailService';
+import AdminOnboarding from './Admin/AdminOnboarding';
 
 
 interface AdminDashboardProps {
@@ -114,9 +116,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     licenseKey,
     setShowExpiryWarning
 }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>('calendar');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>(
+        () => (location.state?.activeTab as any) || 'calendar'
+    );
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [activeHelpTab, setActiveHelpTab] = useState(0);
+
+    const navigateToTab = (tab: 'overview' | 'calendar' | 'rooms' | 'settings', targetId?: string) => {
+        setActiveTab(tab);
+        if (targetId) {
+            // Increased timeout to 600ms to ensure content is rendered in DOM
+            setTimeout(() => {
+                const el = document.getElementById(targetId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Add a temporary highlight effect
+                    el.classList.add('ring-4', 'ring-primary/50', 'transition-all', 'duration-1000');
+                    setTimeout(() => el.classList.remove('ring-4', 'ring-primary/50'), 3000);
+                }
+            }, 600);
+        }
+    };
+
+    // Auto-scroll if navigated from Quick Start Guide
+    useEffect(() => {
+        if (location.state?.scrollTarget && activeTab === location.state?.activeTab) {
+            setTimeout(() => {
+                document.getElementById(location.state.scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
+    }, [location.state?.scrollTarget, activeTab]);
 
 
     const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
@@ -1673,7 +1703,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="space-y-6 text-left">
                     {/* Brand Settings */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div id="settings-brand" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <div className="flex items-center justify-between border-b dark:border-gray-700 pb-2 mb-4">
                             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                                 <Globe size={20} className="mr-2 text-primary" /> Brand Identity
@@ -1745,7 +1775,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Map Configuration */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div id="settings-map" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <Globe size={20} className="mr-2 text-primary" /> Map Configuration
                         </h3>
@@ -1767,7 +1797,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Payment Methods */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div id="settings-payment" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <CreditCard size={20} className="mr-2 text-primary" /> Payment Methods
                         </h3>
@@ -1996,6 +2026,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
 
+                    {/* Social Media Links */}
+                    <div id="settings-social" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
+                            <Share2 size={20} className="mr-2 text-primary" /> Social Media Links
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Connect your social accounts so guests can follow you.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://facebook.com/yourpage"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.social?.facebook || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, facebook: e.target.value, facebookLabel: 'Facebook' } as any })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instagram URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://instagram.com/yourpage"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.social?.instagram || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, instagram: e.target.value, instagramLabel: 'Instagram' } as any })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Airbnb URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://airbnb.com/rooms/12345"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.social?.airbnb || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, airbnb: e.target.value, airbnbLabel: 'Airbnb' } as any })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website or Other Link</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://yourwebsite.com"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    value={settingsForm.social?.customUrl || ''}
+                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, customUrl: e.target.value, customLabel: 'Website' } as any })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Reservation & Deposit Settings */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
@@ -2209,11 +2290,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
 
                 </nav>
-                <div className="p-4 border-t border-gray-700 hidden md:block space-y-3">
+                <div className="p-4 border-t border-gray-700 space-y-3">
                     {onEnterVisualBuilder && (
                         <button
                             onClick={onEnterVisualBuilder}
-                            className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all font-bold shadow-lg transform hover:-translate-y-0.5"
+                            className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-500 bg-[length:200%_auto] animate-gradient-x text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all font-bold shadow-lg transform hover:-translate-y-0.5"
                         >
                             <Palette size={18} className="mr-2" /> Open Visual Builder
                         </button>
@@ -2226,6 +2307,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {/* Main Content */}
             <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
+
+                {/* Admin Onboarding Tour */}
+                {settings?.setupComplete && (
+                    <AdminOnboarding onNavigate={navigateToTab} onEnterVisualBuilder={onEnterVisualBuilder} />
+                )}
 
                 {/* Expiry Tracker Banner */}
                 {expiryDays !== null && (

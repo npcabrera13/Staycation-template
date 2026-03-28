@@ -27,7 +27,6 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
   const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
-    // ... scroll logic ...
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setScrolled(true);
@@ -95,7 +94,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     <nav className={navClasses}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center cursor-pointer select-none group" onClick={handleLogoClick}>
+          <div className="flex items-center cursor-pointer select-none group relative" onClick={handleLogoClick}>
             <div className={`relative h-10 w-auto max-w-[120px] mr-3 overflow-visible flex-shrink-0 ${isEditing ? 'ring-2 ring-primary ring-offset-2 rounded-sm cursor-pointer' : ''}`}>
               {settings?.logo?.trim() ? (
                 <img
@@ -216,6 +215,33 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
                   placeholder="https://i.imgur.com/example.png"
                   autoFocus
                 />
+              </div>
+
+              {/* Live Preview */}
+              <div className="mt-2 p-4 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 min-h-[100px] transition-all">
+                <span className="text-xs text-gray-400 font-medium mb-3 uppercase tracking-wider">Live Preview</span>
+                {logoUrlInput.trim() ? (
+                  <div className="relative h-12 w-full flex flex-col items-center justify-center">
+                     <img 
+                       src={logoUrlInput} 
+                       alt="Logo Preview" 
+                       className="max-h-full max-w-full object-contain"
+                       onError={(e) => {
+                         const target = e.target as HTMLImageElement;
+                         target.style.display = 'none';
+                         if (target.nextElementSibling) {
+                             (target.nextElementSibling as HTMLElement).style.display = 'block';
+                         }
+                       }}
+                     />
+                     <span className="text-xs text-red-500 font-medium hidden mt-2">Invalid Image URL</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
+                     <ImageIcon size={24} className="opacity-30 mb-1" />
+                     <span className="text-xs font-medium">No image URL provided</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">

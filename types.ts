@@ -159,6 +159,7 @@ export interface Settings {
         buttonTextColor?: string;
         buttonFontFamily?: string;
     };
+    setupComplete?: boolean; // Tracks if the admin has completed initial setup
 }
 
 export interface ChartData {

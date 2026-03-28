@@ -17,6 +17,7 @@ import InlineImage from './Builder/InlineImage';
 import InlineButton from './Builder/InlineButton';
 import InlineColorBlock from './Builder/InlineColorBlock';
 import BuilderToolbar from './Builder/BuilderToolbar';
+import SetupWizard from './SetupWizard';
 
 // Wrapper that only shows AI chat when enabled in SuperAdmin settings
 const AiChatWrapper: React.FC = () => {
@@ -48,6 +49,7 @@ interface LandingPageProps {
     onExitAdmin?: () => void;
     startEditing?: boolean;
     onEditingStarted?: () => void;
+    onUpdateRoom?: (roomId: string, updates: Partial<Room>) => Promise<void>;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
@@ -62,7 +64,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
     isAdmin = false,
     onExitAdmin,
     startEditing,
-    onEditingStarted
+    onEditingStarted,
+    onUpdateRoom,
 }) => {
     const navigate = useNavigate();
     const [activeRoomIndex, setActiveRoomIndex] = useState(0);
@@ -326,6 +329,18 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     isBuilderOpen={isEditing && !isBuilderMinimized}
                     onUpdateSettings={handleSettingChange}
                 />
+
+                {/* Setup Wizard — mandatory until user changes the default name */}
+                {workingSettings?.siteName === 'Serenity Staycation' && onUpdateSettings && (
+                    <SetupWizard
+                        settings={workingSettings}
+                        rooms={rooms}
+                        onUpdateSettings={onUpdateSettings}
+                        onUpdateRoom={onUpdateRoom}
+                        onEnterAdmin={onAdminEnter}
+                    />
+                )}
+
                 {/* Hero Section */}
                 <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
                     <div className="absolute inset-0">
@@ -979,7 +994,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onAdminEnter={onAdminEnter}
                 />
                 <AiChatWrapper />
-            </div >
+            </div>
 
             {isEditing && (
                 <BuilderToolbar
