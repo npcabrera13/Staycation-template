@@ -673,7 +673,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     <span className="text-primary">
                                         <InlineText
                                             value={workingSettings.about?.subtitle ?? ""}
-                                            placeholder="Serenity?"
+                                            placeholder="Us?"
                                             isEditing={isEditing}
                                             onChange={(val) => handleSettingChange('about', 'subtitle', val)}
                                         />
@@ -683,9 +683,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                             <div className="space-y-10">
                                 {(workingSettings.about?.features || [
-                                    { title: "Handpicked Locations", description: "Every house is verified for quality, view, and comfort to ensure a magical stay." },
-                                    { title: "Seamless Booking", description: "Real-time availability calendar, instant confirmation, and secure payments." },
-                                    { title: "24/7 Concierge", description: "Our AI concierge and support team are always here to help you plan your trip." }
+                                    { title: "Curated Destinations", description: "Each property is handpicked for its unique charm and absolute comfort to ensure a remarkable stay." },
+                                    { title: "Effortless Booking", description: "Enjoy a seamless experience with real-time availability, instant confirmation, and secure payments." },
+                                    { title: "Personalized Service", description: "Our dedicated support team and digital concierge are always available to help you plan the perfect trip." }
                                 ]).map((feature, index) => (
                                     <RevealOnScroll key={index} delay={200 * (index + 1)}>
                                         <div className="flex items-start group">

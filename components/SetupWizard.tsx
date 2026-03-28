@@ -83,6 +83,10 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                 updated.siteName = businessName.trim();
                 if (!updated.hero) updated.hero = {} as any;
                 updated.hero.title = businessName.trim();
+                
+                // Sync "Why Choose [Resort Name]?" section
+                if (!updated.about) updated.about = {} as any;
+                updated.about.subtitle = `${businessName.trim()}?`;
             }
             if (heroTagline.trim()) updated.hero.tagline = heroTagline.trim();
             if (heroSubtitle.trim()) updated.hero.subtitle = heroSubtitle.trim();

@@ -2257,7 +2257,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <aside className="bg-secondary text-white w-full md:w-64 flex-shrink-0 flex flex-col z-30 shadow-xl">
                 <div className="p-6 border-b border-gray-700 flex justify-between items-center md:block">
                     <h1 className="text-xl md:text-2xl font-bold font-serif tracking-wider">Admin Panel</h1>
-                    <button onClick={onExit} className="md:hidden p-2 hover:bg-gray-700 rounded"><LogOut size={20} /></button>
+                    <button onClick={onExit} className="md:hidden p-2 hover:bg-gray-700 rounded" title="Return to Site">
+                        <LogOut size={20} />
+                    </button>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
                     <button
@@ -2299,7 +2301,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <Palette size={18} className="mr-2" /> Open Visual Builder
                         </button>
                     )}
-                    <button onClick={onExit} className="flex items-center text-red-300 hover:text-red-100 transition-colors w-full justify-center pt-2">
+                    <button onClick={onExit} className="hidden md:flex items-center text-red-300 hover:text-red-100 transition-colors w-full justify-center pt-2">
                         <LogOut size={20} className="mr-2" /> Return to Site
                     </button>
                 </div>
