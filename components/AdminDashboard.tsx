@@ -2308,7 +2308,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
+            <main className="flex-1 p-2 sm:p-4 md:p-8 overflow-y-auto h-screen">
 
                 {/* Admin Onboarding Tour */}
                 {settings?.setupComplete && (
@@ -2448,12 +2448,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {
                     activeTab === 'overview' && (
-                        <div className="animate-fade-in space-y-8 pb-12">
+                        <div className="animate-fade-in space-y-4 sm:space-y-6 md:space-y-8 pb-12">
                             {/* Stats Cards & Charts - Keep existing implementation */}
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Overview</h2>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Track performance and manage bookings</p>
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-white">Dashboard Overview</h2>
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm hidden sm:block">Track performance and manage bookings</p>
                                 </div>
 
                                 <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2 xl:space-x-2 w-full md:w-auto">
@@ -2516,61 +2516,61 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             </div>
 
-                            {/* Stats Cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 bg-teal-50 rounded-lg text-primary">
-                                            <CalendarIcon size={24} />
+                            {/* Stats Cards - Compact on mobile */}
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
+                                <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
+                                        <div className="p-1.5 sm:p-2 md:p-3 bg-teal-50 rounded-lg text-primary">
+                                            <CalendarIcon size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
                                         </div>
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Bookings</span>
+                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Bookings</span>
                                     </div>
-                                    <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{rangeBookingsCount}</span>
-                                        <span className="text-xs text-gray-400 mb-1.5">In Range</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2">
+                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rangeBookingsCount}</span>
+                                        <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">In Range</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 bg-orange-50 rounded-lg text-accent">
-                                            <TrendingUp size={24} />
+                                <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
+                                        <div className="p-1.5 sm:p-2 md:p-3 bg-orange-50 rounded-lg text-accent">
+                                            <TrendingUp size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
                                         </div>
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
+                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
                                     </div>
-                                    <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">₱{rangeRevenue.toLocaleString()}</span>
-                                        <span className="text-xs text-green-500 font-bold mb-1.5">+12%</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2">
+                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none truncate">₱{rangeRevenue.toLocaleString()}</span>
+                                        <span className="text-[9px] sm:text-xs text-green-500 font-bold mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">+12%</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 bg-blue-50 rounded-lg text-secondary">
-                                            <BedDouble size={24} />
+                                <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
+                                        <div className="p-1.5 sm:p-2 md:p-3 bg-blue-50 rounded-lg text-secondary">
+                                            <BedDouble size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
                                         </div>
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Occupancy</span>
+                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Rooms</span>
                                     </div>
-                                    <div className="flex items-end space-x-2">
-                                        <span className="text-3xl font-bold text-gray-800 dark:text-white">{rooms.length}</span>
-                                        <span className="text-xs text-gray-400 mb-1.5">Active Rooms</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2">
+                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rooms.length}</span>
+                                        <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">Active</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Charts Section */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
                                 {/* Bar Chart */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-96">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center">
-                                        <TrendingUp size={18} className="mr-2 text-primary" />
+                                <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-56 sm:h-72 md:h-96">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 dark:text-white mb-2 sm:mb-4 md:mb-6 flex items-center">
+                                        <TrendingUp size={16} className="mr-2 text-primary sm:w-[18px] sm:h-[18px]" />
                                         Revenue Trend
                                     </h3>
                                     <ResponsiveContainer width="100%" height="85%">
                                         <BarChart data={chartData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} tickFormatter={(val) => `₱${val / 1000}k`} />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} tickFormatter={(val) => `₱${val / 1000}k`} width={45} />
                                             <Tooltip
                                                 cursor={{ fill: '#F3F4F6' }}
                                                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
@@ -2582,9 +2582,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Pie Chart */}
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                                        <TrendingUp size={18} className="mr-2 text-primary" />
+                                <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 dark:text-white mb-2 sm:mb-3 md:mb-4 flex items-center">
+                                        <TrendingUp size={16} className="mr-2 text-primary sm:w-[18px] sm:h-[18px]" />
                                         Room Distribution
                                     </h3>
                                     <div className={`flex flex-col ${roomPopularity.some(r => r.value > 0) ? 'md:flex-row' : ''} items-center gap-4`}>
@@ -2649,7 +2649,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {/* Booking List */}
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                                 {/* Header Area - OPTIMIZED */}
-                                <div className="p-4 md:px-6 md:py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
+                                <div className="p-3 sm:p-4 md:px-6 md:py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
                                         {/* Title */}
@@ -2797,48 +2797,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 {/* Mobile/Tablet Card View */}
-                                <div className="lg:hidden p-4 space-y-4">
+                                <div className="lg:hidden p-2 sm:p-4 space-y-2 sm:space-y-4">
                                     {filteredBookings.map((booking) => {
                                         const roomName = rooms.find(r => r.id === booking.roomId)?.name || 'Unknown Room';
                                         return (
-                                            <div key={booking.id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-lg shadow-sm p-4 relative">
-                                                <div className="flex justify-between items-start mb-2">
+                                            <div key={booking.id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-lg shadow-sm p-3 sm:p-4 relative">
+                                                <div className="flex justify-between items-start mb-1 sm:mb-2">
                                                     <div>
-                                                        <h4 className="font-bold text-gray-900 dark:text-white">{booking.guestName}</h4>
-                                                        <p className="text-xs text-gray-500">{roomName}</p>
+                                                        <h4 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white">{booking.guestName}</h4>
+                                                        <p className="text-[10px] sm:text-xs text-gray-500">{roomName}</p>
                                                     </div>
-                                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getStatusColor(booking.status)}`}>
+                                                    <span className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border ${getStatusColor(booking.status)}`}>
                                                         {booking.status}
                                                     </span>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 my-3">
+                                                <div className="grid grid-cols-2 gap-1 sm:gap-2 text-sm text-gray-600 my-2 sm:my-3">
                                                     <div>
-                                                        <span className="block text-xs text-gray-400">Dates & Times</span>
-                                                        <div className="font-medium">{booking.checkIn} - {booking.checkOut}</div>
-                                                        <div className="text-xs text-gray-500 flex items-center mt-1">
+                                                        <span className="block text-[10px] sm:text-xs text-gray-400">Dates & Times</span>
+                                                        <div className="font-medium text-xs sm:text-sm">{booking.checkIn} - {booking.checkOut}</div>
+                                                        <div className="text-[10px] sm:text-xs text-gray-500 flex items-center mt-0.5">
                                                             <Clock size={10} className="mr-1" />
                                                             {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="block text-xs text-gray-400">Total</span>
-                                                        <span className="font-bold text-primary">₱{booking.totalPrice.toLocaleString()}</span>
+                                                        <span className="block text-[10px] sm:text-xs text-gray-400">Total</span>
+                                                        <span className="font-bold text-sm sm:text-base text-primary">₱{booking.totalPrice.toLocaleString()}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex justify-end border-t border-gray-50 pt-3 space-x-3">
+                                                <div className="flex justify-end border-t border-gray-50 pt-2 sm:pt-3 space-x-2 sm:space-x-3">
                                                     <button
                                                         onClick={() => handleEditBookingClick(booking)}
-                                                        className="flex items-center text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded"
+                                                        className="flex items-center text-[10px] sm:text-xs font-medium text-indigo-600 bg-indigo-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded"
                                                     >
-                                                        <Edit size={14} className="mr-1" /> Edit
+                                                        <Edit size={12} className="mr-1" /> Edit
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteBookingClick(booking.id)}
-                                                        className="flex items-center text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded"
+                                                        className="flex items-center text-[10px] sm:text-xs font-medium text-red-600 bg-red-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded"
                                                     >
-                                                        <Trash2 size={14} className="mr-1" /> Delete
+                                                        <Trash2 size={12} className="mr-1" /> Delete
                                                     </button>
                                                 </div>
                                             </div>

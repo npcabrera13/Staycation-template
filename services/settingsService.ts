@@ -33,9 +33,9 @@ export const DEFAULT_SETTINGS: Settings = {
         title: "Why Choose",
         subtitle: "Us?",
         features: [
-            { title: "Curated Destinations", description: "Each property is handpicked for its unique charm and absolute comfort to ensure a remarkable stay." },
-            { title: "Effortless Booking", description: "Enjoy a seamless experience with real-time availability, instant confirmation, and secure payments." },
-            { title: "Personalized Service", description: "Our dedicated support team and digital concierge are always available to help you plan the perfect trip." }
+            { title: "Handpicked Locations", description: "Every property is personally verified for quality and comfort to ensure you have a truly magical stay." },
+            { title: "Seamless Booking", description: "Experience a stress-free process with real-time availability, instant confirmation, and secure payments." },
+            { title: "Exceptional Service", description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish." }
         ],
         image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
         images: []

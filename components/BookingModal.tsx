@@ -1115,9 +1115,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                     <div className="relative max-w-xl w-full max-h-[95vh] flex items-center justify-center animate-pop" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => setZoomedQr(null)}
-                            className="absolute -top-12 right-0 md:-right-4 p-2 text-white hover:text-red-400 transition-colors bg-black/40 hover:bg-black/60 rounded-full z-10"
+                            className="fixed top-6 right-6 p-4 text-white bg-black/60 hover:bg-black/80 rounded-full z-[110] backdrop-blur-md shadow-2xl transition-all active:scale-95"
                         >
-                            <X size={24} />
+                            <X size={28} />
                         </button>
                         <img
                             src={zoomedQr}

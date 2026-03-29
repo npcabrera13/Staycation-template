@@ -93,6 +93,33 @@ function AppContent() {
           // Apply font family
           document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
           document.body.classList.add(`font-${fetchedSettings.theme.fontFamily || 'sans'}`);
+
+          // BRANDING MIGRATION (Clean up old 'Serenity' or 'AI' defaults if still present)
+          let needsUpdate = false;
+          const updatedSettings = { ...fetchedSettings };
+          
+          // 1. Fix "Why Choose Serenity?" if user has a different site name
+          if (updatedSettings.about?.subtitle === 'Serenity?' && updatedSettings.siteName && updatedSettings.siteName !== 'Serenity Staycation') {
+            updatedSettings.about.subtitle = `${updatedSettings.siteName}?`;
+            needsUpdate = true;
+          }
+
+          // 2. Fix old AI Concierge text or old branding
+          const f3 = updatedSettings.about?.features?.[2];
+          if (f3?.title === '24/7 Concierge' || f3?.title === 'Personalized Support' || f3?.description?.includes('AI concierge') || f3?.description?.includes('digital concierge')) {
+            updatedSettings.about.features[2] = {
+              title: "Exceptional Service",
+              description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish."
+            };
+            needsUpdate = true;
+          }
+
+          if (needsUpdate) {
+            console.log("Migrating legacy branding/AI text...");
+            settingsService.updateSettings(updatedSettings);
+            // We set settings to trigger a re-render with the new migrated values
+            setSettings(updatedSettings);
+          }
         }
       } catch (error) {
         console.error("Failed to load data:", error);
