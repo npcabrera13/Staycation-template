@@ -76,6 +76,8 @@ export interface Settings {
         }>;
         image: string;
         images?: string[]; // Gallery images for carousel
+        imagePositions?: string[]; // CSS object-position for each image
+        inheritGallery?: boolean; // Whether to pull photos from the admin rooms automatically
     };
     contact: {
         address: string;

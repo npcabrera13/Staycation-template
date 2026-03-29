@@ -2880,9 +2880,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <div key={room.id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}`}>
                                         <div className="flex flex-col md:flex-row">
                                             {/* Image Thumb */}
-                                            <div className="w-full md:w-48 h-48 md:h-auto relative bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
+                                            <div className="w-full md:w-64 h-56 md:h-auto relative bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
                                                 <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
-                                                <div className="absolute top-2 right-2 bg-white dark:bg-black px-2 py-1 rounded-lg text-xs font-bold shadow-md">
+                                                <div className="absolute top-3 right-3 bg-white dark:bg-black px-3 py-1.5 rounded-lg text-xs font-black shadow-md">
                                                     <span className="text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
                                                 </div>
                                             </div>

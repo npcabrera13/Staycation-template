@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus, Image as ImageIcon, Info, Trash2 } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
@@ -71,6 +71,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [activeRoomIndex, setActiveRoomIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // Dynamic Room Gallery Images
+    const roomGalleryImages = useMemo(() => {
+        const imgs = rooms.flatMap(r => [r.image, ...(r.images || [])])
+            .filter(img => img && typeof img === "string" && img.trim() !== "" && img.includes("http"));
+        return Array.from(new Set(imgs));
+    }, [rooms]);
+
     // Builder State
     const [isEditing, setIsEditing] = useState(false);
     const [workingSettings, setWorkingSettings] = useState<Settings>(settings || DEFAULT_SETTINGS);
@@ -78,6 +85,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
     const [activeAboutSlide, setActiveAboutSlide] = useState(0);
     const [showAboutLightbox, setShowAboutLightbox] = useState(false);
+    
+    // Gallery Manager State
+    const [showGalleryManager, setShowGalleryManager] = useState(false);
+    const [tempGalleryImages, setTempGalleryImages] = useState<string[]>([]);
+    const [tempGalleryPositions, setTempGalleryPositions] = useState<string[]>([]);
+    const [tempInheritGallery, setTempInheritGallery] = useState<boolean>(true);
+
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
     const { showConfirm } = useNotification();
 
@@ -518,7 +532,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         onChange={(val) => handleSettingChange('features', 'title', val)}
                                     />
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-serif font-bold text-secondary mb-6">
+                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-secondary dark:text-white mb-10 leading-tight text-center px-2">
                                     <InlineText
                                         value={workingSettings.roomsSection?.title ?? ""}
                                         placeholder="Our Exclusive Rooms"
@@ -536,7 +550,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 {searchCriteria ? (
                                     <div className="flex flex-col items-center animate-fade-in">
                                         <p className="text-gray-600 text-lg mb-4">
-                                            Showing {filteredRooms.length} room{filteredRooms.length !== 1 && 's'} available for{' '}
+                                            Showing {filteredRooms.length} room{filteredRooms.length !== 1 && "s"} available for{" "}
                                             <span className="font-bold text-primary">
                                                 {searchCriteria.checkIn?.toLocaleDateString()} - {searchCriteria.checkOut?.toLocaleDateString()}
                                             </span>
@@ -549,12 +563,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg leading-relaxed font-light">
+                                    <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg leading-relaxed font-light text-center">
                                         <InlineText
                                             value={workingSettings.features?.description ?? ""}
                                             placeholder="From beachfront villas to cozy mountain cabins, each property is designed to provide the ultimate relaxation experience."
                                             isEditing={isEditing}
-                                            onChange={(val) => handleSettingChange('features', 'description', val)}
+                                            onChange={(val) => handleSettingChange("features", "description", val)}
                                             multiline
                                         />
                                     </p>
@@ -572,7 +586,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 {filteredRooms.length > 1 && (
                                     <>
                                         <button
-                                            onClick={() => scroll('left')}
+                                            onClick={() => scroll("left")}
                                             className="absolute left-2 md:-left-6 top-1/2 -translate-y-1/2 z-30 bg-white/95 hover:bg-white text-secondary p-3 rounded-full shadow-xl border border-gray-100 transition-all active:scale-95 md:opacity-0 md:group-hover:opacity-100 duration-300"
                                             aria-label="Scroll Left"
                                         >
@@ -580,18 +594,23 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         </button>
 
                                         <button
-                                            onClick={() => scroll('right')}
+                                            onClick={() => scroll("right")}
                                             className="absolute right-2 md:-right-6 top-1/2 -translate-y-1/2 z-30 bg-white/95 hover:bg-white text-secondary p-3 rounded-full shadow-xl border border-gray-100 transition-all active:scale-95 md:opacity-0 md:group-hover:opacity-100 duration-300"
                                             aria-label="Scroll Right"
                                         >
                                             <ChevronRight size={24} className="relative -right-0.5" />
                                         </button>
-                                    </>
+                                    
+<style>{`
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+`}</style>
+</>
                                 )}
 
                                 <div
                                     ref={scrollContainerRef}
-                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'} ${filteredRooms.length === 1 ? 'justify-center' : ''}`}
+                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
                                     onScroll={handleScroll}
                                     onMouseDown={handleMouseDown}
                                     onMouseLeave={handleMouseLeave}
@@ -613,7 +632,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             </div>
                         ) : (
                             <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-                                <AlertCircle size={48} className="mx-auto text-gray-300 mb-4" />
                                 <h3 className="text-xl font-bold text-gray-800 mb-2">No Rooms Available</h3>
                                 <p className="text-gray-500">
                                     {searchCriteria ? "Try adjusting your dates or guest count." : "Our rooms are currently being updated. Please check back soon!"}
@@ -629,10 +647,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 {filteredRooms.map((_, idx) => (
                                     <div
                                         key={idx}
-                                        className={`h-2 rounded-full transition-all duration-300 ${idx === activeRoomIndex
-                                            ? 'w-8 bg-secondary'
-                                            : 'w-2 bg-gray-300'
-                                            }`}
+                                        className={`h-2 rounded-full transition-all duration-300 ${idx === activeRoomIndex ? "w-8 bg-secondary" : "w-2 bg-gray-300"}`}
                                     />
                                 ))}
                             </div>
@@ -645,53 +660,55 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 onSearch={setSearchCriteria}
                                 isEditing={isEditing}
                                 buttonText={workingSettings.searchBar?.buttonText}
-                                onButtonTextChange={(val) => handleSettingChange('searchBar', 'buttonText', val)}
-                                buttonColor={workingSettings.searchBar?.buttonColor || ''}
-                                onButtonColorChange={(val) => handleSettingChange('searchBar', 'buttonColor', val)}
+                                onButtonTextChange={(val) => handleSettingChange("searchBar", "buttonText", val)}
+                                buttonColor={workingSettings.searchBar?.buttonColor || ""}
+                                onButtonColorChange={(val) => handleSettingChange("searchBar", "buttonColor", val)}
                                 buttonTextColor={workingSettings.searchBar?.buttonTextColor}
-                                onButtonTextColorChange={(val) => handleSettingChange('searchBar', 'buttonTextColor', val)}
+                                onButtonTextColorChange={(val) => handleSettingChange("searchBar", "buttonTextColor", val)}
                                 buttonFontFamily={workingSettings.searchBar?.buttonFontFamily}
-                                onButtonFontFamilyChange={(val) => handleSettingChange('searchBar', 'buttonFontFamily', val)}
+                                onButtonFontFamilyChange={(val) => handleSettingChange("searchBar", "buttonFontFamily", val)}
                             />
                         </div>
-
                     </div>
                 </section>
+
 
                 {/* About/Promo Section */}
                 <section id="about" className="py-24 md:py-32 bg-white dark:bg-gray-800 overflow-hidden scroll-mt-10">
                     <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
-                        <div className="md:w-1/2">
-                            <RevealOnScroll>
-                                <h2 className="text-4xl md:text-5xl font-serif font-bold text-secondary dark:text-white mb-8 leading-tight">
-                                    <InlineText
-                                        value={workingSettings.about?.title ?? ""}
-                                        placeholder="Why Choose"
-                                        isEditing={isEditing}
-                                        onChange={(val) => handleSettingChange('about', 'title', val)}
-                                    /> <br />
-                                    <span className="text-primary">
+                        <div className="md:w-1/2 order-2 md:order-1">
+                            <RevealOnScroll className="mb-10 text-center md:text-left">
+                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-secondary dark:text-white leading-tight">
+                                    <div className="flex flex-col md:items-start items-center">
                                         <InlineText
-                                            value={workingSettings.about?.subtitle ?? ""}
-                                            placeholder="Us?"
+                                            value={workingSettings.about?.title ?? ""}
+                                            placeholder="Why Choose"
                                             isEditing={isEditing}
-                                            onChange={(val) => handleSettingChange('about', 'subtitle', val)}
+                                            onChange={(val) => handleSettingChange('about', 'title', val)}
                                         />
-                                    </span>
+                                        <span className="text-primary mt-1 font-bold">
+                                            <InlineText
+                                                value={workingSettings.about?.subtitle ?? ""}
+                                                placeholder="Us?"
+                                                isEditing={isEditing}
+                                                onChange={(val) => handleSettingChange('about', 'subtitle', val)}
+                                            />
+                                        </span>
+                                    </div>
                                 </h2>
                             </RevealOnScroll>
 
-                            <div className="space-y-10">
+                            <div className="flex md:flex-col overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-8 pb-8 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                                 {(workingSettings.about?.features || [
-                                    { title: "Handpicked Locations", description: "Every property is personally verified for quality and comfort to ensure you have a truly magical stay." },
-                                    { title: "Seamless Booking", description: "Experience a stress-free process with real-time availability, instant confirmation, and secure payments." },
+                                    { title: "Handpicked Locations", description: "Every house is verified for quality, view, and comfort to ensure a magical stay." },
+                                    { title: "Seamless Booking", description: "Real-time availability calendar, instant confirmation, and secure payments." },
                                     { title: "Exceptional Service", description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish." }
                                 ]).map((feature, index) => (
-                                    <RevealOnScroll key={index} delay={200 * (index + 1)}>
-                                        <div className="flex items-start group">
-                                            <div className="bg-surface dark:bg-gray-700 p-4 rounded-2xl mr-6 text-primary font-bold text-xl group-hover:bg-primary group-hover:text-white transition-colors duration-500 shadow-sm">0{index + 1}</div>
-                                            <div>
-                                                <h4 className="font-bold text-secondary dark:text-white text-xl mb-2">
+                                    <RevealOnScroll key={index} delay={200 * (index + 1)} width="full" className="flex-shrink-0 w-[85%] md:w-full snap-center"> 
+                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 group cursor-default bg-white dark:bg-gray-800 p-8 md:p-0 rounded-[2rem] md:rounded-none shadow-xl md:shadow-none h-full md:h-auto">
+                                            <div className="flex-shrink-0 bg-primary flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-3xl text-white font-black text-2xl shadow-xl transition-transform group-hover:scale-110 duration-500">0{index + 1}</div>
+                                            <div className="flex-1 text-center md:text-left">
+                                                <h4 className="font-bold text-secondary dark:text-white text-xl md:text-2xl font-black mb-3">
                                                     <InlineText
                                                         value={feature.title}
                                                         isEditing={isEditing}
@@ -699,11 +716,11 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                             const newFeatures = [...(workingSettings.about?.features || [])];
                                                             if (!newFeatures[index]) newFeatures[index] = { title: feature.title, description: feature.description };
                                                             newFeatures[index].title = val;
-                                                            handleSettingChange('about', 'features', newFeatures);
+                                                            handleSettingChange("about", "features", newFeatures);
                                                         }}
                                                     />
                                                 </h4>
-                                                <p className="text-gray-500 dark:text-gray-300 leading-relaxed">
+                                                <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base leading-relaxed">
                                                     <InlineText
                                                         value={feature.description}
                                                         isEditing={isEditing}
@@ -711,7 +728,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                             const newFeatures = [...(workingSettings.about?.features || [])];
                                                             if (!newFeatures[index]) newFeatures[index] = { title: feature.title, description: feature.description };
                                                             newFeatures[index].description = val;
-                                                            handleSettingChange('about', 'features', newFeatures);
+                                                            handleSettingChange("about", "features", newFeatures);
                                                         }}
                                                         multiline
                                                     />
@@ -723,127 +740,92 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             </div>
                         </div>
 
-                        <div className="md:w-1/2 relative w-full h-96 md:h-[600px] mt-12 md:mt-0">
+                        <div className="md:w-1/2 relative w-full h-80 md:h-[600px] order-1 md:order-2">
                             <RevealOnScroll delay={300} className="h-full w-full">
                                 <div className="absolute -inset-4 bg-accent/20 rounded-full blur-3xl z-0 animate-pulse-slow"></div>
 
-                                {/* About Image Carousel */}
+                                {/* Dynamic Room Mosaic Gallery */}
                                 {(() => {
-                                    const aboutImages = [
-                                        workingSettings.about?.image,
-                                        ...(workingSettings.about?.images || [])
-                                    ].filter(img => img && img.trim() !== '');
+                                    // Use custom images if inheritGallery is explicitly false
+                                    const isInheriting = workingSettings.about?.inheritGallery !== false;
+                                    const customImages = (workingSettings.about?.images || []).filter(img => img && img.trim() !== "");
+                                    const customPositions = workingSettings.about?.imagePositions || [];
+                                    
+                                    const defaultFallbackImages = [
+                                        "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+                                        "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+                                        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+                                        "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                                    ];
 
-                                    if (aboutImages.length === 0) {
-                                        return (
-                                            <InlineImage
-                                                src="https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                                                alt="About Section"
-                                                isEditing={isEditing}
-                                                onChange={(url) => handleSettingChange('about', 'image', url)}
-                                                className="w-full h-full object-cover rounded-3xl shadow-2xl relative z-10"
-                                            />
-                                        );
-                                    }
+                                    const displayImages = isInheriting 
+                                        ? (roomGalleryImages.length > 0 ? roomGalleryImages : defaultFallbackImages)
+                                        : (customImages.length > 0 ? customImages : defaultFallbackImages);
 
                                     return (
-                                        <div className="relative w-full h-full group">
-                                            {/* Main Image */}
-                                            <div
-                                                className="w-full h-full cursor-pointer relative overflow-hidden rounded-3xl shadow-2xl z-10"
-                                                onClick={() => !isEditing && setShowAboutLightbox(true)}
+                                        <div 
+                                            className={`relative w-full h-full grid grid-cols-2 grid-rows-2 gap-3 group ${isEditing ? 'cursor-pointer' : ''}`}
+                                            onClick={() => {
+                                                if (isEditing) {
+                                                    setTempInheritGallery(isInheriting);
+                                                    setTempGalleryImages(customImages.length > 0 ? customImages : [...displayImages]);
+                                                    setTempGalleryPositions([...customPositions]);
+                                                    setShowGalleryManager(true);
+                                                }
+                                            }}
+                                        >
+                                            {/* Large Main Feature */}
+                                            <div 
+                                                className="col-span-1 row-span-2 relative overflow-hidden rounded-3xl shadow-xl cursor-pointer group/item"
+                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
                                             >
-                                                {aboutImages.map((img, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={`absolute inset-0 transition-opacity duration-500 ${index === activeAboutSlide ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}
-                                                    >
-                                                        {isEditing ? (
-                                                            <InlineImage
-                                                                src={img}
-                                                                alt={`About ${index + 1}`}
-                                                                isEditing={true}
-                                                                onChange={(newUrl) => {
-                                                                    const currentImages = [...(workingSettings.about?.images || [])];
-                                                                    if (index === 0 && workingSettings.about?.image) {
-                                                                        // Depending on how images are structured (first is main, rest are array)
-                                                                        handleSettingChange('about', 'image', newUrl);
-                                                                    } else {
-                                                                        const arrIndex = (workingSettings.about?.image && workingSettings.about.image.trim() !== '') ? index - 1 : index;
-                                                                        if (arrIndex >= 0) {
-                                                                            currentImages[arrIndex] = newUrl;
-                                                                            handleSettingChange('about', 'images', currentImages);
-                                                                        }
-                                                                    }
-                                                                }}
-                                                                onAdd={(newUrl) => {
-                                                                    const currentImages = [...(workingSettings.about?.images || [])];
-                                                                    if (newUrl && newUrl.trim() !== "") {
-                                                                        currentImages.push(newUrl.trim());
-                                                                        handleSettingChange('about', 'images', currentImages);
-                                                                        setActiveAboutSlide(currentImages.length);
-                                                                    }
-                                                                }}
-                                                                className="w-full h-full object-cover rounded-3xl"
-                                                            />
-                                                        ) : (
-                                                            <img
-                                                                src={img}
-                                                                alt={`About ${index + 1}`}
-                                                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                ))}
-
-                                                {/* Zoom hint overlay */}
-                                                {!isEditing && aboutImages.length > 0 && (
-                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                        <span className="bg-white/90 text-gray-800 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
-                                                            🔍 Click to Zoom
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                <img 
+                                                    src={displayImages[0]} 
+                                                    alt="Gallery 1" 
+                                                    style={{ objectPosition: customImages.length > 0 && customPositions[0] ? customPositions[0] : 'center' }}
+                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors pointer-events-none" />
+                                            </div>
+                                            
+                                            {/* Top Secondary */}
+                                            <div 
+                                                className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl shadow-lg cursor-pointer group/item"
+                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
+                                            >
+                                                <img 
+                                                    src={displayImages[1 % displayImages.length]} 
+                                                    alt="Gallery 2" 
+                                                    style={{ objectPosition: customImages.length > 0 && customPositions[1 % displayImages.length] ? customPositions[1 % displayImages.length] : 'center' }}
+                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors pointer-events-none" />
                                             </div>
 
-                                            {/* Carousel Arrows */}
-                                            {aboutImages.length > 1 && (
-                                                <>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveAboutSlide(prev => (prev - 1 + aboutImages.length) % aboutImages.length);
-                                                        }}
-                                                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        <ChevronLeft size={24} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveAboutSlide(prev => (prev + 1) % aboutImages.length);
-                                                        }}
-                                                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        <ChevronRight size={24} />
-                                                    </button>
-                                                </>
-                                            )}
+                                            {/* Bottom Secondary or More */}
+                                            <div 
+                                                className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl shadow-lg cursor-pointer group/item"
+                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
+                                            >
+                                                <img 
+                                                    src={displayImages[2 % displayImages.length]} 
+                                                    alt="Gallery 3" 
+                                                    style={{ objectPosition: customImages.length > 0 && customPositions[2 % displayImages.length] ? customPositions[2 % displayImages.length] : 'center' }}
+                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 group-hover/item:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
+                                                    {displayImages.length > 3 && (
+                                                        <span className="text-white font-black text-2xl sm:text-3xl">+ {displayImages.length - 2}</span>
+                                                    )}
+                                                </div>
+                                            </div>
 
-
-                                            {/* Dots Indicator */}
-                                            {aboutImages.length > 1 && (
-                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-                                                    {aboutImages.map((_, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActiveAboutSlide(idx);
-                                                            }}
-                                                            className={`h-2 rounded-full transition-all ${idx === activeAboutSlide ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
-                                                        />
-                                                    ))}
+                                            {/* Edit Gallery Overlay */}
+                                            {isEditing && (
+                                                <div className="absolute inset-0 bg-black/50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all">
+                                                        <ImageIcon size={20} className="mr-2" /> Manage Gallery
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -855,10 +837,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                     {/* About Lightbox Modal */}
                     {showAboutLightbox && (() => {
-                        const aboutImages = [
+                        const displayImages = roomGalleryImages.length > 0 ? roomGalleryImages : [
                             workingSettings.about?.image,
                             ...(workingSettings.about?.images || [])
-                        ].filter(img => img && img.trim() !== '');
+                        ].filter(img => img && img.trim() !== "");
 
                         return (
                             <div
@@ -873,12 +855,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 </button>
 
                                 {/* Navigation arrows */}
-                                {aboutImages.length > 1 && (
+                                {displayImages.length > 1 && (
                                     <>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev - 1 + aboutImages.length) % aboutImages.length);
+                                                setActiveAboutSlide(prev => (prev - 1 + displayImages.length) % displayImages.length);
                                             }}
                                             className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
                                         >
@@ -887,7 +869,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev + 1) % aboutImages.length);
+                                                setActiveAboutSlide(prev => (prev + 1) % displayImages.length);
                                             }}
                                             className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
                                         >
@@ -896,22 +878,196 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     </>
                                 )}
 
-                                <img
-                                    src={aboutImages[activeAboutSlide]}
-                                    alt="About Full Size"
-                                    className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-
-                                {/* Image counter */}
-                                {aboutImages.length > 1 && (
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 bg-black/50 px-4 py-2 rounded-full text-sm">
-                                        {activeAboutSlide + 1} / {aboutImages.length}
+                                <div className="max-w-5xl max-h-[85vh] relative" onClick={(e) => e.stopPropagation()}>
+                                    <img
+                                        src={displayImages[activeAboutSlide % displayImages.length]}
+                                        alt="Gallery Fullscreen"
+                                        className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl animate-zoom-in"
+                                    />
+                                    <div className="absolute -bottom-10 left-0 right-0 text-center text-white/50 text-sm">
+                                        {(activeAboutSlide % displayImages.length) + 1} / {displayImages.length}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         );
                     })()}
+
+                    {/* Gallery Manager Modal */}
+                    {showGalleryManager && (
+                        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowGalleryManager(false)}>
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                                    <h3 className="text-xl font-bold flex items-center dark:text-white">
+                                        <ImageIcon className="mr-2 text-primary" size={20} /> Manage Gallery
+                                    </h3>
+                                    <button onClick={() => setShowGalleryManager(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="p-4 overflow-y-auto flex-1 space-y-4">
+                                    
+                                    {/* Inheritance Toggle */}
+                                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-bold text-gray-800 dark:text-white flex items-center">
+                                                Auto-Sync with Room Gallery
+                                            </h4>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                {tempInheritGallery 
+                                                    ? "Currently inheriting images automatically from your Room list." 
+                                                    : "Currently using a Custom Gallery. Your images will not change when rooms are added."}
+                                            </p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setTempInheritGallery(!tempInheritGallery)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${tempInheritGallery ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${tempInheritGallery ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
+                                    </div>
+
+                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <h4 className="font-bold text-gray-800 dark:text-white mb-4 uppercase text-xs tracking-wider">
+                                            {tempInheritGallery ? 'Inherited Room Images (Read-Only)' : 'Custom Gallery Images'}
+                                        </h4>
+                                        
+                                        {(tempInheritGallery ? roomGalleryImages : tempGalleryImages).map((imgUrl, idx) => {
+                                            
+                                            // Handle parsing of sliders. Default to 50% 50% if none.
+                                            let xPos = 50, yPos = 50;
+                                            if (tempGalleryPositions[idx]) {
+                                                const match = tempGalleryPositions[idx].match(/(\d+)%\s+(\d+)%/);
+                                                if (match) {
+                                                    xPos = parseInt(match[1]);
+                                                    yPos = parseInt(match[2]);
+                                                } else {
+                                                    // Map legacy words
+                                                    if (tempGalleryPositions[idx] === 'top') { xPos=50; yPos=0; }
+                                                    else if (tempGalleryPositions[idx] === 'bottom') { xPos=50; yPos=100; }
+                                                    else if (tempGalleryPositions[idx] === 'left') { xPos=0; yPos=50; }
+                                                    else if (tempGalleryPositions[idx] === 'right') { xPos=100; yPos=50; }
+                                                }
+                                            }
+                                            
+                                            const currentObjectPosition = `${xPos}% ${yPos}%`;
+
+                                            return (
+                                                <div key={idx} className="flex flex-col sm:flex-row gap-4 items-start bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-200 dark:border-gray-700 relative group mb-3">
+                                                    {/* Preview Thumb */}
+                                                    <div className="w-full sm:w-40 h-32 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-100 dark:border-gray-600 shadow-sm">
+                                                        <img 
+                                                            src={imgUrl} 
+                                                            alt={`Gallery Preview ${idx + 1}`} 
+                                                            style={{ objectPosition: currentObjectPosition }} 
+                                                            className="w-full h-full object-cover transition-all" 
+                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTNhM2FmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiPjwvY2lyY2xlPjxsaW5lIHgxPSIxMiIgeTE9IjgiIHgyPSIxMiIgeTI9IjEyIj48L2xpbmU+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ij48L2xpbmU+PC9zdmc+'; }} 
+                                                        />
+                                                        {!tempInheritGallery && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const newImgs = [...tempGalleryImages];
+                                                                    const newPos = [...tempGalleryPositions];
+                                                                    newImgs.splice(idx, 1);
+                                                                    newPos.splice(idx, 1);
+                                                                    setTempGalleryImages(newImgs);
+                                                                    setTempGalleryPositions(newPos);
+                                                                }}
+                                                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                                title="Remove Image"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Settings Fields */}
+                                                    <div className="flex-1 space-y-3 w-full">
+                                                        {!tempInheritGallery && (
+                                                            <div>
+                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 block uppercase">Image URL</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={imgUrl} 
+                                                                    onChange={(e) => {
+                                                                        const newImgs = [...tempGalleryImages];
+                                                                        newImgs[idx] = e.target.value;
+                                                                        setTempGalleryImages(newImgs);
+                                                                    }}
+                                                                    placeholder="https://..."
+                                                                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm w-full outline-none focus:border-primary dark:text-white"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <div className="flex justify-between items-end mb-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase">Horizontal Pan (X)</label>
+                                                                <span className="text-xs text-gray-400 font-mono">{xPos}%</span>
+                                                            </div>
+                                                            <input 
+                                                                type="range" 
+                                                                min="0" max="100" 
+                                                                value={xPos}
+                                                                onChange={(e) => {
+                                                                    const newPos = [...tempGalleryPositions];
+                                                                    newPos[idx] = `${e.target.value}% ${yPos}%`;
+                                                                    setTempGalleryPositions(newPos);
+                                                                }}
+                                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex justify-between items-end mb-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase">Vertical Pan (Y)</label>
+                                                                <span className="text-xs text-gray-400 font-mono">{yPos}%</span>
+                                                            </div>
+                                                            <input 
+                                                                type="range" 
+                                                                min="0" max="100" 
+                                                                value={yPos}
+                                                                onChange={(e) => {
+                                                                    const newPos = [...tempGalleryPositions];
+                                                                    newPos[idx] = `${xPos}% ${e.target.value}%`;
+                                                                    setTempGalleryPositions(newPos);
+                                                                }}
+                                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {!tempInheritGallery && (
+                                            <button 
+                                                onClick={() => {
+                                                    setTempGalleryImages([...tempGalleryImages, ""]);
+                                                    setTempGalleryPositions([...tempGalleryPositions, "50% 50%"]);
+                                                }}
+                                                className="mt-2 w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 text-gray-500 dark:text-gray-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all font-bold flex flex-col items-center"
+                                            >
+                                                <Plus size={24} className="mb-2" />
+                                                Add New Frame
+                                            </button>
+                                        )}
+                                        {tempInheritGallery && roomGalleryImages.length === 0 && (
+                                             <div className="text-center p-6 text-gray-400">
+                                                 No room images found. It will display demo images automatically.
+                                             </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3">
+                                    <button onClick={() => setShowGalleryManager(false)} className="px-5 py-2 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition">Cancel</button>
+                                    <button onClick={() => {
+                                        handleSettingChange('about', 'inheritGallery', tempInheritGallery);
+                                        handleSettingChange('about', 'images', tempGalleryImages.filter(u => u.trim() !== ""));
+                                        handleSettingChange('about', 'imagePositions', tempGalleryPositions);
+                                        setShowGalleryManager(false);
+                                    }} className="px-5 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover shadow-md transition">Apply Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* Location Section with Google Maps Embed */}
@@ -986,6 +1142,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
                     </div>
                 </section >
+
 
                 <Footer
                     settings={workingSettings}
