@@ -10,7 +10,14 @@ import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
 import { Room, Booking, Settings } from '../types';
-import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, Facebook, Instagram, Music, Plus, Image as ImageIcon, Info, Trash2 } from 'lucide-react';
+import { 
+    ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, 
+    Facebook, Instagram, Music, Plus, Image as ImageIcon, Info, Trash2, 
+    Sparkles, X, Wifi, Shield, Star, Coffee, Home, 
+    Waves, Wind, ChefHat, Car, Dumbbell, Tv, Utensils, 
+    Monitor, Zap, Sun, Umbrella, Bell, Bath, Armchair, Bike, Key, Edit, Hash,
+    Layout, RotateCcw, Move, ExternalLink
+} from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
 import InlineImage from './Builder/InlineImage';
@@ -18,6 +25,55 @@ import InlineButton from './Builder/InlineButton';
 import InlineColorBlock from './Builder/InlineColorBlock';
 import BuilderToolbar from './Builder/BuilderToolbar';
 import SetupWizard from './SetupWizard';
+import GalleryFrame from './UI/GalleryFrame';
+
+const LAYOUT_CONFIGS = {
+    'mosaic': {
+        name: 'Classic Mosaic',
+        gridClass: 'grid-cols-2 grid-rows-2',
+        frames: [
+            { className: 'col-span-1 row-span-2 h-full' },
+            { className: 'col-span-1 row-span-1 h-full' },
+            { className: 'col-span-1 row-span-1 h-full' },
+        ]
+    },
+    'grid-2': {
+        name: '2-Column Split',
+        gridClass: 'grid-cols-2 grid-rows-1',
+        frames: [
+            { className: 'col-span-1 h-64 md:h-full' },
+            { className: 'col-span-1 h-64 md:h-full' },
+        ]
+    },
+    'grid-3': {
+        name: '3-Column Row',
+        gridClass: 'grid-cols-1 md:grid-cols-3 gap-4',
+        frames: [
+            { className: 'h-64 md:h-80' },
+            { className: 'h-64 md:h-80' },
+            { className: 'h-64 md:h-80' },
+        ]
+    },
+    'grid-4': {
+        name: '2x2 Grid',
+        gridClass: 'grid-cols-2 grid-rows-2',
+        frames: [
+            { className: 'aspect-square' },
+            { className: 'aspect-square' },
+            { className: 'aspect-square' },
+            { className: 'aspect-square' },
+        ]
+    },
+    'panorama': {
+        name: 'Panorama Feature',
+        gridClass: 'grid-cols-2 grid-rows-2',
+        frames: [
+            { className: 'col-span-2 row-span-1 h-48 md:h-64' },
+            { className: 'col-span-1 row-span-1 h-40 md:h-48' },
+            { className: 'col-span-1 row-span-1 h-40 md:h-48' },
+        ]
+    }
+};
 
 // Wrapper that only shows AI chat when enabled in SuperAdmin settings
 const AiChatWrapper: React.FC = () => {
@@ -35,6 +91,60 @@ const AiChatWrapper: React.FC = () => {
     return <AIChat />;
 };
 import { DEFAULT_SETTINGS } from '../services/settingsService';
+
+const ICON_OPTIONS = [
+    { name: 'wifi', icon: Wifi },
+    { name: 'shield', icon: Shield },
+    { name: 'star', icon: Star },
+    { name: 'coffee', icon: Coffee },
+    { name: 'home', icon: Home },
+    { name: 'map', icon: MapPin },
+    { name: 'sparkles', icon: Sparkles },
+    { name: 'waves', icon: Waves },
+    { name: 'wind', icon: Wind },
+    { name: 'chef-hat', icon: ChefHat },
+    { name: 'car', icon: Car },
+    { name: 'dumbbell', icon: Dumbbell },
+    { name: 'tv', icon: Tv },
+    { name: 'utensils', icon: Utensils },
+    { name: 'monitor', icon: Monitor },
+    { name: 'zap', icon: Zap },
+    { name: 'sun', icon: Sun },
+    { name: 'umbrella', icon: Umbrella },
+    { name: 'bell', icon: Bell },
+    { name: 'bath', icon: Bath },
+    { name: 'armchair', icon: Armchair },
+    { name: 'bike', icon: Bike },
+    { name: 'key', icon: Key },
+    { name: 'number', icon: Hash }
+];
+
+const RenderFeatureIcon: React.FC<{ icon?: string, index: number }> = ({ icon, index }) => {
+    // If specifically set to 'number' OR if it's explicitly empty/missing, show the number 01, 02 
+    if (!icon || icon.toLowerCase() === 'number') {
+        return (
+            <div className="flex-shrink-0 bg-primary flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] text-white font-black text-xl sm:text-2xl md:text-3xl shadow-2xl shadow-primary/20 transition-transform group-hover:scale-110 group-hover:rotate-6 duration-500">
+                0{index + 1}
+            </div>
+        );
+    }
+
+    if (icon.startsWith('http')) {
+        return (
+             <div className="flex-shrink-0 bg-white dark:bg-gray-700 flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] shadow-xl overflow-hidden glass transition-transform group-hover:scale-110 duration-500">
+                <img src={icon} alt="icon" className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 object-contain" />
+            </div>
+        );
+    }
+
+    const FoundIcon = ICON_OPTIONS.find(io => io.name === icon.toLowerCase())?.icon || Sparkles;
+    
+    return (
+        <div className="flex-shrink-0 bg-primary/10 dark:bg-primary/5 flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] text-primary shadow-2xl shadow-primary/5 transition-transform group-hover:scale-110 group-hover:rotate-6 duration-500">
+            <FoundIcon size={40} className="w-1/2 h-1/2" />
+        </div>
+    );
+};
 
 interface LandingPageProps {
     rooms: Room[];
@@ -90,10 +200,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [showGalleryManager, setShowGalleryManager] = useState(false);
     const [tempGalleryImages, setTempGalleryImages] = useState<string[]>([]);
     const [tempGalleryPositions, setTempGalleryPositions] = useState<string[]>([]);
+    const [tempGalleryScales, setTempGalleryScales] = useState<number[]>([]);
+    const [tempLayoutType, setTempLayoutType] = useState<string>('mosaic');
     const [tempInheritGallery, setTempInheritGallery] = useState<boolean>(true);
 
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
-    const { showConfirm } = useNotification();
+    const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
+    const { showToast, showConfirm } = useNotification();
 
     // Initial load - use deep copy to avoid shared reference
     useEffect(() => {
@@ -610,7 +723,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                 <div
                                     ref={scrollContainerRef}
-                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-y scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
+                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-x pan-y scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
                                     onScroll={handleScroll}
                                     onMouseDown={handleMouseDown}
                                     onMouseLeave={handleMouseLeave}
@@ -698,35 +811,209 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 </h2>
                             </RevealOnScroll>
 
-                            <div className="flex md:flex-col overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-8 pb-8 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                                {(workingSettings.about?.features || [
-                                    { title: "Handpicked Locations", description: "Every house is verified for quality, view, and comfort to ensure a magical stay." },
-                                    { title: "Seamless Booking", description: "Real-time availability calendar, instant confirmation, and secure payments." },
-                                    { title: "Exceptional Service", description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish." }
-                                ]).map((feature, index) => (
-                                    <RevealOnScroll key={index} delay={200 * (index + 1)} width="full" className="flex-shrink-0 w-[85%] md:w-full snap-center"> 
-                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 group cursor-default bg-white dark:bg-gray-800 p-8 md:p-0 rounded-[2rem] md:rounded-none shadow-xl md:shadow-none h-full md:h-auto">
-                                            <div className="flex-shrink-0 bg-primary flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-3xl text-white font-black text-2xl shadow-xl transition-transform group-hover:scale-110 duration-500">0{index + 1}</div>
+
+                            {isEditing && (
+                                <div className="mb-10 flex flex-wrap gap-4 justify-center md:justify-start ring-2 ring-primary/20 p-6 rounded-3xl bg-gray-50 dark:bg-gray-900/50">
+                                    <div className="w-full mb-2">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Feature Management</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            const newFeatures = [...(workingSettings.about?.features || [])];
+                                            newFeatures.push({ title: "New Feature", description: "Describe here..." });
+                                            handleSettingChange("about", "features", newFeatures);
+                                        }}
+                                        className="px-6 py-3 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2"
+                                    >
+                                        <Plus size={16} /> Add Point
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            if (!rooms || rooms.length === 0) {
+                                                showToast("No rooms found! Add some rooms with amenities first.", "info");
+                                                return;
+                                            }
+
+                                            const allAmenities = new Set<string>();
+                                            rooms.forEach(r => {
+                                                if (Array.isArray(r.amenities)) {
+                                                    r.amenities.forEach(a => {
+                                                        if (typeof a === 'string') allAmenities.add(a);
+                                                        else if (a && typeof a === 'object' && a.name) allAmenities.add(a.name);
+                                                    });
+                                                }
+                                            });
+                                            
+                                            const amenityList = Array.from(allAmenities).slice(0, 6); 
+                                            
+                                            if (amenityList.length === 0) {
+                                                showToast("No amenities found in your rooms! Make sure your rooms have amenities listed.", "error");
+                                                return;
+                                            }
+
+                                            const DESCRIPTIONS = [
+                                                (name: string) => `Enjoy our ${name} facilities, designed for your comfort and absolute relaxation.`,
+                                                (name: string) => `Experience our ${name} services, curated to make your stay even more pleasant.`,
+                                                (name: string) => `Our ${name} amenities are here to ensure your getaway is as relaxing as possible.`,
+                                                (name: string) => `Relax and make use of the ${name} available to you throughout your entire visit.`,
+                                                (name: string) => `We've provided ${name} to ensure you have everything you need for a worry-free stay.`,
+                                                (name: string) => `Your comfort is our top priority, which is why we include ${name} for all our guests.`
+                                            ];
+
+                                            const newFeatures = amenityList.map((name, idx) => {
+                                                const lower = name.toLowerCase();
+                                                let icon = "star";
+                                                if (lower.includes('wifi')) icon = 'wifi';
+                                                else if (lower.includes('pool') || lower.includes('water')) icon = 'waves';
+                                                else if (lower.includes('security') || lower.includes('safe')) icon = 'shield';
+                                                else if (lower.includes('coffee') || lower.includes('breakfast')) icon = 'coffee';
+                                                else if (lower.includes('parking') || lower.includes('location')) icon = 'map';
+                                                else if (lower.includes('ac') || lower.includes('aircon') || lower.includes('cooling')) icon = 'wind';
+                                                else if (lower.includes('food') || lower.includes('cook') || lower.includes('kitchen')) icon = 'chef-hat';
+                                                else if (lower.includes('tv') || lower.includes('movie')) icon = 'tv';
+                                                else if (lower.includes('gym') || lower.includes('fitness')) icon = 'dumbbell';
+                                                
+                                                // Cycle through templates or pick at random
+                                                const template = DESCRIPTIONS[idx % DESCRIPTIONS.length];
+                                                
+                                                return {
+                                                    title: name,
+                                                    description: template(name),
+                                                    icon: icon
+                                                };
+                                            });
+                                            
+                                            showConfirm({
+                                                title: "Sync from Amenities",
+                                                message: `Found ${amenityList.length} unique amenities. This will replace your current feature cards. Continue?`,
+                                                confirmLabel: "Yes, Sync Now",
+                                                onConfirm: () => {
+                                                    handleSettingChange("about", "features", newFeatures);
+                                                    showToast("Features updated from amenities!", "success");
+                                                }
+                                            });
+                                        }}
+                                        className="px-6 py-3 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-105 transition-transform flex items-center gap-2"
+                                    >
+                                        <Sparkles size={16} /> Sync with Amenities
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-10 md:gap-y-8">
+                                {(() => {
+                                    const features = workingSettings.about?.features || [
+                                        { title: "Handpicked Locations", description: "Every house is verified for quality, view, and comfort to ensure a magical stay." },
+                                        { title: "Seamless Booking", description: "Real-time availability calendar, instant confirmation, and secure payments." },
+                                        { title: "Exceptional Service", description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish." }
+                                    ];
+                                    return features.map((feature, index) => {
+                                        const isLast = index === features.length - 1;
+                                        const isOddCount = features.length % 2 !== 0;
+                                        const shouldCenter = isLast && isOddCount;
+
+                                        return (
+                                            <RevealOnScroll 
+                                                key={index} 
+                                                delay={100 * (index + 1)} 
+                                                width="full" 
+                                                className={shouldCenter ? "col-span-2 w-full flex justify-center lg:col-span-1" : "w-full"}
+                                            > 
+                                                <div className={`flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 md:gap-8 group cursor-default relative ${shouldCenter ? "max-w-xs md:max-w-none" : ""}`}>
+                                            {isEditing && (
+                                                <button 
+                                                    onClick={() => {
+                                                        const newFeatures = [...(workingSettings.about?.features || [])];
+                                                        newFeatures.splice(index, 1);
+                                                        handleSettingChange("about", "features", newFeatures);
+                                                    }}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg z-10 hover:scale-110 transition-transform"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            )}
+                                            
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="relative group/icon">
+                                                    <RenderFeatureIcon icon={feature.icon} index={index} />
+                                                    {isEditing && (
+                                                        <button 
+                                                            onClick={() => setActiveIconPicker(activeIconPicker === index ? null : index)}
+                                                            className="absolute -bottom-2 right-0 bg-white dark:bg-gray-800 text-primary p-1.5 rounded-full shadow-lg border border-primary/20 hover:scale-110 transition-transform z-20"
+                                                            title="Change Icon"
+                                                        >
+                                                            <Edit size={12} />
+                                                        </button>
+                                                    )}
+
+                                                    {/* Icon Picker Popover */}
+                                                    {isEditing && activeIconPicker === index && (
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[100] w-48 animate-fade-in">
+                                                            <div className="flex items-center justify-between mb-2 px-1">
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Select Icon</span>
+                                                                <button onClick={() => setActiveIconPicker(null)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                                                    <X size={12} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="grid grid-cols-4 gap-2">
+                                                                {ICON_OPTIONS.map((opt) => (
+                                                                    <button
+                                                                        key={opt.name}
+                                                                        onClick={() => {
+                                                                            const newFeatures = [...(workingSettings.about?.features || [])];
+                                                                            if (!newFeatures[index]) newFeatures[index] = { ...feature };
+                                                                            newFeatures[index].icon = opt.name;
+                                                                            handleSettingChange("about", "features", newFeatures);
+                                                                            setActiveIconPicker(null);
+                                                                        }}
+                                                                        className={`p-2 rounded-lg flex items-center justify-center transition-all ${feature.icon === opt.name ? 'bg-primary/20 text-primary ring-1 ring-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'}`}
+                                                                        title={opt.name}
+                                                                    >
+                                                                        <opt.icon size={16} />
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            
+                                                            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                                <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1 px-1">Custom Image URL</label>
+                                                                <input 
+                                                                    type="text"
+                                                                    placeholder="https://..."
+                                                                    className="text-[10px] w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 outline-none focus:border-primary"
+                                                                    value={feature.icon?.startsWith('http') ? feature.icon : ''}
+                                                                    onChange={(e) => {
+                                                                        const newFeatures = [...(workingSettings.about?.features || [])];
+                                                                        if (!newFeatures[index]) newFeatures[index] = { ...feature };
+                                                                        newFeatures[index].icon = e.target.value;
+                                                                        handleSettingChange("about", "features", newFeatures);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
                                             <div className="flex-1 text-center md:text-left">
-                                                <h4 className="font-bold text-secondary dark:text-white text-xl md:text-2xl font-black mb-3">
+                                                <h4 className="font-bold text-secondary dark:text-white text-sm sm:text-base md:text-2xl lg:text-3xl font-black mb-1 sm:mb-2 md:mb-4 tracking-tight">
                                                     <InlineText
                                                         value={feature.title}
                                                         isEditing={isEditing}
                                                         onChange={(val) => {
                                                             const newFeatures = [...(workingSettings.about?.features || [])];
-                                                            if (!newFeatures[index]) newFeatures[index] = { title: feature.title, description: feature.description };
+                                                            if (!newFeatures[index]) newFeatures[index] = { ...feature };
                                                             newFeatures[index].title = val;
                                                             handleSettingChange("about", "features", newFeatures);
                                                         }}
                                                     />
                                                 </h4>
-                                                <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base leading-relaxed">
+                                                <p className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs md:text-base lg:text-lg leading-relaxed font-medium line-clamp-3 md:line-clamp-none">
                                                     <InlineText
                                                         value={feature.description}
                                                         isEditing={isEditing}
                                                         onChange={(val) => {
                                                             const newFeatures = [...(workingSettings.about?.features || [])];
-                                                            if (!newFeatures[index]) newFeatures[index] = { title: feature.title, description: feature.description };
+                                                            if (!newFeatures[index]) newFeatures[index] = { ...feature };
                                                             newFeatures[index].description = val;
                                                             handleSettingChange("about", "features", newFeatures);
                                                         }}
@@ -736,8 +1023,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             </div>
                                         </div>
                                     </RevealOnScroll>
-                                ))}
-                            </div>
+                                );
+                            });
+                        })()}
+                    </div>
                         </div>
 
                         <div className="md:w-1/2 relative w-full h-80 md:h-[600px] order-1 md:order-2">
@@ -758,73 +1047,57 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
                                     ];
 
+                                    const layoutType = (workingSettings.about?.layoutType || 'mosaic') as keyof typeof LAYOUT_CONFIGS;
+                                    const layout = LAYOUT_CONFIGS[layoutType] || LAYOUT_CONFIGS.mosaic;
+                                    
                                     const displayImages = isInheriting 
                                         ? (roomGalleryImages.length > 0 ? roomGalleryImages : defaultFallbackImages)
                                         : (customImages.length > 0 ? customImages : defaultFallbackImages);
 
                                     return (
                                         <div 
-                                            className={`relative w-full h-full grid grid-cols-2 grid-rows-2 gap-3 group ${isEditing ? 'cursor-pointer' : ''}`}
+                                            className={`relative w-full h-full grid gap-3 md:gap-4 group ${layout.gridClass}`}
                                             onClick={() => {
                                                 if (isEditing) {
                                                     setTempInheritGallery(isInheriting);
                                                     setTempGalleryImages(customImages.length > 0 ? customImages : [...displayImages]);
                                                     setTempGalleryPositions([...customPositions]);
+                                                    setTempGalleryScales([...(workingSettings.about?.imageScales || [])]);
+                                                    setTempLayoutType(layoutType);
                                                     setShowGalleryManager(true);
                                                 }
                                             }}
                                         >
-                                            {/* Large Main Feature */}
-                                            <div 
-                                                className="col-span-1 row-span-2 relative overflow-hidden rounded-3xl shadow-xl cursor-pointer group/item"
-                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
-                                            >
-                                                <img 
-                                                    src={displayImages[0]} 
-                                                    alt="Gallery 1" 
-                                                    style={{ objectPosition: customImages.length > 0 && customPositions[0] ? customPositions[0] : 'center' }}
-                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
-                                                />
-                                                <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors pointer-events-none" />
-                                            </div>
-                                            
-                                            {/* Top Secondary */}
-                                            <div 
-                                                className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl shadow-lg cursor-pointer group/item"
-                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
-                                            >
-                                                <img 
-                                                    src={displayImages[1 % displayImages.length]} 
-                                                    alt="Gallery 2" 
-                                                    style={{ objectPosition: customImages.length > 0 && customPositions[1 % displayImages.length] ? customPositions[1 % displayImages.length] : 'center' }}
-                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
-                                                />
-                                                <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors pointer-events-none" />
-                                            </div>
+                                            {layout.frames.map((frame, idx) => {
+                                                const imgUrl = displayImages[idx % displayImages.length];
+                                                const pos = customImages.length > 0 && customPositions[idx % displayImages.length] ? customPositions[idx % displayImages.length] : '50% 50%';
+                                                const scale = workingSettings.about?.imageScales?.[idx % displayImages.length] || 1;
 
-                                            {/* Bottom Secondary or More */}
-                                            <div 
-                                                className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl shadow-lg cursor-pointer group/item"
-                                                onClick={(e) => { if (!isEditing) setShowAboutLightbox(true); else e.preventDefault(); }}
-                                            >
-                                                <img 
-                                                    src={displayImages[2 % displayImages.length]} 
-                                                    alt="Gallery 3" 
-                                                    style={{ objectPosition: customImages.length > 0 && customPositions[2 % displayImages.length] ? customPositions[2 % displayImages.length] : 'center' }}
-                                                    className={`w-full h-full object-cover transform transition-all duration-700 ${!isEditing ? 'hover:scale-110' : ''}`} 
-                                                />
-                                                <div className="absolute inset-0 bg-black/40 group-hover/item:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
-                                                    {displayImages.length > 3 && (
-                                                        <span className="text-white font-black text-2xl sm:text-3xl">+ {displayImages.length - 2}</span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                return (
+                                                    <GalleryFrame 
+                                                        key={`${layoutType}-${idx}`}
+                                                        src={imgUrl}
+                                                        alt={`Gallery ${idx + 1}`}
+                                                        isEditing={isEditing}
+                                                        className={frame.className}
+                                                        objectPosition={pos}
+                                                        scale={scale}
+                                                        onPositionChange={(newPos) => {
+                                                            const newPositions = [...customPositions];
+                                                            // Pad array if needed
+                                                            while (newPositions.length <= idx) newPositions.push('50% 50%');
+                                                            newPositions[idx] = newPos;
+                                                            handleSettingChange('about', 'imagePositions', newPositions);
+                                                        }}
+                                                    />
+                                                );
+                                            })}
 
                                             {/* Edit Gallery Overlay */}
                                             {isEditing && (
-                                                <div className="absolute inset-0 bg-black/50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all">
-                                                        <ImageIcon size={20} className="mr-2" /> Manage Gallery
+                                                <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-10">
+                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all cursor-pointer">
+                                                        <ImageIcon size={20} className="mr-2" /> Manage Gallery & Layout
                                                     </div>
                                                 </div>
                                             )}
@@ -906,132 +1179,136 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 </div>
                                 <div className="p-4 overflow-y-auto flex-1 space-y-4">
                                     
-                                    {/* Inheritance Toggle */}
-                                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
+                                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-bold text-gray-800 dark:text-white flex items-center">
-                                                Auto-Sync with Room Gallery
+                                            <h4 className="font-black text-xs uppercase tracking-widest text-primary mb-1 flex items-center gap-2">
+                                                <RotateCcw size={14} /> Auto-Sync Room Gallery
                                             </h4>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
                                                 {tempInheritGallery 
-                                                    ? "Currently inheriting images automatically from your Room list." 
-                                                    : "Currently using a Custom Gallery. Your images will not change when rooms are added."}
+                                                    ? "Currently pulling photos from your Room list automatically." 
+                                                    : "Currently using a Custom Gallery. Manual control enabled."}
                                             </p>
                                         </div>
                                         <button 
                                             onClick={() => setTempInheritGallery(!tempInheritGallery)}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${tempInheritGallery ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${tempInheritGallery ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-gray-200 dark:bg-gray-700'}`}
                                         >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${tempInheritGallery ? 'translate-x-6' : 'translate-x-1'}`} />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${tempInheritGallery ? 'translate-x-6' : 'translate-x-1'}`} />
                                         </button>
+                                    </div>
+
+                                    {/* Layout Picker */}
+                                    <div className="pt-2">
+                                        <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400 mb-3">Choose Gallery Style</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                            {Object.entries(LAYOUT_CONFIGS).map(([key, config]) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => setTempLayoutType(key)}
+                                                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${tempLayoutType === key ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/50'}`}
+                                                >
+                                                    <div className={`w-8 h-8 rounded border-2 border-dashed ${tempLayoutType === key ? 'border-primary' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
+                                                        <Layout size={14} className={tempLayoutType === key ? 'text-primary' : 'text-gray-400'} />
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-center leading-tight dark:text-gray-300">{config.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                                         <h4 className="font-bold text-gray-800 dark:text-white mb-4 uppercase text-xs tracking-wider">
                                             {tempInheritGallery ? 'Inherited Room Images (Read-Only)' : 'Custom Gallery Images'}
                                         </h4>
-                                        
-                                        {(tempInheritGallery ? roomGalleryImages : tempGalleryImages).map((imgUrl, idx) => {
-                                            
-                                            // Handle parsing of sliders. Default to 50% 50% if none.
-                                            let xPos = 50, yPos = 50;
-                                            if (tempGalleryPositions[idx]) {
-                                                const match = tempGalleryPositions[idx].match(/(\d+)%\s+(\d+)%/);
-                                                if (match) {
-                                                    xPos = parseInt(match[1]);
-                                                    yPos = parseInt(match[2]);
-                                                } else {
-                                                    // Map legacy words
-                                                    if (tempGalleryPositions[idx] === 'top') { xPos=50; yPos=0; }
-                                                    else if (tempGalleryPositions[idx] === 'bottom') { xPos=50; yPos=100; }
-                                                    else if (tempGalleryPositions[idx] === 'left') { xPos=0; yPos=50; }
-                                                    else if (tempGalleryPositions[idx] === 'right') { xPos=100; yPos=50; }
-                                                }
-                                            }
-                                            
-                                            const currentObjectPosition = `${xPos}% ${yPos}%`;
+                                                                          {(tempInheritGallery ? roomGalleryImages : tempGalleryImages).map((imgUrl, idx) => {
+                                            const xPos = tempGalleryPositions[idx] ? parseInt(tempGalleryPositions[idx].split('%')[0]) : 50;
+                                            const yPos = tempGalleryPositions[idx] ? parseInt(tempGalleryPositions[idx].split('%')[1]) : 50;
+                                            const scale = tempGalleryScales[idx] || 1;
 
                                             return (
-                                                <div key={idx} className="flex flex-col sm:flex-row gap-4 items-start bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-200 dark:border-gray-700 relative group mb-3">
-                                                    {/* Preview Thumb */}
-                                                    <div className="w-full sm:w-40 h-32 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-100 dark:border-gray-600 shadow-sm">
-                                                        <img 
-                                                            src={imgUrl} 
-                                                            alt={`Gallery Preview ${idx + 1}`} 
-                                                            style={{ objectPosition: currentObjectPosition }} 
-                                                            className="w-full h-full object-cover transition-all" 
-                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTNhM2FmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiPjwvY2lyY2xlPjxsaW5lIHgxPSIxMiIgeTE9IjgiIHgyPSIxMiIgeTI9IjEyIj48L2xpbmU+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ij48L2xpbmU+PC9zdmc+'; }} 
-                                                        />
+                                                <div key={idx} className="bg-white dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm relative group mb-4">
+                                                    <div className="flex flex-col sm:flex-row gap-4">
+                                                        {/* Interactive Preview Frame */}
+                                                        <div className="w-full sm:w-48 h-32 flex-shrink-0">
+                                                            <GalleryFrame 
+                                                                src={imgUrl} 
+                                                                alt={`Frame ${idx + 1}`} 
+                                                                isEditing={true}
+                                                                objectPosition={tempGalleryPositions[idx] || '50% 50%'}
+                                                                scale={scale}
+                                                                onPositionChange={(newPos) => {
+                                                                    const newPosArr = [...tempGalleryPositions];
+                                                                    // Pad if needed
+                                                                    while (newPosArr.length <= idx) newPosArr.push('50% 50%');
+                                                                    newPosArr[idx] = newPos;
+                                                                    setTempGalleryPositions(newPosArr);
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex-1 space-y-4">
+                                                            {!tempInheritGallery && (
+                                                                <div>
+                                                                    <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Image URL</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={imgUrl} 
+                                                                        onChange={(e) => {
+                                                                            const newImgs = [...tempGalleryImages];
+                                                                            newImgs[idx] = e.target.value;
+                                                                            setTempGalleryImages(newImgs);
+                                                                        }}
+                                                                        placeholder="https://..."
+                                                                        className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition-all dark:text-white"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            <div>
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <label className="text-[10px] font-black uppercase text-gray-400">Zoom Level</label>
+                                                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">{Math.round(scale * 100)}%</span>
+                                                                </div>
+                                                                <input 
+                                                                    type="range" 
+                                                                    min="1" max="3" step="0.1"
+                                                                    value={scale}
+                                                                    onChange={(e) => {
+                                                                        const newScales = [...tempGalleryScales];
+                                                                        while (newScales.length <= idx) newScales.push(1);
+                                                                        newScales[idx] = parseFloat(e.target.value);
+                                                                        setTempGalleryScales(newScales);
+                                                                    }}
+                                                                    className="w-full h-1 bg-gray-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                                                                />
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center gap-3 text-gray-400 italic text-[10px]">
+                                                                <Move size={12} />
+                                                                Tip: Drag the image on the left to center it
+                                                            </div>
+                                                        </div>
+
                                                         {!tempInheritGallery && (
                                                             <button 
                                                                 onClick={() => {
                                                                     const newImgs = [...tempGalleryImages];
                                                                     const newPos = [...tempGalleryPositions];
+                                                                    const newScales = [...tempGalleryScales];
                                                                     newImgs.splice(idx, 1);
                                                                     newPos.splice(idx, 1);
+                                                                    newScales.splice(idx, 1);
                                                                     setTempGalleryImages(newImgs);
                                                                     setTempGalleryPositions(newPos);
+                                                                    setTempGalleryScales(newScales);
                                                                 }}
-                                                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                                                                title="Remove Image"
+                                                                className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 text-red-500 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border border-gray-100 dark:border-gray-700"
+                                                                title="Remove Frame"
                                                             >
-                                                                <Trash2 size={14} />
+                                                                <Trash2 size={16} />
                                                             </button>
                                                         )}
-                                                    </div>
-                                                    
-                                                    {/* Settings Fields */}
-                                                    <div className="flex-1 space-y-3 w-full">
-                                                        {!tempInheritGallery && (
-                                                            <div>
-                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 block uppercase">Image URL</label>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={imgUrl} 
-                                                                    onChange={(e) => {
-                                                                        const newImgs = [...tempGalleryImages];
-                                                                        newImgs[idx] = e.target.value;
-                                                                        setTempGalleryImages(newImgs);
-                                                                    }}
-                                                                    placeholder="https://..."
-                                                                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm w-full outline-none focus:border-primary dark:text-white"
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <div className="flex justify-between items-end mb-1">
-                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase">Horizontal Pan (X)</label>
-                                                                <span className="text-xs text-gray-400 font-mono">{xPos}%</span>
-                                                            </div>
-                                                            <input 
-                                                                type="range" 
-                                                                min="0" max="100" 
-                                                                value={xPos}
-                                                                onChange={(e) => {
-                                                                    const newPos = [...tempGalleryPositions];
-                                                                    newPos[idx] = `${e.target.value}% ${yPos}%`;
-                                                                    setTempGalleryPositions(newPos);
-                                                                }}
-                                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex justify-between items-end mb-1">
-                                                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 block uppercase">Vertical Pan (Y)</label>
-                                                                <span className="text-xs text-gray-400 font-mono">{yPos}%</span>
-                                                            </div>
-                                                            <input 
-                                                                type="range" 
-                                                                min="0" max="100" 
-                                                                value={yPos}
-                                                                onChange={(e) => {
-                                                                    const newPos = [...tempGalleryPositions];
-                                                                    newPos[idx] = `${xPos}% ${e.target.value}%`;
-                                                                    setTempGalleryPositions(newPos);
-                                                                }}
-                                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                            />
-                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -1042,6 +1319,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 onClick={() => {
                                                     setTempGalleryImages([...tempGalleryImages, ""]);
                                                     setTempGalleryPositions([...tempGalleryPositions, "50% 50%"]);
+                                                    setTempGalleryScales([...tempGalleryScales, 1]);
                                                 }}
                                                 className="mt-2 w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 text-gray-500 dark:text-gray-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all font-bold flex flex-col items-center"
                                             >
@@ -1062,6 +1340,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         handleSettingChange('about', 'inheritGallery', tempInheritGallery);
                                         handleSettingChange('about', 'images', tempGalleryImages.filter(u => u.trim() !== ""));
                                         handleSettingChange('about', 'imagePositions', tempGalleryPositions);
+                                        handleSettingChange('about', 'imageScales', tempGalleryScales);
+                                        handleSettingChange('about', 'layoutType', tempLayoutType);
                                         setShowGalleryManager(false);
                                     }} className="px-5 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover shadow-md transition">Apply Changes</button>
                                 </div>
@@ -1077,7 +1357,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             <h2 className="text-3xl md:text-4xl font-serif font-bold text-secondary dark:text-white mb-4">
                                 <InlineText
                                     value={workingSettings.contact?.title ?? ""}
-                                    placeholder="Find Us in Paradise"
+                                    placeholder="Our Location"
                                     isEditing={isEditing}
                                     onChange={(val) => handleSettingChange('contact', 'title', val)}
                                 />
@@ -1085,7 +1365,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             <p className="text-gray-500 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
                                 <InlineText
                                     value={workingSettings.contact?.description ?? ""}
-                                    placeholder="Located in the heart of the Philippines' most beautiful islands. Visit our main office or book a stay at one of our exclusive properties."
+                                    placeholder="Visit our primary office or book a stay at one of our premium properties. We're here to make your experience unforgettable."
                                     isEditing={isEditing}
                                     onChange={(val) => handleSettingChange('contact', 'description', val)}
                                     multiline
@@ -1119,8 +1399,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                     <div className="bg-black/40 p-3 rounded text-xs font-mono mb-2 overflow-x-auto whitespace-nowrap border border-white/10">
                                                         <span className="text-gray-500">&lt;iframe src="</span><span className="text-green-400">https://www.google.com/maps/embed?pb=...</span><span className="text-gray-500">" width="600" ...&gt;&lt;/iframe&gt;</span>
                                                     </div>
-                                                    <a href="https://support.google.com/maps/answer/144361?hl=en#zippy=%2Cembed-a-map-or-directions" target="_blank" rel="noreferrer" className="text-primary hover:text-white underline inline-block transition-colors">
-                                                        View Tutorial
+                                                    <a 
+                                                        href="https://www.google.com/maps" 
+                                                        target="_blank" 
+                                                        rel="noreferrer" 
+                                                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold transition-all shadow-lg active:scale-95 mt-2 no-underline text-xs"
+                                                    >
+                                                        <ExternalLink size={14} /> Open Google Maps
                                                     </a>
                                                 </div>
                                             </div>

@@ -73,10 +73,13 @@ export interface Settings {
         features: Array<{
             title: string;
             description: string;
+            icon?: string;
         }>;
         image: string;
         images?: string[]; // Gallery images for carousel
         imagePositions?: string[]; // CSS object-position for each image
+        imageScales?: number[]; // CSS scale for each image (zoom level)
+        layoutType?: 'mosaic' | 'grid-2' | 'grid-3' | 'grid-4' | 'panorama';
         inheritGallery?: boolean; // Whether to pull photos from the admin rooms automatically
     };
     contact: {

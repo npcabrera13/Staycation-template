@@ -175,6 +175,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
       <div className="grid grid-cols-7 gap-y-2">
         {getDaysInMonth().map((date, idx) => {
           const booked = isDateBooked(date);
+          const isToday = isSameDay(date, today);
           const past = isBefore(date, today);
 
           // Determine selection state
@@ -191,14 +192,14 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
           // Unified Color/State Logic
           let bgClass = 'hover:bg-green-50 dark:hover:bg-green-900/30 cursor-pointer text-gray-700 dark:text-gray-200';
 
-          if (past) {
-            bgClass = 'text-gray-300 dark:text-gray-600 cursor-not-allowed hover:bg-transparent';
+          if (isStart || isEnd || isInRange) {
+            bgClass = 'bg-primary text-white shadow-md transform scale-105 cursor-pointer hover:brightness-110 z-10';
+          } else if (past) {
+            bgClass = 'opacity-30 text-gray-400 dark:text-gray-500 cursor-not-allowed hover:bg-transparent';
           } else if (booked) {
             bgClass = 'bg-red-50/50 dark:bg-red-900/30 text-red-300 dark:text-red-400 cursor-not-allowed';
-          } else if (isStart || isEnd || isInRange) {
-            // Apply the same primary dark teal color to ALL selected dates
-            // Ensure cursor-pointer is present so it feels clickable
-            bgClass = 'bg-primary text-white shadow-md transform scale-105 cursor-pointer hover:brightness-110';
+          } else if (isToday) {
+            bgClass = 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-primary/30 text-primary font-black cursor-pointer hover:bg-blue-100';
           }
 
           // Combine classes

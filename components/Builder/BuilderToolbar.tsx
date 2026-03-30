@@ -377,65 +377,6 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     </div>
                 </AccordionItem>
 
-                {/* 4. About Gallery */}
-                <AccordionItem
-                    title="About Gallery"
-                    icon={ImageIcon}
-                    isOpen={openSection === 'about'}
-                    onClick={() => setOpenSection(openSection === 'about' ? null : 'about')}
-                >
-                    <div className="space-y-3">
-                        <label className="block text-xs font-bold text-gray-500">Gallery Images (Carousel)</label>
-                        <p className="text-xs text-gray-400 mb-2">First image is the main image. Additional images appear in the carousel.</p>
-
-                        {/* Main image */}
-                        <div className="flex gap-2 mb-2">
-                            <input
-                                type="text"
-                                value={settings?.about?.image || ''}
-                                onChange={(e) => onUpdateSettings?.('about', 'image', e.target.value)}
-                                className="flex-1 text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                                placeholder="Main image URL..."
-                            />
-                        </div>
-
-                        {/* Additional images */}
-                        {(settings?.about?.images || []).map((img, index) => (
-                            <div key={index} className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={img}
-                                    onChange={(e) => {
-                                        const newImages = [...(settings?.about?.images || [])];
-                                        newImages[index] = e.target.value;
-                                        onUpdateSettings?.('about', 'images', newImages);
-                                    }}
-                                    className="flex-1 text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                                    placeholder="Additional image URL..."
-                                />
-                                <button
-                                    onClick={() => {
-                                        const newImages = (settings?.about?.images || []).filter((_, i) => i !== index);
-                                        onUpdateSettings?.('about', 'images', newImages);
-                                    }}
-                                    className="text-red-400 hover:text-red-600 p-1"
-                                    title="Remove Image"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ))}
-                        <button
-                            onClick={() => {
-                                const newImages = [...(settings?.about?.images || []), ''];
-                                onUpdateSettings?.('about', 'images', newImages);
-                            }}
-                            className="w-full py-1 text-xs text-primary border border-primary border-dashed rounded hover:bg-teal-50 flex items-center justify-center gap-1"
-                        >
-                            + Add Another Image
-                        </button>
-                    </div>
-                </AccordionItem>
 
                 {/* 5. Footer Section */}
                 <AccordionItem
@@ -496,8 +437,13 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         <Edit size={20} />
                         <span>Visual Builder</span>
                     </div>
-                    <button onClick={() => onToggleMinimize?.(true)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <X size={20} />
+
+                    <button 
+                        onClick={() => onToggleMinimize?.(true)} 
+                        className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        title="Minimize Panel"
+                    >
+                        <X size={18} />
                     </button>
                 </div>
                 {renderFullPanel()}
@@ -508,12 +454,22 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                 <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg animate-slide-down">
                     {/* Mini Header */}
                     <div className="flex items-center justify-between px-3 pt-2 pb-1">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">🎨 Themes</span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={onCancel}
+                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors active:scale-90"
+                                title="Exit Builder"
+                            >
+                                <LogOut size={18} />
+                            </button>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">🎨 Themes</span>
+                        </div>
+                        
                         <div className="flex items-center gap-1">
                             {hasChanges && (
                                 <button
                                     onClick={onSave}
-                                    className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm hover:bg-primary-hover transition-all"
+                                    className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg hover:bg-primary-hover transition-all active:scale-95 animate-pulse-slow"
                                 >
                                     <Save size={12} className="inline mr-1" />Save
                                 </button>
@@ -527,8 +483,8 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             </button>
                             <button
                                 onClick={() => onToggleMinimize?.(true)}
-                                className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                                title="Close Builder"
+                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                title="Minimize Panel"
                             >
                                 <X size={18} />
                             </button>

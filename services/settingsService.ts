@@ -12,9 +12,9 @@ export const DEFAULT_SETTINGS: Settings = {
     description: "Experience the ultimate relaxation with our curated staycation packages.",
     heroImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
     hero: {
-        tagline: "Welcome to Paradise",
-        title: "Rediscover Serenity",
-        subtitle: "Luxury staycations curated for your peace of mind. Experience comfort like never before.",
+        tagline: "Luxury & Comfort Awaits",
+        title: "Welcome to Your Staycation",
+        subtitle: "Experience premium comfort and curated relaxation. Your perfect getaway is just a booking away.",
         ctaText: "Explore Rooms",
         buttonColor: "", // Inherit global accent by default
         buttonTextColor: "",
@@ -52,8 +52,8 @@ export const DEFAULT_SETTINGS: Settings = {
         address: COMPANY_INFO.address,
         phone: COMPANY_INFO.phone,
         email: COMPANY_INFO.email,
-        title: "Find Us in Paradise",
-        description: "Located in the heart of the Philippines' most beautiful islands. Visit our main office or book a stay at one of our exclusive properties."
+        title: "Our Location",
+        description: "Visit our primary office or book a stay at one of our premium properties. We're here to make your experience unforgettable."
     },
     social: {
         facebook: COMPANY_INFO.facebook,
