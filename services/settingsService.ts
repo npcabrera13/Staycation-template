@@ -74,7 +74,7 @@ export const DEFAULT_SETTINGS: Settings = {
         primaryColor: "#0D9488", // Teal 600
         primaryHoverColor: "#0F766E", // Teal 700
         secondaryColor: "#000000",
-        accentColor: "#E9C46A", // Soft gold
+        accentColor: "#FACC15", // Vibrant Gold
         fontFamily: "sans"
     },
     paymentMethods: {

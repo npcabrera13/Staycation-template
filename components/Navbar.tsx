@@ -110,13 +110,13 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
               )}
             </div>
 
-            <span className="font-serif text-xl font-bold tracking-wider text-secondary dark:text-white">
+            <span className="font-serif text-xl font-bold tracking-wider text-primary dark:text-white">
               {isEditing ? (
                 <input
                   type="text"
                   value={settings?.siteName || ''}
                   onChange={(e) => onUpdateSettings && onUpdateSettings('siteName' as any, '', e.target.value)}
-                  className="bg-transparent border-2 border-dashed border-gray-400/50 hover:border-gray-400 focus:border-blue-500 rounded px-2 py-1 outline-none text-xl font-bold font-serif tracking-wider text-secondary dark:text-white w-full min-w-[300px] transition-colors"
+                  className="bg-transparent border-2 border-dashed border-gray-400/50 hover:border-gray-400 focus:border-blue-500 rounded px-2 py-1 outline-none text-xl font-bold font-serif tracking-wider text-primary dark:text-white w-full min-w-[300px] transition-colors"
                   placeholder="Site Name"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -150,15 +150,15 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
-            {/* Updated button to solid secondary color for contrast on white */}
-            <button onClick={() => scrollToSection('rooms')} className="bg-secondary text-white px-6 py-2.5 rounded-full font-bold hover:bg-primary transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:-translate-y-0.5">
+            {/* Updated button to solid primary color for contrast on white */}
+            <button onClick={() => scrollToSection('rooms')} className="bg-primary text-white px-6 py-2.5 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-primary/40 transform hover:-translate-y-0.5">
               Book Now
             </button>
           </div>
 
           {/* Mobile/Tablet Menu Button (Visible on md and below) */}
           <div className="lg:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-secondary hover:text-primary transition-colors p-2">
+            <button onClick={() => setIsOpen(!isOpen)} className="text-primary hover:text-primary-hover transition-colors p-2">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -178,13 +178,13 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             {/* Dark Mode Toggle - Mobile */}
             <button
               onClick={toggleTheme}
-              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium"
+              className="w-full flex items-center px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-primary rounded-lg transition-colors font-medium"
             >
               {isDark ? <Sun size={18} className="mr-3" /> : <Moon size={18} className="mr-3" />}
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
 
-            <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-secondary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
+            <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-primary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
               Book Your Stay
             </button>
           </div>

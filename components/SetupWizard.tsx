@@ -20,6 +20,12 @@ const COLOR_PRESETS = [
     { name: 'Coral Reef', primary: '#E85D3A', secondary: '#2A1E1A', accent: '#FF8A65' },
     { name: 'Slate Modern', primary: '#455A64', secondary: '#1A1E22', accent: '#78909C' },
     { name: 'Teal Fresh', primary: '#00838F', secondary: '#1A2A2E', accent: '#4DB6AC' },
+    { name: 'Lavender Dreams', primary: '#7C3AED', secondary: '#1E1B4B', accent: '#DDD6FE' },
+    { name: 'Midnight Slate', primary: '#0F172A', secondary: '#020617', accent: '#334155' },
+    { name: 'Desert Mirage', primary: '#92400E', secondary: '#451A03', accent: '#FDE68A' },
+    { name: 'Tropical Mint', primary: '#065F46', secondary: '#064E3B', accent: '#A7F3D0' },
+    { name: 'Coffee Roast', primary: '#4B2C20', secondary: '#3E2723', accent: '#D7CCC8' },
+    { name: 'Berry Blast', primary: '#831843', secondary: '#500724', accent: '#fce7f3' },
 ];
 
 const SetupWizard: React.FC<SetupWizardProps> = ({

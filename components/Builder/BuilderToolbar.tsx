@@ -30,6 +30,12 @@ const THEME_PRESETS = [
     { name: 'Sky Fresh', primary: '#2563EB', hover: '#1D4ED8', secondary: '#1E40AF' },
     { name: 'Forest Pine', primary: '#166534', hover: '#14532D', secondary: '#064E3B' },
     { name: 'Crimson Bold', primary: '#DC2626', hover: '#B91C1C', secondary: '#991B1B' },
+    { name: 'Lavender Dreams', primary: '#7C3AED', hover: '#6D28D9', secondary: '#DDD6FE' },
+    { name: 'Midnight Slate', primary: '#0F172A', hover: '#020617', secondary: '#334155' },
+    { name: 'Desert Mirage', primary: '#92400E', hover: '#78350F', secondary: '#FDE68A' },
+    { name: 'Tropical Mint', primary: '#065F46', hover: '#064E3B', secondary: '#A7F3D0' },
+    { name: 'Coffee Roast', primary: '#4B2C20', hover: '#3E2723', secondary: '#D7CCC8' },
+    { name: 'Berry Blast', primary: '#831843', hover: '#701a3e', secondary: '#fce7f3' },
 ];
 
 const AccordionItem: React.FC<{
