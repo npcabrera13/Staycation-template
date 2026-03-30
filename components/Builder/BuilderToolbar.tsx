@@ -462,11 +462,11 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     <div className="flex items-center justify-between px-3 pt-2 pb-1">
                         <div className="flex items-center gap-1">
                             <button
-                                onClick={onCancel}
-                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors active:scale-90"
-                                title="Exit Builder"
+                                onClick={() => onToggleMinimize?.(true)}
+                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                title="Minimize Panel"
                             >
-                                <LogOut size={18} />
+                                <X size={18} />
                             </button>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">🎨 Themes</span>
                         </div>
@@ -488,11 +488,11 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                 <SlidersHorizontal size={18} />
                             </button>
                             <button
-                                onClick={() => onToggleMinimize?.(true)}
-                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                                title="Minimize Panel"
+                                onClick={onCancel}
+                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors active:scale-90"
+                                title="Exit Builder"
                             >
-                                <X size={18} />
+                                <LogOut size={18} />
                             </button>
                         </div>
                     </div>

@@ -16,7 +16,7 @@ import {
     Sparkles, X, Wifi, Shield, Star, Coffee, Home, 
     Waves, Wind, ChefHat, Car, Dumbbell, Tv, Utensils, 
     Monitor, Zap, Sun, Umbrella, Bell, Bath, Armchair, Bike, Key, Edit, Hash,
-    Layout, RotateCcw, Move, ExternalLink
+    Layout, RotateCcw, Move, ExternalLink, Maximize
 } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
@@ -206,6 +206,24 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
     const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
+
+    // Consolidated Gallery Images Logic
+    const displayGalleryImages = useMemo(() => {
+        const isInheriting = workingSettings.about?.inheritGallery !== false;
+        const customImages = (workingSettings.about?.images || []).filter(img => img && img.trim() !== "");
+        
+        const defaultFallbackImages = [
+            "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+            "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+        ];
+
+        return isInheriting 
+            ? (roomGalleryImages.length > 0 ? roomGalleryImages : defaultFallbackImages)
+            : (customImages.length > 0 ? customImages : defaultFallbackImages);
+    }, [workingSettings.about?.inheritGallery, workingSettings.about?.images, roomGalleryImages]);
+
     const { showToast, showConfirm } = useNotification();
 
     // Initial load - use deep copy to avoid shared reference
@@ -1033,73 +1051,86 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             <RevealOnScroll delay={300} className="h-full w-full">
                                 <div className="absolute -inset-4 bg-accent/20 rounded-full blur-3xl z-0 animate-pulse-slow"></div>
 
-                                {/* Dynamic Room Mosaic Gallery */}
+                                                                {/* Dynamic Room Mosaic Gallery */}
                                 {(() => {
-                                    // Use custom images if inheritGallery is explicitly false
                                     const isInheriting = workingSettings.about?.inheritGallery !== false;
                                     const customImages = (workingSettings.about?.images || []).filter(img => img && img.trim() !== "");
                                     const customPositions = workingSettings.about?.imagePositions || [];
                                     
-                                    const defaultFallbackImages = [
-                                        "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-                                        "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-                                        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-                                        "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                                    ];
-
                                     const layoutType = (workingSettings.about?.layoutType || 'mosaic') as keyof typeof LAYOUT_CONFIGS;
                                     const layout = LAYOUT_CONFIGS[layoutType] || LAYOUT_CONFIGS.mosaic;
                                     
-                                    const displayImages = isInheriting 
-                                        ? (roomGalleryImages.length > 0 ? roomGalleryImages : defaultFallbackImages)
-                                        : (customImages.length > 0 ? customImages : defaultFallbackImages);
-
                                     return (
                                         <div 
                                             className={`relative w-full h-full grid gap-3 md:gap-4 group ${layout.gridClass}`}
-                                            onClick={() => {
-                                                if (isEditing) {
-                                                    setTempInheritGallery(isInheriting);
-                                                    setTempGalleryImages(customImages.length > 0 ? customImages : [...displayImages]);
-                                                    setTempGalleryPositions([...customPositions]);
-                                                    setTempGalleryScales([...(workingSettings.about?.imageScales || [])]);
-                                                    setTempLayoutType(layoutType);
-                                                    setShowGalleryManager(true);
-                                                }
-                                            }}
                                         >
                                             {layout.frames.map((frame, idx) => {
-                                                const imgUrl = displayImages[idx % displayImages.length];
-                                                const pos = customImages.length > 0 && customPositions[idx % displayImages.length] ? customPositions[idx % displayImages.length] : '50% 50%';
-                                                const scale = workingSettings.about?.imageScales?.[idx % displayImages.length] || 1;
+                                                const imgUrl = displayGalleryImages[idx % displayGalleryImages.length];
+                                                const pos = customImages.length > 0 && customPositions[idx % displayGalleryImages.length] ? customPositions[idx % displayGalleryImages.length] : '50% 50%';
+                                                const scale = workingSettings.about?.imageScales?.[idx % displayGalleryImages.length] || 1;
 
                                                 return (
-                                                    <GalleryFrame 
+                                                    <div 
                                                         key={`${layoutType}-${idx}`}
-                                                        src={imgUrl}
-                                                        alt={`Gallery ${idx + 1}`}
-                                                        isEditing={isEditing}
-                                                        className={frame.className}
-                                                        objectPosition={pos}
-                                                        scale={scale}
-                                                        onPositionChange={(newPos) => {
-                                                            const newPositions = [...customPositions];
-                                                            // Pad array if needed
-                                                            while (newPositions.length <= idx) newPositions.push('50% 50%');
-                                                            newPositions[idx] = newPos;
-                                                            handleSettingChange('about', 'imagePositions', newPositions);
+                                                        className={`${frame.className} relative cursor-pointer group/frame-wrapper`}
+                                                        onClick={(e) => {
+                                                            if (isEditing) {
+                                                                e.stopPropagation();
+                                                                setTempInheritGallery(isInheriting);
+                                                                setTempGalleryImages(customImages.length > 0 ? customImages : [...displayGalleryImages]);
+                                                                setTempGalleryPositions([...customPositions]);
+                                                                setTempGalleryScales([...(workingSettings.about?.imageScales || [])]);
+                                                                setTempLayoutType(layoutType);
+                                                                setShowGalleryManager(true);
+                                                            } else {
+                                                                setActiveAboutSlide(idx % displayGalleryImages.length);
+                                                                setShowAboutLightbox(true);
+                                                            }
                                                         }}
-                                                    />
+                                                    >
+                                                        <GalleryFrame 
+                                                            src={imgUrl}
+                                                            alt={`Gallery ${idx + 1}`}
+                                                            isEditing={isEditing}
+                                                            className="h-full w-full"
+                                                            objectPosition={pos}
+                                                            scale={scale}
+                                                            onPositionChange={(newPos) => {
+                                                                const newPositions = [...customPositions];
+                                                                while (newPositions.length <= idx) newPositions.push('50% 50%');
+                                                                newPositions[idx] = newPos;
+                                                                handleSettingChange('about', 'imagePositions', newPositions);
+                                                            }}
+                                                        />
+                                                        {!isEditing && (
+                                                            <div className="absolute inset-0 bg-black/0 group-hover/frame-wrapper:bg-black/10 transition-colors rounded-3xl flex items-center justify-center opacity-0 group-hover/frame-wrapper:opacity-100">
+                                                                <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30 text-white shadow-xl transform scale-90 group-hover/frame-wrapper:scale-100 transition-all">
+                                                                    <Maximize size={20} />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 );
                                             })}
 
-                                            {/* Edit Gallery Overlay */}
+                                            {/* Manage Gallery Overlay - ONLY in Edit Mode */}
                                             {isEditing && (
-                                                <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-10">
-                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all cursor-pointer">
+                                                <button 
+                                                    className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center z-10"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setTempInheritGallery(isInheriting);
+                                                        setTempGalleryImages(customImages.length > 0 ? customImages : [...displayGalleryImages]);
+                                                        setTempGalleryPositions([...customPositions]);
+                                                        setTempGalleryScales([...(workingSettings.about?.imageScales || [])]);
+                                                        setTempLayoutType(layoutType);
+                                                        setShowGalleryManager(true);
+                                                    }}
+                                                >
+                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold transform translate-y-4 hover:translate-y-0 transition-all">
                                                         <ImageIcon size={20} className="mr-2" /> Manage Gallery & Layout
                                                     </div>
-                                                </div>
+                                                </button>
                                             )}
                                         </div>
                                     );
@@ -1110,56 +1141,71 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                     {/* About Lightbox Modal */}
                     {showAboutLightbox && (() => {
-                        const displayImages = roomGalleryImages.length > 0 ? roomGalleryImages : [
-                            workingSettings.about?.image,
-                            ...(workingSettings.about?.images || [])
-                        ].filter(img => img && img.trim() !== "");
-
                         return (
                             <div
-                                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+                                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-0 md:p-4 animate-fade-in touch-none"
                                 onClick={() => setShowAboutLightbox(false)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowLeft') setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length);
+                                    if (e.key === 'ArrowRight') setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length);
+                                    if (e.key === 'Escape') setShowAboutLightbox(false);
+                                }}
+                                tabIndex={0}
                             >
                                 <button
                                     onClick={() => setShowAboutLightbox(false)}
-                                    className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-10"
+                                    className="absolute top-6 right-6 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-all hover:scale-110 z-[110] backdrop-blur-md border border-white/10"
+                                    aria-label="Close Gallery"
                                 >
-                                    ✕
+                                    <X size={24} />
                                 </button>
 
                                 {/* Navigation arrows */}
-                                {displayImages.length > 1 && (
+                                {displayGalleryImages.length > 1 && (
                                     <>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev - 1 + displayImages.length) % displayImages.length);
+                                                setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length);
                                             }}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
+                                            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-4 rounded-full transition-all hover:scale-110 active:scale-95 z-[110] backdrop-blur-md border border-white/10 group/nav"
                                         >
-                                            <ChevronLeft size={32} />
+                                            <ChevronLeft size={32} className="group-hover/nav:-translate-x-0.5 transition-transform" />
                                         </button>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev + 1) % displayImages.length);
+                                                setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length);
                                             }}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors"
+                                            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-4 rounded-full transition-all hover:scale-110 active:scale-95 z-[110] backdrop-blur-md border border-white/10 group/nav"
                                         >
-                                            <ChevronRight size={32} />
+                                            <ChevronRight size={32} className="group-hover/nav:translate-x-0.5 transition-transform" />
                                         </button>
                                     </>
                                 )}
 
-                                <div className="max-w-5xl max-h-[85vh] relative" onClick={(e) => e.stopPropagation()}>
-                                    <img
-                                        src={displayImages[activeAboutSlide % displayImages.length]}
-                                        alt="Gallery Fullscreen"
-                                        className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl animate-zoom-in"
-                                    />
-                                    <div className="absolute -bottom-10 left-0 right-0 text-center text-white/50 text-sm">
-                                        {(activeAboutSlide % displayImages.length) + 1} / {displayImages.length}
+                                <div className="w-full h-full flex items-center justify-center p-4 md:p-12" onClick={(e) => e.stopPropagation()}>
+                                    <div className="relative max-w-full max-h-full group/image-container">
+                                        <img
+                                            key={activeAboutSlide}
+                                            src={displayGalleryImages[activeAboutSlide % displayGalleryImages.length]}
+                                            alt="Gallery Fullscreen"
+                                            className="max-w-full max-h-[85vh] md:max-h-[90vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-zoom-in"
+                                        />
+                                        
+                                        {/* Image Counter Badge */}
+                                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/10 text-white/70 text-xs font-bold tracking-widest uppercase">
+                                            {(activeAboutSlide % displayGalleryImages.length) + 1} / {displayGalleryImages.length}
+                                        </div>
                                     </div>
+                                </div>
+
+                                {/* Progress Bar (Optional, but looks premium) */}
+                                <div className="absolute bottom-0 left-0 h-1 bg-primary/30 w-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-primary transition-all duration-500 ease-out"
+                                        style={{ width: `${((activeAboutSlide + 1) / displayGalleryImages.length) * 100}%` }}
+                                    />
                                 </div>
                             </div>
                         );
@@ -1376,36 +1422,36 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         <RevealOnScroll delay={200}>
                             <div className="w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative group">
                                 {isEditing && (
-                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                                        <h3 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
-                                            <MapPin className="w-6 h-6" /> Edit Google Map 
+                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-4 md:p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm overflow-y-auto">
+                                        <h3 className="text-white text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2">
+                                            <MapPin className="w-5 h-5 md:w-6 md:h-6" /> Edit Google Map 
                                         </h3>
-                                        <div className="w-full max-w-2xl bg-white/10 p-6 rounded-xl border border-white/20 backdrop-blur-md">
-                                            <label className="block text-sm font-medium text-gray-200 mb-2">Google Maps Embed URL (src link)</label>
+                                        <div className="w-full max-w-2xl bg-white/10 p-4 md:p-6 rounded-2xl border border-white/20 backdrop-blur-md">
+                                            <label className="block text-xs md:text-sm font-medium text-gray-200 mb-1.5 md:mb-2">Google Maps Embed URL (src link)</label>
                                             <input 
                                                 type="text" 
-                                                className="w-full px-4 py-3 rounded-lg text-black mb-4 focus:ring-2 focus:ring-primary outline-none"
-                                                placeholder="https://www.google.com/maps/embed?pb=..."
+                                                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-black mb-3 md:mb-4 focus:ring-2 focus:ring-primary outline-none transition-all"
+                                                placeholder="https://www.google.com/maps/embed?..."
                                                 value={workingSettings.map?.embedUrl || ''}
                                                 onChange={(e) => handleSettingChange('map', 'embedUrl', e.target.value)}
                                             />
-                                            <div className="bg-black/30 p-4 rounded-lg flex gap-3 text-sm text-gray-300">
-                                                <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                                                <div className="flex-1">
-                                                    <p className="mb-2">
-                                                        Go to Google Maps → Share → Embed a map → Copy HTML. <br/>
-                                                        Extract only the URL inside the <code className="text-primary bg-primary/10 px-1 rounded">src="..."</code> attribute.
+                                            <div className="bg-black/30 p-3 md:p-4 rounded-xl flex gap-2.5 md:gap-3 text-[11px] md:text-sm text-gray-300">
+                                                <Info className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="mb-2 leading-relaxed">
+                                                        Go to Google Maps → Share → Embed a map → Copy HTML. <br className="hidden md:block"/>
+                                                        Extract only the URL inside the <code className="text-primary bg-primary/10 px-1 rounded mx-0.5">src="..."</code>.
                                                     </p>
-                                                    <div className="bg-black/40 p-3 rounded text-xs font-mono mb-2 overflow-x-auto whitespace-nowrap border border-white/10">
-                                                        <span className="text-gray-500">&lt;iframe src="</span><span className="text-green-400">https://www.google.com/maps/embed?pb=...</span><span className="text-gray-500">" width="600" ...&gt;&lt;/iframe&gt;</span>
+                                                    <div className="bg-black/40 p-2.5 md:p-3 rounded-lg text-[10px] font-mono mb-2 overflow-x-auto whitespace-nowrap border border-white/10 scrollbar-hide">
+                                                        <span className="text-gray-500">&lt;iframe src="</span><span className="text-green-400">https://www.google.com/maps/embed?pb=...</span><span className="text-gray-500">" ...&gt;</span>
                                                     </div>
                                                     <a 
                                                         href="https://www.google.com/maps" 
                                                         target="_blank" 
                                                         rel="noreferrer" 
-                                                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold transition-all shadow-lg active:scale-95 mt-2 no-underline text-xs"
+                                                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-bold transition-all shadow-lg active:scale-95 mt-1 no-underline text-[10px] md:text-xs"
                                                     >
-                                                        <ExternalLink size={14} /> Open Google Maps
+                                                        <ExternalLink size={12} className="md:w-3.5 md:h-3.5" /> Open Google Maps
                                                     </a>
                                                 </div>
                                             </div>
@@ -1426,7 +1472,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             </div>
                         </RevealOnScroll>
                     </div>
-                </section >
+                </section>
 
 
                 <Footer
