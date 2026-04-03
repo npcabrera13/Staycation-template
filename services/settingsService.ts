@@ -33,7 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
         title: "Why Choose",
         subtitle: "Us?",
         features: [
-            { title: "Handpicked Locations", description: "Every property is personally verified for quality and comfort to ensure you have a truly magical stay." },
+            { title: "Superior Comfort", description: "Every room is personally verified for quality and comfort to ensure you have a truly relaxing stay." },
             { title: "Seamless Booking", description: "Experience a stress-free process with real-time availability, instant confirmation, and secure payments." },
             { title: "Exceptional Service", description: "Our dedicated team is always available to assist you, ensuring a smooth and worry-free experience from start to finish." }
         ],

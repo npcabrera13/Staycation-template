@@ -59,7 +59,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
 
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const TOTAL_STEPS = 7; // 0-6: Name, Message, Colors, Rooms, Contact, Location, Success
+    const TOTAL_STEPS = 6; // 0-5: Name, Message, Colors, Contact, Location, Success
 
     // Auto-focus inputs when step changes
     useEffect(() => {
@@ -71,7 +71,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
 
     // Trigger confetti on final step
     useEffect(() => {
-        if (currentStep === 6) {
+        if (currentStep === 5) {
             setTimeout(() => setShowConfetti(true), 300);
         }
     }, [currentStep]);
@@ -79,8 +79,8 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
     const goNext = async () => {
         if (isAnimating) return;
 
-        // Only save to Firestore on the LAST data-entry step (Step 5 → "Finish")
-        if (currentStep === 5) {
+        // Only save to Firestore on the LAST data-entry step (Step 4 → "Finish")
+        if (currentStep === 4) {
             // 1. Update Settings
             const updated = JSON.parse(JSON.stringify(settings)) as Settings;
             
@@ -124,15 +124,8 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
             await onUpdateSettings(updated);
             localStorage.setItem('justFinishedWizard', 'true');
 
-            // 2. Update Rooms (if changed)
-            if (onUpdateRoom) {
-                for (const room of rooms) {
-                    const newName = roomNames[room.id];
-                    if (newName && newName !== room.name) {
-                        await onUpdateRoom(room.id, { name: newName });
-                    }
-                }
-            }
+            // 2. Room Photos tutorial: In the Admin Panel, we tell them to head there.
+            // Simplified: Removing Room naming from wizard to speed up onboarding.
         }
 
         if (currentStep < TOTAL_STEPS - 1) {
@@ -159,9 +152,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
         if (currentStep === 0) return businessName.trim().length > 0;
         if (currentStep === 1) return heroTagline.trim().length > 0;
         if (currentStep === 2) return selectedColorIdx !== null;
-        if (currentStep === 3) return !Object.values(roomNames).some(name => !String(name).trim());
-        if (currentStep === 4) return phone.trim().length > 0 || email.trim().length > 0;
-        if (currentStep === 5) return address.trim().length > 0;
+        if (currentStep === 3) return phone.trim().length > 0 || email.trim().length > 0;
+        if (currentStep === 4) return address.trim().length > 0;
+        return true;
         return true;
     };
 
@@ -264,36 +257,6 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
             case 3:
                 return (
                     <div className="flex flex-col items-center text-center px-4">
-                        <div className="text-5xl md:text-6xl mb-6">🏠</div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                            Naming Rooms
-                        </h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg mb-8 max-w-md">
-                            What should we call your staycation spots?
-                        </p>
-                        <div className="w-full max-w-md space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                            {rooms.map((room) => (
-                                <div key={room.id} className="text-left bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
-                                    <div className="flex items-center gap-2 mb-2 text-primary">
-                                        <Home size={14} />
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-0.5">Name your room</label>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={roomNames[room.id] || ''}
-                                        onChange={(e) => setRoomNames(prev => ({ ...prev, [room.id]: e.target.value }))}
-                                        placeholder={room.name}
-                                        className="w-full bg-transparent border-b-2 border-gray-200 dark:border-gray-700 focus:border-primary outline-none py-1 text-lg font-medium transition-all"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-
-            case 4:
-                return (
-                    <div className="flex flex-col items-center text-center px-4">
                         <div className="text-5xl md:text-6xl mb-6">📱</div>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
                             How can guests reach you?
@@ -327,7 +290,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                     </div>
                 );
 
-            case 5:
+            case 4:
                 return (
                     <div className="flex flex-col items-center text-center px-4">
                         <div className="text-5xl md:text-6xl mb-6">📍</div>
@@ -335,9 +298,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                             Where to find you
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg mb-8 max-w-md">
-                            Add your address and a map link for easy navigation.
+                            Add your address so guests know exactly where to go.
                         </p>
-                        <div className="w-full max-w-md space-y-4">
+                        <div className="w-full max-w-md">
                             <div className="text-left bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center gap-2 mb-2 text-primary">
                                     <MapPin size={14} />
@@ -348,28 +311,15 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
                                     placeholder="e.g. 123 Beach Road, El Nido, Palawan"
-                                    className="w-full bg-transparent outline-none py-1 text-lg font-medium resize-none min-h-[60px]"
+                                    className="w-full bg-transparent outline-none py-1 text-lg font-medium resize-none min-h-[100px]"
                                 />
                             </div>
-                            <div className="text-left bg-white dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 rounded-2xl hover:border-primary/50 transition-all">
-                                <div className="flex items-center gap-2 mb-2 text-primary">
-                                    <div className="p-1 rounded bg-primary/10"><Sparkles size={12} /></div>
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Google Maps Embed Link</label>
-                                </div>
-                                <input
-                                    type="text"
-                                    value={mapEmbedUrl}
-                                    onChange={(e) => setMapEmbedUrl(e.target.value)}
-                                    placeholder="https://www.google.com/maps/embed?pb=..."
-                                    className="w-full text-xs text-gray-500 dark:text-gray-400 bg-transparent outline-none py-1 truncate"
-                                />
-                                <p className="text-[10px] text-gray-400 mt-2 italic">Tip: Click 'Share' {'->'} 'Embed a map' and copy the 'src' attribute.</p>
-                            </div>
+                            <p className="text-xs text-gray-400 mt-4 text-center">You can set up your Google Maps embed later in the Admin Panel.</p>
                         </div>
                     </div>
                 );
 
-            case 6:
+            case 5:
                 return (
                     <div className="flex flex-col items-center text-center px-4 relative">
                         {showConfetti && (
@@ -475,7 +425,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                 </div>
 
                 {/* Navigation buttons */}
-                {currentStep < 6 && (
+                {currentStep < 5 && (
                     <div className="px-8 pb-10 flex items-center justify-between gap-4">
                         <div className="w-1/4">
                             {currentStep > 0 && (
@@ -491,9 +441,9 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                         <button
                             onClick={goNext}
                             disabled={!canProceed()}
-                            className={`flex-1 max-w-[200px] py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${currentStep === 5 ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-200' : 'bg-gray-900 hover:bg-black text-white'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                            className={`flex-1 max-w-[200px] py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${currentStep === 4 ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-200' : 'bg-gray-900 hover:bg-black text-white'} disabled:opacity-20 disabled:cursor-not-allowed`}
                         >
-                            {currentStep === 5 ? 'Finish & Launch' : 'Continue'} <ChevronRight size={18} />
+                            {currentStep === 4 ? 'Finish & Launch' : 'Continue'} <ChevronRight size={18} />
                         </button>
 
                         <div className="w-1/4 text-right text-[10px] text-gray-300 font-bold uppercase tracking-widest hidden sm:block">

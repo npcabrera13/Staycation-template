@@ -25,6 +25,14 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
+  const [showAdminGuide, setShowAdminGuide] = useState(false);
+
+  useEffect(() => {
+    // Check if user just finished the wizard
+    if (localStorage.getItem('justFinishedWizard') === 'true') {
+      setShowAdminGuide(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +55,11 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     }
     // Prevent text selection logic here if needed?
     // document.getSelection()?.removeAllRanges();
+
+    if (showAdminGuide) {
+      setShowAdminGuide(false);
+      localStorage.removeItem('justFinishedWizard');
+    }
 
     const now = Date.now();
     if (now - lastClickTimeRef.current < 1000) {
@@ -94,7 +107,20 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     <nav className={navClasses}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center cursor-pointer select-none group relative" onClick={handleLogoClick}>
+          <div className="flex items-center cursor-pointer select-none group relative py-1 px-2 rounded-xl transition-all" onClick={handleLogoClick}>
+            {/* Admin Entry Guide Tooltip */}
+            {showAdminGuide && (
+              <>
+                <div className="absolute -bottom-20 left-0 bg-primary text-white text-xs px-5 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-bounce whitespace-nowrap z-[60] font-bold border-2 border-white/20 backdrop-blur-md">
+                  <div className="absolute -top-2.5 left-6 w-5 h-5 bg-primary rotate-45 border-l-2 border-t-2 border-white/20"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white text-primary w-8 h-8 rounded-full flex items-center justify-center text-sm font-black shadow-inner">3x</div>
+                    <span className="text-sm">Triple-click the logo to enter Admin Panel!</span>
+                  </div>
+                </div>
+                <div className="absolute inset-0 rounded-xl ring-4 ring-primary animate-pulse z-[59]"></div>
+              </>
+            )}
             <div className={`relative h-10 w-auto max-w-[120px] mr-3 overflow-visible flex-shrink-0 ${isEditing ? 'ring-2 ring-primary ring-offset-2 rounded-sm cursor-pointer' : ''}`}>
               {settings?.logo?.trim() ? (
                 <img

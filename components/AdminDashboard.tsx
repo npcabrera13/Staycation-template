@@ -962,6 +962,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                         )}
 
+                        {/* Awaiting Payment - Deposit made, balance pending */}
+                        {(() => {
+                            const awaitingPaymentBookings = bookings
+                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
+                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                            if (awaitingPaymentBookings.length === 0) return null;
+
+                            return (
+                                <div className="hidden md:block bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0 animate-fade-in shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm md:text-base">
+                                            ⏳ Awaiting Balance Payment ({awaitingPaymentBookings.length})
+                                        </h3>
+                                        <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
+                                    </div>
+                                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
+                                        {awaitingPaymentBookings.map(booking => {
+                                            const room = rooms.find(r => r.id === booking.roomId);
+                                            return (
+                                                <div
+                                                    key={booking.id}
+                                                    onClick={() => setEditingBooking(booking)}
+                                                    className="min-w-[200px] md:min-w-[240px] max-w-[260px] bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer snap-start flex-shrink-0 relative group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="font-bold text-gray-800 dark:text-white truncate pr-2">{booking.guestName}</div>
+                                                        <div className="text-[10px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-2 py-0.5 rounded font-black tracking-wider uppercase">Deposit Paid</div>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mb-1 flex items-center">
+                                                        <CalendarIcon size={12} className="mr-1 flex-shrink-0" />
+                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
+                                                    </div>
+                                                    <div className="text-xs font-medium text-primary line-clamp-1">
+                                                        {room?.name || 'Unknown Room'}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {/* Upcoming Arrivals - Easy to see incoming bookings */}
                         {(() => {
                             const today = new Date();
@@ -981,7 +1025,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             if (upcomingArrivals.length === 0) return null;
 
                             return (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0">
+                                <div className="hidden md:block bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0">
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="font-bold text-blue-800 dark:text-blue-200 flex items-center text-sm md:text-base">
                                             <CalendarIcon size={18} className="mr-2" />
@@ -1730,9 +1774,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <h1 className="text-lg md:text-2xl font-bold font-serif tracking-wider">Admin Panel</h1>
                     </div>
                     <div className="flex items-center space-x-2 md:mt-4 md:justify-between">
+                        <button
+                            onClick={() => {
+                                if (expiryDays !== null) {
+                                    setShowExpiryWarning(true);
+                                }
+                            }}
+                            className={`relative p-2 rounded transition-colors group flex items-center justify-center ${expiryDays !== null && expiryDays <= 0 ? 'text-red-400 hover:bg-red-900/30' : expiryDays !== null && expiryDays <= 7 ? 'text-yellow-400 hover:bg-yellow-900/30' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                            title="Notifications"
+                        >
+                            <Bell size={20} />
+                            {expiryDays !== null && expiryDays <= 7 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full animate-pulse bg-current"></span>
+                            )}
+                        </button>
                         <button 
                             onClick={toggleTheme} 
-                            className="p-2 hover:bg-gray-700 rounded transition-all text-gray-300 hover:text-white flex items-center justify-center group"
+                            className="md:hidden p-2 hover:bg-gray-700 rounded transition-all text-gray-300 hover:text-white flex items-center justify-center group"
                             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
                         >
                             {isDark ? (
@@ -1740,9 +1798,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             ) : (
                                 <Moon size={20} className="group-hover:-rotate-12 transition-transform" />
                             )}
-                        </button>
-                        <button onClick={onExit} className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-300 hover:text-white" title="Return to Site">
-                            <LogOut size={20} />
                         </button>
                     </div>
                 </div>
@@ -1753,7 +1808,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         onClick={() => setActiveTab('calendar')}
                         className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${activeTab === 'calendar' ? 'bg-primary text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
                     >
-                        <CalendarIcon size={20} className="mr-3" /> Calendar & Bookings
+                        <CalendarIcon size={20} className="mr-3" /> Calendar
                         {pendingBookings.length > 0 && (
                             <span className="ml-auto bg-yellow-500 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{pendingBookings.length}</span>
                         )}
@@ -1778,7 +1833,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                 </nav>
 
-                <div className="hidden md:block p-4 border-t border-gray-700 space-y-3">
+                <div className="hidden md:flex flex-col p-4 border-t border-gray-700 space-y-3">
                     {onEnterVisualBuilder && (
                         <button
                             onClick={onEnterVisualBuilder}
@@ -1787,7 +1842,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <Palette size={18} className="mr-2" /> Open Visual Builder
                         </button>
                     )}
-                    <button onClick={onExit} className="flex items-center text-red-300 hover:text-red-100 transition-colors w-full justify-center pt-2">
+                    <button
+                        onClick={toggleTheme}
+                        className="flex items-center px-4 py-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-300 hover:text-white w-full"
+                        title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    >
+                        {isDark ? <Sun size={18} className="mr-3" /> : <Moon size={18} className="mr-3" />}
+                        {isDark ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                    <button onClick={onExit} className="flex items-center text-red-300 hover:text-red-100 transition-colors w-full justify-center pt-2 mt-2 border-t border-gray-700/50">
                         <LogOut size={20} className="mr-2" /> Return to Site
                     </button>
                 </div>
@@ -1851,37 +1914,54 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen pb-24 md:pb-8">
 
 
-                {/* Expiry Tracker Banner */}
-                {expiryDays !== null && (
-                    <div className={`mb-4 rounded-xl p-3 flex items-center justify-between border ${expiryDays <= 0 ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800' :
-                        expiryDays <= 7 ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800' :
-                            expiryDays <= 30 ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' :
-                                'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
-                        }`}>
-                        <div className="flex items-center">
-                            <Clock size={18} className={`mr-2 ${expiryDays <= 0 ? 'text-red-500' : expiryDays <= 7 ? 'text-yellow-500' : expiryDays <= 30 ? 'text-amber-500' : 'text-green-500'
-                                }`} />
-                            <div>
-                                <span className={`text-sm font-bold ${expiryDays <= 0 ? 'text-red-700 dark:text-red-300' : expiryDays <= 7 ? 'text-yellow-700 dark:text-yellow-300' : expiryDays <= 30 ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-300'
-                                    }`}>
-                                    {expiryDays <= 0 ? `Website expired ${Math.abs(expiryDays)} days ago` :
-                                        `${expiryDays} day${expiryDays !== 1 ? 's' : ''} until expiry`}
-                                </span>
-                                {expiryDate && (
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
-                                        (Expires: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
-                                    </span>
-                                )}
+
+
+                {/* Mobile-Only: Awaiting Payment */}
+                <div className="md:hidden mb-4">
+                    {(() => {
+                        const awaitingPaymentBookings = processedBookings
+                            .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
+                            .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                        if (awaitingPaymentBookings.length === 0) return null;
+
+                        return (
+                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 shadow-sm animate-fade-in">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm">
+                                        ⏳ Awaiting Balance ({awaitingPaymentBookings.length})
+                                    </h3>
+                                    <span className="text-[10px] text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    {awaitingPaymentBookings.slice(0, 3).map(booking => {
+                                        const room = rooms.find(r => r.id === booking.roomId);
+                                        return (
+                                            <div
+                                                key={booking.id}
+                                                onClick={() => setEditingBooking(booking)}
+                                                className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm cursor-pointer relative group flex items-center justify-between"
+                                            >
+                                                <div className="flex-1 truncate pr-2">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="font-bold text-gray-800 dark:text-white truncate max-w-[120px] text-sm">{booking.guestName}</span>
+                                                        <span className="text-[9px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-1.5 py-0.5 rounded font-black tracking-wider uppercase flex-shrink-0">Deposit Paid</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-500 flex items-center">
+                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
+                                                        <span className="mx-1">•</span>
+                                                        <span className="text-primary font-medium truncate">{room?.name || 'Unknown'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-shrink-0 pl-2 opacity-50"><ChevronRight size={16} /></div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                        {expiryDays <= 7 && (
-                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${expiryDays <= 0 ? 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200' : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
-                                }`}>
-                                {expiryDays <= 0 ? 'EXPIRED' : 'RENEW SOON'}
-                            </span>
-                        )}
-                    </div>
-                )}
+                        );
+                    })()}
+                </div>
 
                 {/* Mobile-Only: Upcoming Arrivals at very top */}
                 <div className="md:hidden mb-4">
@@ -2805,16 +2885,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             
             {/* Expiry Warning Popup */}
             {
-                showExpiryWarning && expiryDays !== null && expiryDays <= 7 && (
+                showExpiryWarning && expiryDays !== null && (
                     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
-                            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'}`}>
-                                <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
+                            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : expiryDays <= 7 ? 'bg-yellow-100 dark:bg-yellow-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
+                                {expiryDays <= 7 ? (
+                                    <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
+                                ) : (
+                                    <CheckCircle size={32} className="text-green-500" />
+                                )}
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                {expiryDays <= 0 ? 'Subscription Expired!' : 'Subscription Expiring Soon!'}
+                                {expiryDays <= 0 ? 'Subscription Expired!' : expiryDays <= 7 ? 'Subscription Expiring Soon!' : 'Subscription Active'}
                             </h3>
-                            <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : 'text-yellow-500'}`}>
+                            <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : expiryDays <= 7 ? 'text-yellow-500' : 'text-green-500'}`}>
                                 {expiryDays <= 0 ? 'Expired' : `${expiryDays} day${expiryDays !== 1 ? 's' : ''} left`}
                             </p>
                             {expiryDate && (

@@ -37,18 +37,21 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
   };
 
   const scrollToSection = (id: string) => {
-    if (isEditing) return; // Disable cleanup nav in edit mode
+    if (isEditing) return;
     if (location.pathname !== '/') {
-      // ... same logic
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     } else {
-      // ... same logic
       const element = document.getElementById(id);
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   return (
-    <footer className="bg-secondary text-white pt-12 pb-6" id="contact">
+    <footer className="bg-secondary text-white pt-12 pb-6" id="footer">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
@@ -84,10 +87,10 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
             </h4>
             <ul className="space-y-2 text-sm text-gray-300">
               {/* Static links usually don't need editing, just the text maybe? Skipping for now as user asked for 'footer text' mostly */}
-              <li><span className="hover:text-white transition-colors cursor-pointer">Home</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">Rooms</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">About Us</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">Contact</span></li>
+              <li><span onClick={() => scrollToSection('hero')} className="hover:text-white transition-colors cursor-pointer">Home</span></li>
+              <li><span onClick={() => scrollToSection('rooms')} className="hover:text-white transition-colors cursor-pointer">Rooms</span></li>
+              <li><span onClick={() => scrollToSection('about')} className="hover:text-white transition-colors cursor-pointer">About Us</span></li>
+              <li><span onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors cursor-pointer">Contact</span></li>
             </ul>
           </div>
 

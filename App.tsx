@@ -104,7 +104,17 @@ function AppContent() {
             needsUpdate = true;
           }
 
-          // 2. Fix old AI Concierge text or old branding
+          // 2. Fix "Handpicked Locations" migration
+          const f1 = updatedSettings.about?.features?.[0];
+          if (f1?.title === 'Handpicked Locations') {
+            updatedSettings.about.features[0] = {
+              title: "Superior Comfort",
+              description: "Every room is personally verified for quality and comfort to ensure you have a truly relaxing stay."
+            };
+            needsUpdate = true;
+          }
+
+          // 3. Fix old AI Concierge text or old branding
           const f3 = updatedSettings.about?.features?.[2];
           if (f3?.title === '24/7 Concierge' || f3?.title === 'Personalized Support' || f3?.description?.includes('AI concierge') || f3?.description?.includes('digital concierge')) {
             updatedSettings.about.features[2] = {

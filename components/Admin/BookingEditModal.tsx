@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, Mail, Phone, Calendar, Plus, Clock, Image as ImageIcon } from 'lucide-react';
+import { X, Save, User, Mail, Phone, Calendar, Plus, Clock, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { Booking } from '../../types';
 import { format, addDays } from 'date-fns';
 
@@ -32,7 +32,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
         checkIn: new Date().toISOString(),
         checkOut: addDays(new Date(), 1).toISOString(),
         totalPrice: 0,
-        status: 'confirmed',
+        status: 'pending',
         bookedAt: new Date().toISOString(),
         estimatedArrival: '14:00',
         estimatedDeparture: '11:00'
@@ -54,12 +54,31 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
-        onClose(); // Ideally close after save success, but for now immediate close
+        // Enforce payment data integrity based on status
+        let dataToSave = { ...formData };
+        if (dataToSave.status === 'confirmed') {
+            // Manually confirmed via status button → mark both payments as done
+            dataToSave = { ...dataToSave, depositPaid: true, balancePaid: true };
+        } else if (dataToSave.status === 'cancelled') {
+            // Cancelled → clear payment flags
+            dataToSave = { ...dataToSave, depositPaid: false, balancePaid: false };
+        }
+        onSave(dataToSave);
+        onClose();
     };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+            <style>{`
+                @keyframes pulse-subtle {
+                    0% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.01); opacity: 0.95; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                .animate-pulse-subtle {
+                    animation: pulse-subtle 4s infinite ease-in-out;
+                }
+            `}</style>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scale-in border border-gray-100 dark:border-gray-700 flex flex-col max-h-[90vh]">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
@@ -71,28 +90,6 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
 
                 <form onSubmit={handleSubmit} className="p-6 overflow-y-auto custom-scrollbar">
                     <div className="space-y-6">
-                        {/* Status Selection */}
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Booking Status</label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['confirmed', 'pending', 'cancelled'] as const).map(status => (
-                                    <button
-                                        key={status}
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, status })}
-                                        className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${formData.status === status
-                                            ? status === 'confirmed' ? 'border-green-500 bg-green-50 text-green-700'
-                                                : status === 'pending' ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
-                                                    : 'border-red-500 bg-red-50 text-red-700'
-                                            : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                            }`}
-                                    >
-                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Guest Details */}
                         <div className="space-y-4">
                             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Guest Information</label>
@@ -223,42 +220,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                                     </div>
                                 </div>
 
-                                {/* Mark Deposit as Paid Toggle */}
-                                <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${formData.depositPaid
-                                    ? 'bg-green-50 border-green-300'
-                                    : 'bg-yellow-50 border-yellow-300'
-                                    }`}>
-                                    <div>
-                                        <p className={`font-bold ${formData.depositPaid ? 'text-green-700' : 'text-yellow-700'}`}>
-                                            {formData.depositPaid ? '✅ Deposit Paid' : '⏳ Awaiting Payment'}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {formData.depositPaid
-                                                ? `Paid on ${formData.depositPaidAt ? new Date(formData.depositPaidAt).toLocaleDateString() : 'N/A'}`
-                                                : 'Mark as paid when guest sends proof of payment'
-                                            }
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newDepositPaid = !formData.depositPaid;
-                                            setFormData({
-                                                ...formData,
-                                                depositPaid: newDepositPaid,
-                                                depositPaidAt: newDepositPaid ? new Date().toISOString() : undefined,
-                                                // Auto-confirm when deposit is paid
-                                                status: newDepositPaid && formData.status === 'pending' ? 'confirmed' : formData.status
-                                            });
-                                        }}
-                                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${formData.depositPaid
-                                            ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                            : 'bg-green-600 text-white hover:bg-green-700'
-                                            }`}
-                                    >
-                                        {formData.depositPaid ? 'Undo' : 'Mark as Paid'}
-                                    </button>
-                                </div>
+
                             </div>
                         )}
                         {/* Payment Proof Display */}
@@ -291,20 +253,114 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                     </div>
                 </form>
 
-                <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end space-x-3">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover shadow-md transition-all flex items-center"
-                    >
-                        {isNew ? <Plus size={18} className="mr-2" /> : <Save size={18} className="mr-2" />}
-                        {isNew ? 'Create Booking' : 'Save Changes'}
-                    </button>
+                <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-row gap-3">
+                    {/* STAGE 1: New Request — deposit not yet paid → Decline + Accept Deposit side by side */}
+                    {formData.status === 'pending' && !isNew && !formData.depositPaid ? (
+                        <>
+                            {/* Decline — compact, outlined, left side */}
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const updated = { ...formData, status: 'cancelled' as const };
+                                    onSave(updated);
+                                    onClose();
+                                }}
+                                className="px-4 py-3 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-500 font-bold uppercase tracking-widest text-[9px] hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
+                            >
+                                <X size={14} /> Decline
+                            </button>
+
+                            {/* Accept Deposit — dominant green, takes remaining space */}
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const updated = {
+                                        ...formData,
+                                        status: 'confirmed' as const,
+                                        depositPaid: true,
+                                        depositPaidAt: new Date().toISOString()
+                                    };
+                                    onSave(updated);
+                                    onClose();
+                                }}
+                                className="flex-1 px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold uppercase tracking-widest text-[9px] hover:bg-emerald-600 active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5"
+                            >
+                                <CheckCircle size={14} /> Accept Deposit
+                            </button>
+                        </>
+                    ) : formData.status === 'confirmed' && !isNew && formData.depositPaid && !formData.balancePaid ? (
+                        /* STAGE 2: Awaiting Balance — deposit paid, balance not yet → Confirm Full Payment ONLY */
+                        <div className="flex flex-col w-full gap-2">
+                            <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-800 dark:text-yellow-200 text-[10px] sm:text-xs flex items-center justify-center font-bold text-center">
+                                ⏳ Awaiting Payment — Mark as paid when guest sends proof of payment
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const updated = {
+                                        ...formData,
+                                        status: 'confirmed' as const,
+                                        depositPaid: true,
+                                        balancePaid: true,
+                                        depositPaidAt: formData.depositPaidAt || new Date().toISOString()
+                                    };
+                                    onSave(updated);
+                                    onClose();
+                                }}
+                                className="w-full px-5 py-3 rounded-xl bg-emerald-600 text-white font-bold uppercase tracking-widest text-[9px] hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus size={16} /> Confirm Full Payment
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex justify-between gap-3 w-full">
+                            {isNew ? (
+                                <>
+                                    <button
+                                        onClick={onClose}
+                                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="px-6 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-md transition-all flex items-center"
+                                    >
+                                        <Plus size={18} className="mr-2" /> Create Booking
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            const updated = { ...formData, status: 'cancelled' as const };
+                                            onSave(updated);
+                                            onClose();
+                                        }}
+                                        className="flex-1 px-4 py-3 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-500 font-bold uppercase tracking-widest text-xs hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-2 outline-none focus:ring-4 focus:ring-red-500/20"
+                                    >
+                                        <X size={18} /> Decline
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            const updated = { ...formData, status: 'confirmed' as const };
+                                            if (updated.status === 'confirmed') {
+                                                updated.depositPaid = true;
+                                                updated.balancePaid = true;
+                                            }
+                                            onSave(updated);
+                                            onClose();
+                                        }}
+                                        className="flex-1 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold uppercase tracking-widest text-xs hover:bg-emerald-700 shadow-md transition-all flex items-center justify-center gap-2 outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                    >
+                                        <CheckCircle size={18} /> Accept
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

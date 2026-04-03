@@ -194,6 +194,33 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [hasChanges, setHasChanges] = useState(false);
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
     const [activeAboutSlide, setActiveAboutSlide] = useState(0);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Minimum swipe distance in pixels
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length);
+        } else if (isRightSwipe) {
+            setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length);
+        }
+    };
     const [showAboutLightbox, setShowAboutLightbox] = useState(false);
     
     // Gallery Manager State
@@ -428,6 +455,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     // Drag to Scroll Logic
     const handleMouseDown = (e: React.MouseEvent) => {
+        // Ignore right clicks or touch devices (coarse pointers). Let native overflow-x handle touch swipes.
+        if (e.button !== 0 || (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches)) return;
+        
         if (!scrollContainerRef.current) return;
         isDown.current = true;
         startX.current = e.pageX - scrollContainerRef.current.offsetLeft;
@@ -441,14 +471,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     const handleMouseUp = () => {
         isDown.current = false;
-        // Small timeout ensures that if we were dragging, we clear the state,
-        // but we don't block immediate clicks if we weren't dragging.
         setTimeout(() => setIsDragging(false), 50);
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDown.current || !scrollContainerRef.current) return;
-        e.preventDefault();
+        e.preventDefault(); // Only fires on desktop holding click, prevents text selection
         const x = e.pageX - scrollContainerRef.current.offsetLeft;
         const walk = (x - startX.current) * 2; // Scroll-fast
 
@@ -487,7 +515,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 )}
 
                 {/* Hero Section */}
-                <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-20">
+                <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-24">
                     <div className="absolute inset-0">
                         {/* Get valid images array */}
                         {(() => {
@@ -647,7 +675,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
 
                 {/* Rooms Section */}
-                <section id="rooms" className="py-24 md:py-32 bg-surface dark:bg-gray-900 relative overflow-hidden scroll-mt-10">
+                <section id="rooms" className="py-24 md:py-32 bg-surface dark:bg-gray-900 relative overflow-hidden scroll-mt-20">
                     {/* Decorative elements */}
                     <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
                     <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
@@ -741,7 +769,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                 <div
                                     ref={scrollContainerRef}
-                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth touch-pan-x pan-y scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
+                                    className={`flex items-stretch overflow-x-auto snap-x snap-mandatory gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scroll-smooth scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
                                     onScroll={handleScroll}
                                     onMouseDown={handleMouseDown}
                                     onMouseLeave={handleMouseLeave}
@@ -805,7 +833,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
 
                 {/* About/Promo Section */}
-                <section id="about" className="py-24 md:py-32 bg-white dark:bg-gray-800 overflow-hidden scroll-mt-10">
+                <section id="about" className="py-24 md:py-32 bg-white dark:bg-gray-800 overflow-hidden scroll-mt-20">
                     <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
                         <div className="md:w-1/2 order-2 md:order-1">
                             <RevealOnScroll className="mb-10 text-center md:text-left">
@@ -1137,75 +1165,92 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 })()}
                             </RevealOnScroll>
                         </div>
-                    </div>
-
-                    {/* About Lightbox Modal */}
+                    </div>                    {/* About Lightbox Modal */}
                     {showAboutLightbox && (() => {
                         return (
                             <div
-                                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-0 md:p-4 animate-fade-in touch-none"
+                                className="fixed inset-0 z-[100] bg-black/95 flex flex-col animate-fade-in"
                                 onClick={() => setShowAboutLightbox(false)}
+                                onTouchStart={onTouchStart}
+                                onTouchMove={onTouchMove}
+                                onTouchEnd={onTouchEnd}
                                 onKeyDown={(e) => {
                                     if (e.key === 'ArrowLeft') setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length);
                                     if (e.key === 'ArrowRight') setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length);
                                     if (e.key === 'Escape') setShowAboutLightbox(false);
                                 }}
-                                tabIndex={0}
                             >
+                                {/* Close Button - Separate from main area to ensure it's clickable */}
                                 <button
                                     onClick={() => setShowAboutLightbox(false)}
-                                    className="absolute top-6 right-6 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-all hover:scale-110 z-[110] backdrop-blur-md border border-white/10"
-                                    aria-label="Close Gallery"
+                                    className="absolute top-4 right-4 z-[110] p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white"
                                 >
                                     <X size={24} />
                                 </button>
 
-                                {/* Navigation arrows */}
-                                {displayGalleryImages.length > 1 && (
-                                    <>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length);
-                                            }}
-                                            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-4 rounded-full transition-all hover:scale-110 active:scale-95 z-[110] backdrop-blur-md border border-white/10 group/nav"
-                                        >
-                                            <ChevronLeft size={32} className="group-hover/nav:-translate-x-0.5 transition-transform" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length);
-                                            }}
-                                            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white bg-white/10 hover:bg-white/20 p-4 rounded-full transition-all hover:scale-110 active:scale-95 z-[110] backdrop-blur-md border border-white/10 group/nav"
-                                        >
-                                            <ChevronRight size={32} className="group-hover/nav:translate-x-0.5 transition-transform" />
-                                        </button>
-                                    </>
-                                )}
+                                <div className="flex-1 flex items-center justify-center p-0 md:p-4 relative" onClick={(e) => e.stopPropagation()}>
+                                    {/* Left Arrow (Desktop Only) */}
+                                    <button
+                                        className="hidden md:flex absolute left-8 z-[110] p-4 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all transform hover:scale-110"
+                                        onClick={(e) => { e.stopPropagation(); setActiveAboutSlide(prev => (prev - 1 + displayGalleryImages.length) % displayGalleryImages.length); }}
+                                    >
+                                        <ChevronLeft size={32} />
+                                    </button>
 
-                                <div className="w-full h-full flex items-center justify-center p-4 md:p-12" onClick={(e) => e.stopPropagation()}>
-                                    <div className="relative max-w-full max-h-full group/image-container">
-                                        <img
-                                            key={activeAboutSlide}
-                                            src={displayGalleryImages[activeAboutSlide % displayGalleryImages.length]}
-                                            alt="Gallery Fullscreen"
-                                            className="max-w-full max-h-[85vh] md:max-h-[90vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-zoom-in"
-                                        />
-                                        
-                                        {/* Image Counter Badge */}
-                                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/10 text-white/70 text-xs font-bold tracking-widest uppercase">
-                                            {(activeAboutSlide % displayGalleryImages.length) + 1} / {displayGalleryImages.length}
-                                        </div>
+                                    {/* Right Arrow (Desktop Only) */}
+                                    <button
+                                        className="hidden md:flex absolute right-8 z-[110] p-4 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all transform hover:scale-110"
+                                        onClick={(e) => { e.stopPropagation(); setActiveAboutSlide(prev => (prev + 1) % displayGalleryImages.length); }}
+                                    >
+                                        <ChevronRight size={32} />
+                                    </button>
+
+                                    {/* Carousel Content */}
+                                    <div className="w-full max-w-5xl aspect-[4/3] md:aspect-video relative overflow-hidden flex items-center justify-center">
+                                        {displayGalleryImages.map((img, i) => (
+                                            <div
+                                                key={i}
+                                                className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out transform ${i === activeAboutSlide
+                                                    ? 'opacity-100 translate-x-0 scale-100 z-10'
+                                                    : i < activeAboutSlide
+                                                        ? 'opacity-0 -translate-x-full scale-95 z-0'
+                                                        : 'opacity-0 translate-x-full scale-95 z-0'
+                                                    }`}
+                                            >
+                                                <img
+                                                    src={img}
+                                                    alt={`Gallery large ${i + 1}`}
+                                                    className="max-h-full max-w-full object-contain shadow-2xl rounded-sm sm:rounded-xl"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* Progress Bar (Optional, but looks premium) */}
-                                <div className="absolute bottom-0 left-0 h-1 bg-primary/30 w-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-primary transition-all duration-500 ease-out"
-                                        style={{ width: `${((activeAboutSlide + 1) / displayGalleryImages.length) * 100}%` }}
-                                    />
+                                {/* Indicators and Info area */}
+                                <div className="p-6 bg-gradient-to-t from-black to-transparent text-white" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 max-w-4xl mx-auto">
+                                        <div>
+                                            <h3 className="text-xl font-bold font-serif mb-1">{workingSettings.siteName || "Experience Our Resort"}</h3>
+                                            <div className="flex items-center gap-2 text-gray-400 text-sm">
+                                                <div className="px-3 py-1 bg-white/10 rounded-full text-xs font-bold font-mono">
+                                                    {(activeAboutSlide % displayGalleryImages.length) + 1} / {displayGalleryImages.length}
+                                                </div>
+                                                <span className="hidden md:inline">Swipe or use arrows to navigate</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin touch-pan-x touch-pan-y touch-manipulation select-none" style={{ touchAction: 'pan-x pan-y' }}>
+                                            {displayGalleryImages.map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setActiveAboutSlide(i)}
+                                                    className={`h-1.5 transition-all duration-300 rounded-full ${i === activeAboutSlide ? 'w-8 bg-primary' : 'w-2 bg-white/20'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -1397,7 +1442,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 </section>
 
                 {/* Location Section with Google Maps Embed */}
-                <section id="contact" className="py-20 bg-gray-50 dark:bg-gray-900 scroll-mt-10">
+                <section id="contact" className="py-20 bg-gray-50 dark:bg-gray-900 scroll-mt-20">
                     <div className="max-w-7xl mx-auto px-4 text-center">
                         <RevealOnScroll>
                             <h2 className="text-3xl md:text-4xl font-serif font-bold text-secondary dark:text-white mb-4">

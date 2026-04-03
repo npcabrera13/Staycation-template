@@ -35,6 +35,7 @@ export interface Booking {
     depositAmount?: number;
     depositPaid?: boolean;
     depositPaidAt?: string;
+    balancePaid?: boolean;
     balanceAmount?: number;
     paymentType?: 'deposit' | 'full'; // Whether guest chose to pay deposit only or full amount
     paymentProof?: string; // URL to the uploaded receipt image
