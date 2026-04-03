@@ -313,6 +313,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const getFilteredBookings = () => {
         const now = new Date();
         return processedBookings.filter(b => {
+            // RULE: Overview ONLY shows fully confirmed + fully paid bookings, OR cancelled bookings
+            // Either it's cancelled, a standard full payment booking, OR if it has a deposit, the balance must be paid.
+            const isFullyPaidOrCancelled = b.status === 'cancelled' || (b.status === 'confirmed' && (!b.depositPaid || b.balancePaid));
+            if (!isFullyPaidOrCancelled) return false;
+
             const bookingDate = new Date(b.bookedAt);
             switch (bookingFilter) {
                 case 'this_month':
@@ -1010,15 +1015,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {(() => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            const next7Days = new Date(today);
-                            next7Days.setDate(next7Days.getDate() + 30);
+                            const next30Days = new Date(today);
+                            next30Days.setDate(next30Days.getDate() + 30);
 
                             const upcomingArrivals = bookings
                                 .filter(b => {
-                                    if (b.status === 'cancelled') return false;
+                                    if (b.status !== 'pending') return false; // ONLY show action-required pending bookings
                                     const checkIn = new Date(b.checkIn);
                                     checkIn.setHours(0, 0, 0, 0);
-                                    return checkIn >= today && checkIn <= next7Days;
+                                    return checkIn >= today && checkIn <= next30Days;
                                 })
                                 .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
@@ -1973,7 +1978,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         const upcomingArrivals = processedBookings
                             .filter(b => {
-                                if (b.status === 'cancelled') return false;
+                                if (b.status !== 'pending') return false; // ONLY show action-required pending bookings
                                 const checkIn = new Date(b.checkIn);
                                 checkIn.setHours(0, 0, 0, 0);
                                 return checkIn >= today && checkIn <= next30Days;
