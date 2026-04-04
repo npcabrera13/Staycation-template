@@ -618,7 +618,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             if (onUpdateBooking) {
                 onUpdateBooking(updatedBooking);
             }
-            showToast('Booking updated successfully', 'success');
+            // Toast is handled centrally in App.tsx -> handleUpdateBooking
         }
         setEditingBooking(null);
         setIsAddingBooking(false);
@@ -967,50 +967,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                         )}
 
-                        {/* Awaiting Payment - Deposit made, balance pending */}
-                        {(() => {
-                            const awaitingPaymentBookings = bookings
-                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
-                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
-
-                            if (awaitingPaymentBookings.length === 0) return null;
-
-                            return (
-                                <div className="hidden md:block bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0 animate-fade-in shadow-sm">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm md:text-base">
-                                            ⏳ Awaiting Balance Payment ({awaitingPaymentBookings.length})
-                                        </h3>
-                                        <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
-                                    </div>
-                                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
-                                        {awaitingPaymentBookings.map(booking => {
-                                            const room = rooms.find(r => r.id === booking.roomId);
-                                            return (
-                                                <div
-                                                    key={booking.id}
-                                                    onClick={() => setEditingBooking(booking)}
-                                                    className="min-w-[200px] md:min-w-[240px] max-w-[260px] bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer snap-start flex-shrink-0 relative group"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div className="font-bold text-gray-800 dark:text-white truncate pr-2">{booking.guestName}</div>
-                                                        <div className="text-[10px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-2 py-0.5 rounded font-black tracking-wider uppercase">Deposit Paid</div>
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 mb-1 flex items-center">
-                                                        <CalendarIcon size={12} className="mr-1 flex-shrink-0" />
-                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
-                                                    </div>
-                                                    <div className="text-xs font-medium text-primary line-clamp-1">
-                                                        {room?.name || 'Unknown Room'}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
                         {/* Upcoming Arrivals - Easy to see incoming bookings */}
                         {(() => {
                             const today = new Date();
@@ -1079,6 +1035,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             );
                                         })}
 
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Awaiting Payment - Deposit made, balance pending */}
+                        {(() => {
+                            const awaitingPaymentBookings = bookings
+                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
+                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                            if (awaitingPaymentBookings.length === 0) return null;
+
+                            return (
+                                <div className="hidden md:block bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0 animate-fade-in shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm md:text-base">
+                                            ⏳ Awaiting Balance Payment ({awaitingPaymentBookings.length})
+                                        </h3>
+                                        <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
+                                    </div>
+                                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
+                                        {awaitingPaymentBookings.map(booking => {
+                                            const room = rooms.find(r => r.id === booking.roomId);
+                                            return (
+                                                <div
+                                                    key={booking.id}
+                                                    onClick={() => setEditingBooking(booking)}
+                                                    className="min-w-[200px] md:min-w-[240px] max-w-[260px] bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer snap-start flex-shrink-0 relative group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="font-bold text-gray-800 dark:text-white truncate pr-2">{booking.guestName}</div>
+                                                        <div className="text-[10px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-2 py-0.5 rounded font-black tracking-wider uppercase">Deposit Paid</div>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mb-1 flex items-center">
+                                                        <CalendarIcon size={12} className="mr-1 flex-shrink-0" />
+                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
+                                                    </div>
+                                                    <div className="text-xs font-medium text-primary line-clamp-1">
+                                                        {room?.name || 'Unknown Room'}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );

@@ -270,22 +270,24 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                                 <X size={14} /> Decline
                             </button>
 
-                            {/* Accept Deposit — dominant green, takes remaining space */}
+                            {/* Accept (Dynamically Deposit vs Full) — dominant green, takes remaining space */}
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
+                                    const isFull = formData.paymentType === 'full' || !formData.balanceAmount || formData.balanceAmount <= 0;
                                     const updated = {
                                         ...formData,
                                         status: 'confirmed' as const,
                                         depositPaid: true,
-                                        depositPaidAt: new Date().toISOString()
+                                        depositPaidAt: new Date().toISOString(),
+                                        ...(isFull ? { balancePaid: true } : {})
                                     };
                                     onSave(updated);
                                     onClose();
                                 }}
                                 className="flex-1 px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold uppercase tracking-widest text-[9px] hover:bg-emerald-600 active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5"
                             >
-                                <CheckCircle size={14} /> Accept Deposit
+                                <CheckCircle size={14} /> {(formData.paymentType === 'full' || !formData.balanceAmount || formData.balanceAmount <= 0) ? 'Accept Booking' : 'Accept Deposit'}
                             </button>
                         </>
                     ) : formData.status === 'confirmed' && !isNew && formData.depositPaid && !formData.balancePaid ? (

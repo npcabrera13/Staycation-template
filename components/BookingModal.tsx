@@ -296,9 +296,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             // 1. Compress and convert to Base64
             const base64Image = await compressImageToBase64(paymentProofFile, 800, 0.7);
 
-            // 2. Prepare full booking with proof
+            const finalDepositAmount = paymentChoice === 'full' ? totalPrice : displayDeposit;
+            const finalBalanceAmount = paymentChoice === 'full' ? 0 : displayBalance;
+
+            // 2. Prepare full booking with proof, embedding the final payment choices
             const fullBooking: Booking = {
                 ...createdBooking,
+                depositAmount: finalDepositAmount > 0 ? finalDepositAmount : undefined,
+                balanceAmount: finalDepositAmount > 0 ? finalBalanceAmount : undefined,
+                paymentType: displayDeposit > 0 ? paymentChoice : undefined,
                 paymentProof: base64Image
             };
 
