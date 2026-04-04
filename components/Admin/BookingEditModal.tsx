@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, User, Mail, Phone, Calendar, Plus, Clock, Image as ImageIcon, CheckCircle } from 'lucide-react';
-import { Booking } from '../../types';
+import { Booking, Room } from '../../types';
 import { format, addDays } from 'date-fns';
 
 interface BookingEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     booking?: Booking | null; // Optional: if null, we are adding a new booking
+    rooms?: Room[]; // Passed so we can select rooms when adding manually
     onSave: (updatedBooking: Booking) => void;
 }
 
-const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, booking, onSave }) => {
+const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, booking, rooms = [], onSave }) => {
     const [formData, setFormData] = useState<Booking | null>(null);
     const [showProofModal, setShowProofModal] = useState(false);
 
     // Default state for new booking
     const defaultBooking: Booking = {
         id: '', // Will be generated
-        roomId: '1', // Default to first room usually, but here fixed '1' or separate logic?
+        roomId: rooms.length > 0 ? rooms[0].id : '1',
         // Ideally we should pass rooms prop to select room, but for now we'll keep current roomId or let user input/select if we add that field.
         // The previous "Add" form relied on rooms[0].id.
         // Let's assume roomId is handled or we add a Room ID input.
@@ -51,6 +52,22 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
     if (!isOpen || !formData) return null;
 
     const isNew = !booking || !booking.id;
+
+    const handleCalculationUpdate = (updates: Partial<Booking>) => {
+        const newData = { ...formData, ...updates };
+        if (isNew) {
+            const selectedRoom = rooms.find(r => r.id === newData.roomId) || rooms[0];
+            if (selectedRoom && newData.checkIn && newData.checkOut) {
+                try {
+                    const start = new Date(newData.checkIn.split('T')[0]);
+                    const end = new Date(newData.checkOut.split('T')[0]);
+                    const nights = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                    newData.totalPrice = nights * selectedRoom.price;
+                } catch(e) {}
+            }
+        }
+        setFormData(newData as Booking);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,9 +148,9 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                             </div>
                         </div>
 
-                        {/* Dates */}
                         <div className="space-y-4">
                             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Stay Details</label>
+                            
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium">Check-in</label>
@@ -142,7 +159,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                                         <input
                                             type="date"
                                             value={formData.checkIn.split('T')[0]}
-                                            onChange={e => setFormData({ ...formData, checkIn: new Date(e.target.value).toISOString() })}
+                                            onChange={e => handleCalculationUpdate({ checkIn: new Date(e.target.value).toISOString() })}
                                             className="w-full pl-10 pr-2 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                         />
                                     </div>
@@ -154,21 +171,50 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                                         <input
                                             type="date"
                                             value={formData.checkOut.split('T')[0]}
-                                            onChange={e => setFormData({ ...formData, checkOut: new Date(e.target.value).toISOString() })}
+                                            onChange={e => handleCalculationUpdate({ checkOut: new Date(e.target.value).toISOString() })}
                                             className="w-full pl-10 pr-2 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                         />
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium">Number of Guests</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={formData.guests}
-                                    onChange={e => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
-                                    className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                />
+
+                            <div className="mb-4">
+                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium">Room</label>
+                                <select
+                                    value={formData.roomId}
+                                    onChange={e => handleCalculationUpdate({ roomId: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                >
+                                    {rooms.map(r => (
+                                        <option key={r.id} value={r.id}>{r.name} — ₱{r.price.toLocaleString()} / night</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium">Total Price (₱)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.totalPrice === 0 ? '' : formData.totalPrice}
+                                        onChange={e => setFormData({ ...formData, totalPrice: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                        placeholder="0"
+                                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium whitespace-nowrap">
+                                        Guests <span className="text-[9px] text-yellow-500 font-bold ml-1">(Max: {rooms.find(r => r.id === formData.roomId)?.capacity || 2})</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={formData.guests}
+                                        onChange={e => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
+                                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
                             </div>
                         </div>
 

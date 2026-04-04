@@ -836,9 +836,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         const dayBookings = bookings.filter(b => {
                             if (b.status === 'cancelled') return false;
 
-                            // Parse dates properly using local timezone
-                            const [startY, startM, startD] = b.checkIn.split('-').map(Number);
-                            const [endY, endM, endD] = b.checkOut.split('-').map(Number);
+                            // Parse dates properly using local timezone (handling ISO strings from front-end)
+                            const [startY, startM, startD] = b.checkIn.split('T')[0].split('-').map(Number);
+                            const [endY, endM, endD] = b.checkOut.split('T')[0].split('-').map(Number);
                             const start = new Date(startY, startM - 1, startD, 0, 0, 0, 0);
                             const end = new Date(endY, endM - 1, endD, 0, 0, 0, 0);
 
@@ -868,32 +868,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                 <div className="space-y-0.5 md:space-y-1">
                                     {dayBookings.slice(0, 2).map(booking => {
-                                        const colorClass = booking.status === 'pending'
-                                            ? 'bg-yellow-500 text-white border-yellow-600 shadow-sm'
-                                            : 'bg-primary text-white border-primary shadow-sm';
+                                        const roomIndex = rooms.findIndex(r => r.id === booking.roomId);
+                                        const roomColors = ['bg-purple-500 border-purple-600', 'bg-orange-500 border-orange-600', 'bg-teal-500 border-teal-600', 'bg-rose-500 border-rose-600', 'bg-emerald-500 border-emerald-600', 'bg-indigo-500 border-indigo-600'];
+                                        const baseColorClass = roomIndex !== -1 ? roomColors[roomIndex % roomColors.length] : 'bg-slate-500 border-slate-600';
+                                        const isPending = booking.status === 'pending';
+                                        const roomName = roomIndex !== -1 ? rooms[roomIndex].name : 'Unknown Room';
 
                                         return (
                                             <button
                                                 key={booking.id}
                                                 onClick={(e) => { e.stopPropagation(); handleEditBookingClick(booking); }}
-                                                className={`w-full text-left text-[8px] md:text-[10px] px-1 py-0.5 md:px-1.5 md:py-1 rounded border truncate font-medium hover:opacity-90 transition-opacity ${colorClass}`}
-                                                title={`${booking.guestName} (${booking.guests} guests)\nTime: ${booking.estimatedArrival || '14:00'} - ${booking.estimatedDeparture || '11:00'}`}
+                                                className={`w-full text-left text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 rounded border font-medium hover:opacity-90 transition-opacity truncate leading-none text-white shadow-sm ${baseColorClass}`}
+                                                title={`Room: ${roomName}\nGuest: ${booking.guestName} (${booking.guests} guests)\nTime: ${booking.estimatedArrival || '14:00'} - ${booking.estimatedDeparture || '11:00'}\nStatus: ${booking.status.toUpperCase()}`}
                                             >
-                                                <span className="hidden md:inline">{booking.guestName}</span>
-                                                <span className="md:hidden truncate">{booking.guestName.split(' ')[0] || booking.guestName}</span>
+                                                <div className="flex items-center gap-[2px] w-full overflow-hidden">
+                                                    {isPending ? <Clock size={9} className="shrink-0 text-yellow-300" strokeWidth={3} /> : <CheckCircle size={9} className="shrink-0 text-green-200" strokeWidth={3} />}
+                                                    <span className="truncate flex-1 font-medium tracking-tight">{booking.guestName}</span>
+                                                </div>
                                             </button>
                                         );
                                     })}
                                     {dayBookings.length > 2 && (
-                                        <div className="text-[8px] md:text-[10px] text-gray-400 pl-0.5 md:pl-1 font-medium">
-                                            +{dayBookings.length - 2}
-                                        </div>
+                                        <details className="mt-1 relative z-20 group/overflow" onClick={(e) => e.stopPropagation()}>
+                                            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer text-[10px] sm:text-xs text-primary bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-center py-[2px] rounded font-bold transition-colors border border-blue-100 dark:border-blue-800 shadow-sm mx-1 outline-none">
+                                                +{dayBookings.length - 2} more
+                                            </summary>
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[120px] md:w-[160px] z-30 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded p-1 space-y-1 animate-fade-in">
+                                                {dayBookings.slice(2).map(booking => {
+                                                    const roomIndex = rooms.findIndex(r => r.id === booking.roomId);
+                                                    const roomColors = ['bg-purple-500 border-purple-600', 'bg-orange-500 border-orange-600', 'bg-teal-500 border-teal-600', 'bg-rose-500 border-rose-600', 'bg-emerald-500 border-emerald-600', 'bg-indigo-500 border-indigo-600'];
+                                                    const baseColorClass = roomIndex !== -1 ? roomColors[roomIndex % roomColors.length] : 'bg-slate-500 border-slate-600';
+                                                    const isPending = booking.status === 'pending';
+                                                    const roomName = roomIndex !== -1 ? rooms[roomIndex].name : 'Unknown Room';
+
+                                                    return (
+                                                        <button
+                                                            key={'overflow-' + booking.id}
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEditBookingClick(booking); }}
+                                                            className={`w-full text-left text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 rounded border font-medium hover:opacity-90 transition-opacity truncate leading-none text-white shadow-sm ${baseColorClass}`}
+                                                            title={`Room: ${roomName}\nGuest: ${booking.guestName} (${booking.guests} guests)\nStatus: ${booking.status.toUpperCase()}`}
+                                                        >
+                                                            <div className="flex items-center gap-[2px] w-full overflow-hidden">
+                                                                {isPending ? <Clock size={9} className="shrink-0 text-yellow-300" strokeWidth={3} /> : <CheckCircle size={9} className="shrink-0 text-green-200" strokeWidth={3} />}
+                                                                <span className="truncate flex-1 font-medium tracking-tight">{booking.guestName}</span>
+                                                            </div>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </details>
                                     )}
                                 </div>
                             </div>
                         );
                     })}
                 </div>
+
+                 {/* Calendar Legend */}
+                 <div className="mt-4 flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-start md:items-center text-xs md:text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto flex-1">
+                        <span className="font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 text-[10px] mr-1">Room Colors:</span>
+                        {rooms.map((room, idx) => {
+                            const roomColors = ['bg-purple-500', 'bg-orange-500', 'bg-teal-500', 'bg-rose-500', 'bg-emerald-500', 'bg-indigo-500'];
+                            const color = roomColors[idx % roomColors.length];
+                            return (
+                                <div key={room.id} className="flex items-center gap-1.5 whitespace-nowrap">
+                                    <div className={`w-3 h-3 rounded-full shadow-sm ${color}`}></div>
+                                    <span className="truncate font-medium">{room.name}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="flex items-center gap-4 w-full md:w-auto pt-3 md:pt-0 border-t border-gray-100 dark:border-gray-700 md:border-t-0 md:border-l md:pl-4 shrink-0 mt-1 md:mt-0">
+                        <div className="flex items-center gap-1.5 font-medium">
+                            <Clock size={14} className="text-yellow-500" strokeWidth={2.5} />
+                            <span>Pending</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 font-medium">
+                            <CheckCircle size={14} className="text-green-500" strokeWidth={2.5} />
+                            <span>Confirmed</span>
+                        </div>
+                    </div>
+                 </div>
             </div>
         );
     }
@@ -1040,49 +1096,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             );
                         })()}
 
-                        {/* Awaiting Payment - Deposit made, balance pending */}
-                        {(() => {
-                            const awaitingPaymentBookings = bookings
-                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
-                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
-                            if (awaitingPaymentBookings.length === 0) return null;
-
-                            return (
-                                <div className="hidden md:block bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 md:p-4 mb-4 flex-shrink-0 animate-fade-in shadow-sm">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm md:text-base">
-                                            ⏳ Awaiting Balance Payment ({awaitingPaymentBookings.length})
-                                        </h3>
-                                        <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
-                                    </div>
-                                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
-                                        {awaitingPaymentBookings.map(booking => {
-                                            const room = rooms.find(r => r.id === booking.roomId);
-                                            return (
-                                                <div
-                                                    key={booking.id}
-                                                    onClick={() => setEditingBooking(booking)}
-                                                    className="min-w-[200px] md:min-w-[240px] max-w-[260px] bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer snap-start flex-shrink-0 relative group"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div className="font-bold text-gray-800 dark:text-white truncate pr-2">{booking.guestName}</div>
-                                                        <div className="text-[10px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-2 py-0.5 rounded font-black tracking-wider uppercase">Deposit Paid</div>
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 mb-1 flex items-center">
-                                                        <CalendarIcon size={12} className="mr-1 flex-shrink-0" />
-                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
-                                                    </div>
-                                                    <div className="text-xs font-medium text-primary line-clamp-1">
-                                                        {room?.name || 'Unknown Room'}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })()}
 
                         <div className="flex-1 min-h-0 overflow-auto">
                             {renderGridCalendar()}
@@ -1091,49 +1105,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     {/* Side Stats Panel */}
                     <div className={`w-full xl:w-80 flex-shrink-0 flex flex-col gap-6 ${isCalendarExpanded ? 'hidden xl:flex' : ''}`}>
-                        {/* Quick Stats */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-                            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                                <TrendingUp className="mr-2 text-primary" size={20} />
-                                Month Summary
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
-                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Date</p>
-                                    <div className="flex items-center justify-between">
-                                        <button onClick={() => setSummaryDate(addMonths(summaryDate, -1))} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 transition-colors"><ChevronLeft size={16} /></button>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">{format(summaryDate, 'MMMM yyyy')}</p>
-                                        <button onClick={() => setSummaryDate(addMonths(summaryDate, 1))} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 transition-colors"><ChevronRight size={16} /></button>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                        <div className="text-xs text-blue-800 font-bold mb-1">Bookings</div>
-                                        <div className="text-xl font-bold text-blue-900">{currentMonthBookings.length}</div>
-                                    </div>
-                                    <div className="p-3 bg-green-50 border border-green-100 rounded-lg">
-                                        <div className="text-xs text-green-800 font-bold mb-1">Revenue</div>
-                                        <div className="text-xl font-bold text-green-900">₱{monthlyRevenue.toLocaleString()}</div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-600">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500 flex items-center"><CheckCircle size={14} className="mr-1.5 text-green-500" /> Confirmed</span>
-                                        <span className="font-bold text-gray-700 dark:text-gray-200">{confirmedCount}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500 flex items-center"><Clock size={14} className="mr-1.5 text-yellow-500" /> Pending</span>
-                                        <span className="font-bold text-gray-700 dark:text-gray-200">{pendingCount}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500 flex items-center"><XCircle size={14} className="mr-1.5 text-red-500" /> Cancelled</span>
-                                        <span className="font-bold text-gray-700 dark:text-gray-200">{cancelledCount}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         {/* Pending Actions List */}
                         {pendingBookings.length > 0 && (
@@ -1194,6 +1165,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             </div>
                         )}
+
+                        {/* Awaiting Balance Actions List */}
+                        {(() => {
+                            const awaitingPaymentBookings = bookings
+                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
+                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+                            if (awaitingPaymentBookings.length === 0) return null;
+
+                            return (
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/50 overflow-hidden flex-1 min-h-[300px]">
+                                    <div className="bg-orange-50 dark:bg-orange-900/20 px-5 py-4 border-b border-orange-100 dark:border-orange-900/30">
+                                        <h3 className="text-orange-800 dark:text-orange-200 font-bold flex items-center">
+                                            ⏳ Awaiting Balance ({awaitingPaymentBookings.length})
+                                        </h3>
+                                    </div>
+                                    <div className="overflow-y-auto max-h-[300px] md:max-h-[500px] p-2 space-y-2">
+                                        {awaitingPaymentBookings.map(b => (
+                                            <div
+                                                key={b.id}
+                                                className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm border border-orange-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer relative group"
+                                                onClick={() => setEditingBooking(b)}
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-800 dark:text-white text-sm md:text-base">{b.guestName}</h3>
+                                                        <p className="text-xs text-primary font-medium mt-0.5">
+                                                            {rooms.find(r => r.id === b.roomId)?.name || 'Unknown Room'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
+                                                            <CalendarIcon size={12} className="mr-1" />
+                                                            {format(new Date(b.checkIn), 'MMM d')} - {format(new Date(b.checkOut), 'MMM d')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 text-[10px] uppercase font-bold px-2 py-1 rounded">
+                                                        Deposit Paid
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 relative z-10">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setEditingBooking(b); }}
+                                                        className="flex-1 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex items-center justify-center border border-emerald-200"
+                                                    >
+                                                        Review Payment
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
@@ -1210,7 +1233,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
 
         return (
-            <div className="animate-fade-in max-w-4xl mx-auto pb-12 px-4 sm:px-6 md:px-0">
+            <div className="animate-fade-in max-w-4xl mx-auto pb-12 px-4 sm:px-6 md:px-0 w-full overflow-x-hidden overflow-y-visible">
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                         <SettingsIcon className="mr-3 text-primary" size={28} />
@@ -1921,52 +1944,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
 
 
-                {/* Mobile-Only: Awaiting Payment */}
-                <div className="md:hidden mb-4">
-                    {(() => {
-                        const awaitingPaymentBookings = processedBookings
-                            .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
-                            .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
-
-                        if (awaitingPaymentBookings.length === 0) return null;
-
-                        return (
-                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 shadow-sm animate-fade-in">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className="font-bold text-yellow-800 dark:text-yellow-200 flex items-center text-sm">
-                                        ⏳ Awaiting Balance ({awaitingPaymentBookings.length})
-                                    </h3>
-                                    <span className="text-[10px] text-yellow-600 font-medium bg-yellow-100 px-2 py-0.5 rounded-full">Action Required</span>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    {awaitingPaymentBookings.slice(0, 3).map(booking => {
-                                        const room = rooms.find(r => r.id === booking.roomId);
-                                        return (
-                                            <div
-                                                key={booking.id}
-                                                onClick={() => setEditingBooking(booking)}
-                                                className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700 shadow-sm cursor-pointer relative group flex items-center justify-between"
-                                            >
-                                                <div className="flex-1 truncate pr-2">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="font-bold text-gray-800 dark:text-white truncate max-w-[120px] text-sm">{booking.guestName}</span>
-                                                        <span className="text-[9px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400 px-1.5 py-0.5 rounded font-black tracking-wider uppercase flex-shrink-0">Deposit Paid</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-gray-500 flex items-center">
-                                                        {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')}
-                                                        <span className="mx-1">•</span>
-                                                        <span className="text-primary font-medium truncate">{room?.name || 'Unknown'}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex-shrink-0 pl-2 opacity-50"><ChevronRight size={16} /></div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </div>
 
                 {/* Mobile-Only: Upcoming Arrivals at very top */}
                 <div className="md:hidden mb-4">
@@ -2597,6 +2574,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setIsAddingBooking(false);
                 }}
                 booking={editingBooking}
+                rooms={rooms}
                 onSave={handleSaveBooking}
             />
 
