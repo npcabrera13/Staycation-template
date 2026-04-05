@@ -8,6 +8,13 @@ service firebase.storage {
       allow write: if request.resource.size < 5 * 1024 * 1024 // 5MB max
                    && request.resource.contentType.matches('image/.*'); // only images
     }
+
+    match /renewal_proofs/{allPaths=**} {
+      // Allow clients to upload renewal payment screenshots
+      allow read: if true;
+      allow write: if request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
     
     // Block all other access by default
     match /{allPaths=**} {

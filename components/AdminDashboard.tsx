@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Booking, Room, Amenity, Settings } from '../types';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebaseConfig';
 import { format, isValid, differenceInDays, addDays, addMonths, subMonths, isAfter, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
@@ -18,6 +19,7 @@ import StatsSummaryModal from './Admin/StatsSummaryModal';
 import BookingEditModal from './Admin/BookingEditModal';
 import { sendUserConfirmationEmail } from '../services/emailService';
 import AdminOnboarding from './Admin/AdminOnboarding';
+import RenewalModal from './Admin/RenewalModal';
 
 
 interface AdminDashboardProps {
@@ -119,7 +121,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>(
-        () => (location.state?.activeTab as any) || 'calendar'
+        () => (location.state?.activeTab as any) || 'overview'
     );
 
     const navigateToTab = (tab: 'overview' | 'calendar' | 'rooms' | 'settings', targetId?: string) => {
@@ -313,10 +315,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const getFilteredBookings = () => {
         const now = new Date();
         return processedBookings.filter(b => {
-            // RULE: Overview ONLY shows fully confirmed + fully paid bookings, OR cancelled bookings
-            // Either it's cancelled, a standard full payment booking, OR if it has a deposit, the balance must be paid.
-            const isFullyPaidOrCancelled = b.status === 'cancelled' || (b.status === 'confirmed' && (!b.depositPaid || b.balancePaid));
-            if (!isFullyPaidOrCancelled) return false;
+            // Overview shows confirmed and cancelled bookings (pending are in the Awaiting Approval section)
+            if (b.status === 'pending') return false;
 
             const bookingDate = new Date(b.bookedAt);
             switch (bookingFilter) {
@@ -2866,56 +2866,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
 
                             
-            {/* Expiry Warning Popup */}
+            {/* Expiry Warning / Self-Service Renewal Modal */}
             {
                 showExpiryWarning && expiryDays !== null && (
-                    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-fade-in border border-gray-200 dark:border-gray-700">
-                            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${expiryDays <= 0 ? 'bg-red-100 dark:bg-red-900/40' : expiryDays <= 7 ? 'bg-yellow-100 dark:bg-yellow-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
-                                {expiryDays <= 7 ? (
-                                    <AlertTriangle size={32} className={`${expiryDays <= 0 ? 'text-red-500 animate-pulse' : 'text-yellow-500 animate-pulse'}`} />
-                                ) : (
-                                    <CheckCircle size={32} className="text-green-500" />
-                                )}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                {expiryDays <= 0 ? 'Subscription Expired!' : expiryDays <= 7 ? 'Subscription Expiring Soon!' : 'Subscription Active'}
-                            </h3>
-                            <p className={`text-3xl font-bold mb-1 ${expiryDays <= 0 ? 'text-red-500' : expiryDays <= 7 ? 'text-yellow-500' : 'text-green-500'}`}>
-                                {expiryDays <= 0 ? 'Expired' : `${expiryDays} day${expiryDays !== 1 ? 's' : ''} left`}
-                            </p>
-                            {expiryDate && (
-                                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                                    {expiryDays <= 0 ? 'Expired on' : 'Expires on'}: {new Date(expiryDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                </p>
-                            )}
-                            <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">
-                                {contactInfo.providerName
-                                    ? `Please contact ${contactInfo.providerName} to renew your subscription.`
-                                    : 'Please contact your service provider to renew your subscription and avoid service interruption.'}
-                            </p>
-                            {(contactInfo.email || contactInfo.phone) && (
-                                <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-3 mb-5 space-y-2">
-                                    {contactInfo.email && (
-                                        <a href={`mailto:${contactInfo.email}`} className="flex items-center justify-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-medium">
-                                            <Clock size={14} /> {contactInfo.email}
-                                        </a>
-                                    )}
-                                    {contactInfo.phone && (
-                                        <a href={`tel:${contactInfo.phone}`} className="flex items-center justify-center gap-2 text-green-500 hover:text-green-600 text-sm font-medium">
-                                            <Phone size={14} /> {contactInfo.phone}
-                                        </a>
-                                    )}
-                                </div>
-                            )}
-                            <button
-                                onClick={() => setShowExpiryWarning(false)}
-                                className="w-full py-3 bg-gray-900 dark:bg-white dark:text-gray-900 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
-                            >
-                                I Understand
-                            </button>
-                        </div>
-                    </div>
+                    <RenewalModal
+                        expiryDays={expiryDays}
+                        expiryDate={expiryDate}
+                        contactInfo={contactInfo}
+                        settings={settings}
+                        onClose={() => setShowExpiryWarning(false)}
+                    />
                 )
             }
 

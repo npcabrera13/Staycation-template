@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare } from 'lucide-react';
+import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X } from 'lucide-react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy } from 'firebase/firestore';
+import { compressImageToBase64 } from '../utils/imageUtils';
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 
@@ -62,7 +63,31 @@ const SuperAdmin: React.FC = () => {
     };
 
     // Active Tab State
-    const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings'>('subscription');
+    const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings' | 'renewals'>('subscription');
+
+    // Renewal Pricing State
+    const [renewalPrice, setRenewalPrice] = useState(99);
+    const [renewalDays, setRenewalDays] = useState(30);
+    const [renewalPriceStatus, setRenewalPriceStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+    // SuperAdmin Payment Methods State
+    const [gcashEnabled, setGcashEnabled] = useState(false);
+    const [gcashName, setGcashName] = useState('');
+    const [gcashNumber, setGcashNumber] = useState('');
+    const [gcashQr, setGcashQr] = useState<string>('');
+
+    const [bankEnabled, setBankEnabled] = useState(false);
+    const [bankName, setBankName] = useState('');
+    const [bankAccountName, setBankAccountName] = useState('');
+    const [bankAccountNumber, setBankAccountNumber] = useState('');
+
+    const [pmStatus, setPmStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
+    // Renewal Requests State
+    const [renewalRequests, setRenewalRequests] = useState<any[]>([]);
+    const [requestsLoading, setRequestsLoading] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
 
     // Password change state
     const [storedPassword, setStoredPassword] = useState(SUPERADMIN_PASSWORD);
@@ -108,6 +133,89 @@ const SuperAdmin: React.FC = () => {
         };
         loadPassword();
     }, []);
+
+    // Load renewal pricing from Firestore
+    useEffect(() => {
+        const loadPricing = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    if (d.renewalPrice) setRenewalPrice(d.renewalPrice);
+                    if (d.renewalDays) setRenewalDays(d.renewalDays);
+                    if (d.paymentMethods) {
+                        if (d.paymentMethods.gcash) {
+                            setGcashEnabled(d.paymentMethods.gcash.enabled || false);
+                            setGcashName(d.paymentMethods.gcash.accountName || '');
+                            setGcashNumber(d.paymentMethods.gcash.accountNumber || '');
+                            setGcashQr(d.paymentMethods.gcash.qrImage || '');
+                        }
+                        if (d.paymentMethods.bankTransfer) {
+                            setBankEnabled(d.paymentMethods.bankTransfer.enabled || false);
+                            setBankName(d.paymentMethods.bankTransfer.bankName || '');
+                            setBankAccountName(d.paymentMethods.bankTransfer.accountName || '');
+                            setBankAccountNumber(d.paymentMethods.bankTransfer.accountNumber || '');
+                        }
+                    }
+                }
+            } catch { }
+        };
+        loadPricing();
+    }, []);
+
+    // Load pending renewal requests
+    const loadRenewalRequests = async () => {
+        setRequestsLoading(true);
+        try {
+            const snap = await getDocs(collection(db, '_superadmin', 'renewals', 'requests'));
+            const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            // Sort by submittedAt descending
+            items.sort((a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+            setRenewalRequests(items);
+        } catch { }
+        setRequestsLoading(false);
+    };
+
+    const handleApproveRenewal = async (request: any) => {
+        setProcessingId(request.id);
+        try {
+            // Extend expiresAt
+            const subSnap = await getDoc(doc(db, '_superadmin', 'subscription'));
+            const currentExpiry = subSnap.exists() && subSnap.data().expiresAt
+                ? new Date(subSnap.data().expiresAt)
+                : new Date();
+            const base = currentExpiry > new Date() ? currentExpiry : new Date();
+            const newExpiry = new Date(base);
+            newExpiry.setDate(newExpiry.getDate() + (request.daysRequested || 30));
+            await updateDoc(doc(db, '_superadmin', 'subscription'), {
+                expiresAt: newExpiry.toISOString().split('T')[0],
+                lastModified: new Date().toISOString()
+            });
+            // Mark request as approved
+            await updateDoc(doc(db, '_superadmin', 'renewals', 'requests', request.id), {
+                status: 'approved',
+                approvedAt: new Date().toISOString()
+            });
+            await loadRenewalRequests();
+        } catch (e: any) {
+            alert('Error approving: ' + e.message);
+        }
+        setProcessingId(null);
+    };
+
+    const handleRejectRenewal = async (request: any) => {
+        setProcessingId(request.id);
+        try {
+            await updateDoc(doc(db, '_superadmin', 'renewals', 'requests', request.id), {
+                status: 'rejected',
+                rejectedAt: new Date().toISOString()
+            });
+            await loadRenewalRequests();
+        } catch (e: any) {
+            alert('Error rejecting: ' + e.message);
+        }
+        setProcessingId(null);
+    };
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -282,6 +390,12 @@ const SuperAdmin: React.FC = () => {
                         className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'subscription' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Power size={16} className="mr-1.5 sm:mr-2" /> Subscription
+                    </button>
+                    <button
+                        onClick={() => { setActiveSection('renewals'); loadRenewalRequests(); }}
+                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'renewals' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <RefreshCw size={16} className="mr-1.5 sm:mr-2" /> Renewals
                     </button>
                     <button
                         onClick={() => setActiveSection('deployment')}
@@ -525,6 +639,117 @@ const SuperAdmin: React.FC = () => {
                             <p className="text-center text-gray-500 text-xs mt-4">Last updated: {new Date(subscription.lastModified).toLocaleString()}</p>
                         )}
                     </>
+                )}
+
+                {/* ===== RENEWALS TAB ===== */}
+                {activeSection === 'renewals' && (
+                    <div className="space-y-4">
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                            <h3 className="font-bold text-amber-400 text-sm flex items-center mb-1">
+                                <RefreshCw size={15} className="mr-2" /> Pending Renewal Requests
+                            </h3>
+                            <p className="text-amber-200/70 text-xs">Clients who submitted payment proof. Verify the screenshot then click Approve to extend their subscription.</p>
+                        </div>
+
+                        {requestsLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader className="animate-spin text-amber-400" size={28} />
+                            </div>
+                        ) : renewalRequests.length === 0 ? (
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+                                <CheckCircle size={32} className="mx-auto text-gray-600 mb-3" />
+                                <p className="text-gray-400 text-sm">No renewal requests yet.</p>
+                                <p className="text-gray-600 text-xs mt-1">When a client submits payment proof, it will appear here.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {renewalRequests.map((req: any) => (
+                                    <div key={req.id} className={`bg-white/5 border rounded-2xl p-5 ${
+                                        req.status === 'pending' ? 'border-amber-500/30' :
+                                        req.status === 'approved' ? 'border-green-500/20' :
+                                        'border-red-500/20'
+                                    }`}>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <p className="font-bold text-white text-sm">{req.clientName || 'Client'}</p>
+                                                <p className="text-gray-400 text-xs mt-0.5">
+                                                    {new Date(req.submittedAt).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                                req.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
+                                                req.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                                                'bg-red-500/20 text-red-300'
+                                            }`}>
+                                                {req.status === 'pending' ? '⏳ Pending' : req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+                                            <div className="bg-white/5 rounded-lg p-2">
+                                                <p className="text-gray-400 text-[10px] uppercase">Plan</p>
+                                                <p className="text-white text-xs font-bold capitalize">{req.plan || 'Monthly'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-2">
+                                                <p className="text-gray-400 text-[10px] uppercase">Days</p>
+                                                <p className="text-white text-xs font-bold">+{req.daysRequested || 30}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-2">
+                                                <p className="text-gray-400 text-[10px] uppercase">Amount</p>
+                                                <p className="text-amber-400 text-xs font-bold">₱{req.amount || 99}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Payment Proof */}
+                                        {req.paymentProofUrl && (
+                                            <button
+                                                onClick={() => setZoomedImage(req.paymentProofUrl)}
+                                                className="block mb-3 w-full text-left"
+                                            >
+                                                <img
+                                                    src={req.paymentProofUrl}
+                                                    alt="Payment Proof"
+                                                    className="w-full max-h-48 object-contain rounded-xl border border-white/10 hover:border-amber-500/40 transition-colors cursor-zoom-in bg-black/20"
+                                                />
+                                                <p className="text-center text-xs text-gray-500 mt-1">Tap to view full screenshot</p>
+                                            </button>
+                                        )}
+
+                                        {/* Actions */}
+                                        {req.status === 'pending' && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleApproveRenewal(req)}
+                                                    disabled={processingId === req.id}
+                                                    className="flex-1 py-2.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-bold rounded-xl transition-colors border border-green-500/30 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                                >
+                                                    {processingId === req.id ? <Loader size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                                    Approve & Extend
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectRenewal(req)}
+                                                    disabled={processingId === req.id}
+                                                    className="flex-1 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-xl transition-colors border border-red-500/30 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                                >
+                                                    <AlertCircle size={14} /> Reject
+                                                </button>
+                                            </div>
+                                        )}
+                                        {req.status === 'approved' && req.approvedAt && (
+                                            <p className="text-green-400/70 text-xs text-center">Approved on {new Date(req.approvedAt).toLocaleDateString()}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={loadRenewalRequests}
+                            className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-colors border border-white/10 text-sm flex items-center justify-center gap-2"
+                        >
+                            <RefreshCw size={14} /> Refresh
+                        </button>
+                    </div>
                 )}
 
                 {/* ===== DEPLOYMENT CHEATSHEET TAB ===== */}
@@ -911,6 +1136,156 @@ const SuperAdmin: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Renewal Pricing */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <h3 className="text-md font-bold text-white mb-4 flex items-center">
+                                <RefreshCw size={18} className="mr-2 text-amber-400" />
+                                Renewal Pricing
+                            </h3>
+                            <p className="text-gray-400 text-xs mb-4">This price and duration is shown to clients when they renew their own subscription.</p>
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Price (₱)</label>
+                                    <input
+                                        type="number"
+                                        value={renewalPrice}
+                                        onChange={(e) => setRenewalPrice(Number(e.target.value))}
+                                        className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                        placeholder="99"
+                                        min={1}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Duration (days)</label>
+                                    <input
+                                        type="number"
+                                        value={renewalDays}
+                                        onChange={(e) => setRenewalDays(Number(e.target.value))}
+                                        className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                        placeholder="30"
+                                        min={1}
+                                    />
+                                </div>
+                            </div>
+                            {renewalPriceStatus === 'saved' && (
+                                <p className="text-green-400 text-xs mb-3 flex items-center gap-1"><CheckCircle size={12} /> Pricing saved!</p>
+                            )}
+                            <button
+                                onClick={async () => {
+                                    setRenewalPriceStatus('saving');
+                                    try {
+                                        await setDoc(doc(db, '_superadmin', 'settings'), { renewalPrice, renewalDays }, { merge: true });
+                                        setRenewalPriceStatus('saved');
+                                        setTimeout(() => setRenewalPriceStatus('idle'), 3000);
+                                    } catch { }
+                                }}
+                                disabled={renewalPriceStatus === 'saving'}
+                                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center"
+                            >
+                                {renewalPriceStatus === 'saving' ? <><Loader size={16} className="mr-2 animate-spin" /> Saving...</> : <><Save size={16} className="mr-2" /> Save Pricing</>}
+                            </button>
+                        </div>
+
+                        {/* Payment Methods */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <h3 className="text-md font-bold text-white mb-4 flex items-center">
+                                <CreditCard size={18} className="mr-2 text-amber-400" />
+                                Payment Methods (For Renewals)
+                            </h3>
+                            <p className="text-gray-400 text-xs mb-4">Configure the payment details where clients will send their subscription renewal payments.</p>
+
+                            {/* GCash */}
+                            <div className="mb-6 bg-white/5 rounded-xl border border-white/10 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="font-bold text-blue-400 text-sm flex items-center">
+                                        📱 GCash Details
+                                    </h4>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input type="checkbox" checked={gcashEnabled} onChange={(e) => setGcashEnabled(e.target.checked)} className="sr-only peer" />
+                                        <div className="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-blue-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full relative"></div>
+                                    </label>
+                                </div>
+                                {gcashEnabled && (
+                                    <div className="space-y-3 mt-3">
+                                        <div>
+                                            <input type="text" placeholder="Account Name" value={gcashName} onChange={(e) => setGcashName(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                        </div>
+                                        <div>
+                                            <input type="text" placeholder="Account Number" value={gcashNumber} onChange={(e) => setGcashNumber(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-1">Upload QR Code (Optional)</label>
+                                            <input type="file" accept="image/*" onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    try {
+                                                        const b64 = await compressImageToBase64(file);
+                                                        setGcashQr(b64);
+                                                    } catch (err: any) { alert(err.message); }
+                                                }
+                                            }} className="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30 cursor-pointer" />
+                                            {gcashQr && (
+                                                <div className="mt-2 relative inline-block">
+                                                    <img src={gcashQr} alt="GCash QR" className="h-20 rounded border border-white/20" />
+                                                    <button onClick={() => setGcashQr('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Bank Transfer */}
+                            <div className="mb-4 bg-white/5 rounded-xl border border-white/10 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="font-bold text-green-400 text-sm flex items-center">
+                                        🏦 Bank Transfer Details
+                                    </h4>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input type="checkbox" checked={bankEnabled} onChange={(e) => setBankEnabled(e.target.checked)} className="sr-only peer" />
+                                        <div className="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full relative"></div>
+                                    </label>
+                                </div>
+                                {bankEnabled && (
+                                    <div className="space-y-3 mt-3">
+                                        <div>
+                                            <input type="text" placeholder="Bank Name" value={bankName} onChange={(e) => setBankName(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                        </div>
+                                        <div>
+                                            <input type="text" placeholder="Account Name" value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                        </div>
+                                        <div>
+                                            <input type="text" placeholder="Account Number" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {pmStatus === 'saved' && (
+                                <p className="text-green-400 text-xs mb-3 flex items-center gap-1"><CheckCircle size={12} /> Payment methods saved!</p>
+                            )}
+                            <button
+                                onClick={async () => {
+                                    setPmStatus('saving');
+                                    try {
+                                        const paymentMethods = {
+                                            gcash: { enabled: gcashEnabled, accountName: gcashName, accountNumber: gcashNumber, qrImage: gcashQr },
+                                            bankTransfer: { enabled: bankEnabled, bankName: bankName, accountName: bankAccountName, accountNumber: bankAccountNumber }
+                                        };
+                                        await setDoc(doc(db, '_superadmin', 'settings'), { paymentMethods }, { merge: true });
+                                        setPmStatus('saved');
+                                        setTimeout(() => setPmStatus('idle'), 3000);
+                                    } catch { }
+                                }}
+                                disabled={pmStatus === 'saving'}
+                                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center"
+                            >
+                                {pmStatus === 'saving' ? <><Loader size={16} className="mr-2 animate-spin" /> Saving...</> : <><Save size={16} className="mr-2" /> Save Payment Methods</>}
+                            </button>
+                        </div>
+
                         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
                             <p className="text-amber-200/70 text-xs">
                                 <strong className="text-amber-300">Note:</strong> The password is stored in Firestore under <span className="font-mono text-amber-300">_superadmin/settings</span>.
@@ -928,6 +1303,27 @@ const SuperAdmin: React.FC = () => {
                     <span className="text-sm font-medium">Copied <span className="font-mono text-green-200">{copyToast}</span></span>
                 </div>
             )}
+            
+            {/* Zoomed Image Overlay */}
+            {zoomedImage && (
+                <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setZoomedImage(null)}>
+                    <div className="relative max-w-4xl w-full h-full flex items-center justify-center">
+                        <button 
+                            className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-red-500 rounded-full p-2 transition-colors z-10"
+                            onClick={(e) => { e.stopPropagation(); setZoomedImage(null); }}
+                        >
+                            <X size={24} />
+                        </button>
+                        <img 
+                            src={zoomedImage} 
+                            alt="Zoomed" 
+                            className="max-w-full max-h-[90vh] object-contain rounded-xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                </div>
+            )}
+            
             <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
         </div>
     );

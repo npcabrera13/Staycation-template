@@ -161,6 +161,16 @@ function AppContent() {
     loadData();
   }, []);
 
+  // Fetch bookings immediately if user goes to admin dashboard
+  useEffect(() => {
+    if (location.pathname === '/admin' && bookings.length === 0) {
+      bookingService.getAll().then(fetchedBookings => {
+        setBookings(fetchedBookings);
+      }).catch(err => {
+        console.error("Failed to load admin bookings:", err);
+      });
+    }
+  }, [location.pathname]);
 
 
   if (isLoading) {
