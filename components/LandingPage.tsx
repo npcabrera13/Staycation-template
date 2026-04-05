@@ -76,16 +76,17 @@ const LAYOUT_CONFIGS = {
 };
 
 // Wrapper that only shows AI chat when enabled in SuperAdmin settings
+// Deferred by 3s to avoid competing with critical page-load Firebase calls
 const AiChatWrapper: React.FC = () => {
     const [enabled, setEnabled] = useState(false);
     useEffect(() => {
-        const check = async () => {
+        const timer = setTimeout(async () => {
             try {
                 const snap = await getDoc(doc(db, '_superadmin', 'settings'));
                 if (snap.exists() && snap.data().enableAiChat === true) setEnabled(true);
             } catch { }
-        };
-        check();
+        }, 3000); // Defer 3 seconds after page load
+        return () => clearTimeout(timer);
     }, []);
     if (!enabled) return null;
     return <AIChat />;

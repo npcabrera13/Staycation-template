@@ -79,6 +79,8 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             <img 
                 src={src} 
                 alt={alt}
+                loading="lazy"
+                decoding="async"
                 style={{ 
                     objectPosition: currentPos,
                     transform: `scale(${scale})`,
