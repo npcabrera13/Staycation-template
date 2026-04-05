@@ -19,9 +19,10 @@ interface BookingModalProps {
     onUpdateBooking?: (booking: Booking) => Promise<void>; // Added for updating with proof
     initialGalleryOpen?: boolean;
     settings?: Settings;
+    onOpenMyBookings?: () => void;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook, onUpdateBooking, initialGalleryOpen = false, settings }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, onBook, onUpdateBooking, initialGalleryOpen = false, settings, onOpenMyBookings }) => {
     const [step, setStep] = useState<1 | 2 | 3>(1); // 1=Details, 2=Payment, 3=Success
     const [selectedStart, setSelectedStart] = useState<Date | null>(null);
     const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
@@ -201,6 +202,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
+            // Auto-scroll to the first error field so PC users can see what's wrong
+            setTimeout(() => {
+                const firstError = document.querySelector('[data-error="true"]');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
             return;
         }
 
@@ -484,7 +492,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
                                         <div className="space-y-4 mt-6 pb-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div>
+                                                <div data-error={!!errors.name}>
                                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Full Name</label>
                                                     <input
                                                         type="text"
@@ -498,7 +506,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     />
                                                     {errors.name && <div className="flex items-center text-red-500 text-xs mt-1"><AlertCircle size={10} className="mr-1" /> {errors.name}</div>}
                                                 </div>
-                                                <div>
+                                                <div data-error={!!errors.email}>
                                                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Email Address</label>
                                                     <input
                                                         type="email"
@@ -898,7 +906,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             <span className="text-xl leading-none">🔍</span>
                                             <div>
                                                 <p className="text-sm font-semibold text-gray-800">Track your booking anytime</p>
-                                                <p className="text-xs text-gray-500">You can view your booking status under <span className="font-semibold text-primary">"Find My Booking"</span> in the menu.</p>
+                                                <p className="text-xs text-gray-500">You can view your booking status under{' '}
+                                                    <button
+                                                        onClick={() => { onClose(); setTimeout(() => onOpenMyBookings?.(), 200); }}
+                                                        className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer"
+                                                    >
+                                                        "Find My Booking"
+                                                    </button>
+                                                {' '}in the menu.</p>
                                             </div>
                                         </div>
 
@@ -927,7 +942,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                     </div>
 
                                     {/* Payment Methods Section */}
-                                    {settings?.paymentMethods && (settings.paymentMethods.gcash?.enabled || settings.paymentMethods.bankTransfer?.enabled) && (
+                                    {false && settings?.paymentMethods && (settings.paymentMethods.gcash?.enabled || settings.paymentMethods.bankTransfer?.enabled) && (
                                         <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6 w-full max-w-md mb-6">
                                             <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-3 flex items-center text-sm">
                                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>

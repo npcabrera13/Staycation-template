@@ -500,6 +500,7 @@ function AppContent() {
           onUpdateBooking={async (b) => { await handleUpdateBooking(b); }}
           initialGalleryOpen={startInGallery}
           settings={settings}
+          onOpenMyBookings={() => setIsMyBookingsOpen(true)}
         />
       )}
 
