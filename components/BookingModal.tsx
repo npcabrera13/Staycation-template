@@ -883,18 +883,45 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         Thank you, {guestName}! Your reservation request for {room.name} has been received. We will review it shortly and send a confirmation email to {email}.
                                     </p>
 
-                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 w-full max-w-md mb-8 text-left">
-                                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">Booking Reference</p>
-                                        <p className="text-xl font-mono font-bold text-primary mb-4 select-all">{newBookingId}</p>
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 w-full max-w-md mb-8 text-left space-y-3">
+                                        <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-3">What Happens Next?</p>
 
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl leading-none">✅</span>
                                             <div>
-                                                <p className="text-gray-500 text-xs">Check-in</p>
-                                                <p className="font-semibold text-gray-800">{selectedStart?.toLocaleDateString()} @ {estimatedArrival}</p>
+                                                <p className="text-sm font-semibold text-gray-800">We received your payment proof</p>
+                                                <p className="text-xs text-gray-500">Your screenshot has been attached to your reservation.</p>
                                             </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl leading-none">🔍</span>
                                             <div>
-                                                <p className="text-gray-500 text-xs">Check-out</p>
-                                                <p className="font-semibold text-gray-800">{selectedEnd?.toLocaleDateString()} @ {estimatedDeparture}</p>
+                                                <p className="text-sm font-semibold text-gray-800">Track your booking anytime</p>
+                                                <p className="text-xs text-gray-500">You can view your booking status under <span className="font-semibold text-primary">"Find My Booking"</span> in the menu.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-xl leading-none">📧</span>
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-800">Confirmation goes to your email</p>
+                                                <p className="text-xs text-gray-500 break-all">{email}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-gray-200 pt-3 mt-1">
+                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-gray-500 text-xs mb-0.5">Check-in</p>
+                                                    <p className="font-bold text-gray-800">{selectedStart?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                    <p className="text-xs text-gray-400">@ {estimatedArrival}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-500 text-xs mb-0.5">Check-out</p>
+                                                    <p className="font-bold text-gray-800">{selectedEnd?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                    <p className="text-xs text-gray-400">@ {estimatedDeparture}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
