@@ -74,6 +74,8 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
           <img
             src={room.image}
             alt={room.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
         </div>
