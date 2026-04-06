@@ -1811,7 +1811,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             className={`relative p-2 rounded transition-colors group flex items-center justify-center ${expiryDays !== null && expiryDays <= 0 ? 'text-red-400 hover:bg-red-900/30' : expiryDays !== null && expiryDays <= 7 ? 'text-yellow-400 hover:bg-yellow-900/30' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
                             title="Notifications"
                         >
-                            <Bell size={20} />
+                            <Clock size={20} />
                             {expiryDays !== null && expiryDays <= 7 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full animate-pulse bg-current"></span>
                             )}

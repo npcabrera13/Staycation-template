@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2 } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Settings } from '../../types';
@@ -14,11 +14,7 @@ interface RenewalModalProps {
     onClose: () => void;
 }
 
-const PLAN_OPTIONS = [
-    { days: 30, label: '30 Days', multiplier: 1, discount: null },
-    { days: 60, label: '60 Days', multiplier: 1.8, discount: 'SAVE 10%' },
-    { days: 90, label: '90 Days', multiplier: 2.5, discount: 'SAVE 16%' },
-];
+
 
 const RenewalModal: React.FC<RenewalModalProps> = ({
     expiryDays,
@@ -28,6 +24,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
     onClose,
 }) => {
     const [step, setStep] = useState<'info' | 'payment' | 'success'>('info');
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [selectedPlan, setSelectedPlan] = useState(0); // index into PLAN_OPTIONS
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
@@ -53,13 +50,13 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                 if (settings?.siteName) {
                     const q = query(
                         collection(db, '_superadmin', 'renewals', 'requests'),
-                        where('clientName', '==', settings.siteName),
-                        orderBy('submittedAt', 'desc'),
-                        limit(3)
+                        where('clientName', '==', settings.siteName)
                     );
                     const querySnapshot = await getDocs(q);
-                    const requests = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    setRecentRequests(requests);
+                    let requests = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    // Sort locally to avoid Firebase Composite Index requirement
+                    requests.sort((a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+                    setRecentRequests(requests.slice(0, 3));
                 }
             } catch (err) {
                 console.error("Failed to load renewal data", err);
@@ -72,13 +69,20 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
     // Pull payment methods and base renewal price from SuperAdmin settings
     const gcash = superAdminSettings?.paymentMethods?.gcash;
     const bank = superAdminSettings?.paymentMethods?.bankTransfer;
+    // Backward compatibility for base values
     const basePrice = superAdminSettings?.renewalPrice ?? 99;
     const baseDays = superAdminSettings?.renewalDays ?? 30;
 
-    // Dynamic price/days based on selected plan (round up to nearest whole number)
+    // Build dynamic custom-priced plan options
+    const PLAN_OPTIONS = [
+        { days: baseDays, label: '30 Days', price: superAdminSettings?.price30 ?? basePrice },
+        { days: baseDays * 2, label: '60 Days', price: superAdminSettings?.price60 ?? (basePrice * 2) },
+        { days: baseDays * 3, label: '90 Days', price: superAdminSettings?.price90 ?? (basePrice * 3) },
+    ];
+
     const plan = PLAN_OPTIONS[selectedPlan];
-    const totalPrice = Math.round(basePrice * plan.multiplier);
-    const totalDays = Math.round(baseDays * plan.multiplier);
+    const totalPrice = plan.price;
+    const totalDays = plan.days;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -93,6 +97,16 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
         const reader = new FileReader();
         reader.onload = (ev) => setProofPreview(ev.target?.result as string);
         reader.readAsDataURL(file);
+    };
+
+    const handleDeleteRequest = async (id: string) => {
+        try {
+            await deleteDoc(doc(db, '_superadmin', 'renewals', 'requests', id));
+            setRecentRequests(prev => prev.filter(req => req.id !== id));
+            setDeleteConfirmId(null);
+        } catch(err) {
+            console.error("Failed to delete request:", err);
+        }
     };
 
     const handleSubmit = async () => {
@@ -120,14 +134,15 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
             try {
                 const cleanQ = query(
                     collection(db, '_superadmin', 'renewals', 'requests'),
-                    where('clientName', '==', settings?.siteName || 'Unknown'),
-                    orderBy('submittedAt', 'desc')
+                    where('clientName', '==', settings?.siteName || 'Unknown')
                 );
                 const cleanSnap = await getDocs(cleanQ);
-                if (cleanSnap.docs.length > 3) {
-                    const toDelete = cleanSnap.docs.slice(3); // keep index 0,1,2
-                    for (const docSnapshot of toDelete) {
-                        await deleteDoc(docSnapshot.ref);
+                let allDocs = cleanSnap.docs.map(d => ({ doc: d, time: new Date(d.data().submittedAt).getTime() }));
+                allDocs.sort((a, b) => b.time - a.time);
+                if (allDocs.length > 3) {
+                    const toDelete = allDocs.slice(3); // keep index 0,1,2
+                    for (const item of toDelete) {
+                        await deleteDoc(item.doc.ref);
                     }
                 }
             } catch (cleanupErr) {
@@ -197,50 +212,45 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                 {!recentRequests.some(r => r.status === 'pending') ? (
                                     <>
                                         <div>
-                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 text-center">Choose your plan</p>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {PLAN_OPTIONS.map((opt, idx) => (
+                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Choose your plan</p>
+                                            <div className="flex flex-col gap-2">
+                                                {PLAN_OPTIONS.map((opt, idx) => (
+                                                    <button
+                                                        key={opt.days}
+                                                        onClick={() => setSelectedPlan(idx)}
+                                                        className={`relative rounded-xl p-3 flex items-center justify-between transition-all border ${
+                                                            selectedPlan === idx
+                                                                ? 'border-primary bg-primary/10 shadow-sm'
+                                                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === idx ? 'border-primary' : 'border-gray-300 dark:border-gray-600'}`}>
+                                                                {selectedPlan === idx && <div className="w-2 h-2 rounded-full bg-primary" />}
+                                                            </div>
+                                                            <span className={`font-bold text-sm ${selectedPlan === idx ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                {opt.label}
+                                                            </span>
+                                                        </div>
+                                                        <span className={`font-black ${selectedPlan === idx ? 'text-primary' : 'text-gray-900 dark:text-white'}`}>
+                                                            ₱{opt.price}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
                                             <button
-                                                key={opt.days}
-                                                onClick={() => setSelectedPlan(idx)}
-                                                className={`relative rounded-xl p-3 text-center transition-all border-2 ${
-                                                    selectedPlan === idx
-                                                        ? 'border-primary bg-primary/10 shadow-md shadow-primary/10'
-                                                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-700/50'
-                                                }`}
+                                                onClick={() => setStep('payment')}
+                                                className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center justify-center gap-2"
                                             >
-                                                {opt.discount && (
-                                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{opt.discount}</span>
-                                                )}
-                                                <p className={`text-lg font-black ${selectedPlan === idx ? 'text-primary' : 'text-gray-700 dark:text-gray-200'}`}>
-                                                    {opt.days}
-                                                </p>
-                                                <p className={`text-[10px] font-medium ${selectedPlan === idx ? 'text-primary/70' : 'text-gray-400'}`}>Days</p>
-                                                <p className={`text-xs font-bold mt-1 ${selectedPlan === idx ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                    ₱{Math.round(basePrice * opt.multiplier)}
-                                                </p>
+                                                <RefreshCw size={16} /> Continue paying ₱{totalPrice}
                                             </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Selected Price Summary */}
-                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 rounded-xl p-4 text-center">
-                                    <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">{plan.label} Plan</p>
-                                    <p className="text-4xl font-black text-gray-900 dark:text-white">₱{totalPrice}</p>
-                                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{totalDays} days of continued access</p>
-                                </div>
-
-                                <p className="text-gray-600 dark:text-gray-300 text-xs text-center">
-                                    Send payment and upload your receipt to renew instantly.
-                                </p>
-
-                                        <button
-                                            onClick={() => setStep('payment')}
-                                            className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center justify-center gap-2"
-                                        >
-                                            <RefreshCw size={16} /> Continue — ₱{totalPrice}
-                                        </button>
+                                            <p className="text-gray-500 dark:text-gray-400 text-[10px] text-center mt-2">
+                                                Adds {totalDays} days to your subscription.
+                                            </p>
+                                        </div>
                                     </>
                                 ) : (
                                     <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 text-center">
@@ -293,7 +303,21 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                                                 {req.status === 'pending' ? 'Under Review' : req.status === 'approved' ? 'Approved' : 'Rejected'}
                                                             </span>
                                                         </div>
-                                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">₱{req.amount}</span>
+                                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                                            ₱{req.amount}
+                                                            {req.status === 'pending' && (
+                                                                deleteConfirmId === req.id ? (
+                                                                    <div className="flex items-center gap-1 animate-fade-in bg-white dark:bg-gray-800 px-1 py-0.5 rounded shadow-sm border border-gray-200 dark:border-gray-700 absolute right-3">
+                                                                        <button onClick={() => handleDeleteRequest(req.id)} className="text-[10px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 px-2 py-1 rounded">Confirm</button>
+                                                                        <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">Cancel</button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button onClick={() => setDeleteConfirmId(req.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/40 relative z-10" title="Delete Request">
+                                                                        <Trash2 size={13} />
+                                                                    </button>
+                                                                )
+                                                            )}
+                                                        </span>
                                                     </div>
                                                     <div className="flex justify-between items-end mt-2">
                                                         <div>
@@ -418,7 +442,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                             <div className="w-12 h-12 mx-auto rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-2 group-hover:bg-primary/10 transition-colors">
                                                 <Upload size={20} className="text-gray-400 group-hover:text-primary transition-colors" />
                                             </div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Tap to upload GCash receipt</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Tap to upload payment proof</p>
                                             <p className="text-[10px] text-gray-400 mt-1">JPG, PNG • Max 10MB</p>
                                         </div>
                                     )}

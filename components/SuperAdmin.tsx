@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X } from 'lucide-react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
@@ -48,6 +48,7 @@ const SuperAdmin: React.FC = () => {
 
     // Copy toast state
     const [copyToast, setCopyToast] = useState('');
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Favicon preview state
     const [faviconPreview, setFaviconPreview] = useState('');
@@ -66,8 +67,9 @@ const SuperAdmin: React.FC = () => {
     const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings' | 'renewals'>('subscription');
 
     // Renewal Pricing State
-    const [renewalPrice, setRenewalPrice] = useState(99);
-    const [renewalDays, setRenewalDays] = useState(30);
+    const [price30, setPrice30] = useState(99);
+    const [price60, setPrice60] = useState(190);
+    const [price90, setPrice90] = useState(270);
     const [renewalPriceStatus, setRenewalPriceStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
     // SuperAdmin Payment Methods State
@@ -141,8 +143,14 @@ const SuperAdmin: React.FC = () => {
                 const snap = await getDoc(doc(db, '_superadmin', 'settings'));
                 if (snap.exists()) {
                     const d = snap.data();
-                    if (d.renewalPrice) setRenewalPrice(d.renewalPrice);
-                    if (d.renewalDays) setRenewalDays(d.renewalDays);
+                    if (d.price30) setPrice30(d.price30);
+                    else if (d.renewalPrice) setPrice30(d.renewalPrice); // Backward compatibility
+                    
+                    if (d.price60) setPrice60(d.price60);
+                    else if (d.renewalPrice) setPrice60(d.renewalPrice * 2);
+
+                    if (d.price90) setPrice90(d.price90);
+                    else if (d.renewalPrice) setPrice90(d.renewalPrice * 3);
                     if (d.paymentMethods) {
                         if (d.paymentMethods.gcash) {
                             setGcashEnabled(d.paymentMethods.gcash.enabled || false);
@@ -362,7 +370,7 @@ const SuperAdmin: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 p-4 pb-24 md:p-8 md:pb-8">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -383,8 +391,8 @@ const SuperAdmin: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Tab Switcher */}
-                <div className="flex flex-col sm:flex-row mb-6 bg-white/5 rounded-xl p-1 border border-white/10 gap-1">
+                {/* Tab Switcher (Desktop Only) */}
+                <div className="hidden md:flex flex-row mb-6 bg-white/5 rounded-xl p-1 border border-white/10 gap-1">
                     <button
                         onClick={() => setActiveSection('subscription')}
                         className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'subscription' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
@@ -664,11 +672,10 @@ const SuperAdmin: React.FC = () => {
                         ) : (
                             <div className="space-y-4">
                                 {renewalRequests.map((req: any) => (
-                                    <div key={req.id} className={`bg-white/5 border rounded-2xl p-5 ${
-                                        req.status === 'pending' ? 'border-amber-500/30' :
-                                        req.status === 'approved' ? 'border-green-500/20' :
-                                        'border-red-500/20'
-                                    }`}>
+                                    <div key={req.id} className={`bg-white/5 border rounded-2xl p-5 ${req.status === 'pending' ? 'border-amber-500/30' :
+                                            req.status === 'approved' ? 'border-green-500/20' :
+                                                'border-red-500/20'
+                                        }`}>
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
                                                 <p className="font-bold text-white text-sm">{req.clientName || 'Client'}</p>
@@ -676,13 +683,23 @@ const SuperAdmin: React.FC = () => {
                                                     {new Date(req.submittedAt).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                                req.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
-                                                req.status === 'approved' ? 'bg-green-500/20 text-green-300' :
-                                                'bg-red-500/20 text-red-300'
-                                            }`}>
-                                                {req.status === 'pending' ? '⏳ Pending' : req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${req.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
+                                                        req.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                                                            'bg-red-500/20 text-red-300'
+                                                    }`}>
+                                                    {req.status === 'pending' ? '⏳ Pending' : req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                                                </span>
+                                                {req.status !== 'pending' && (
+                                                    <button
+                                                        onClick={() => setDeleteConfirmId(req.id)}
+                                                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors border border-white/10 hover:border-red-500/30"
+                                                        title="Delete permanently"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-2 mb-3 text-center">
@@ -1143,28 +1160,41 @@ const SuperAdmin: React.FC = () => {
                                 Renewal Pricing
                             </h3>
                             <p className="text-gray-400 text-xs mb-4">This price and duration is shown to clients when they renew their own subscription.</p>
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="grid grid-cols-1 gap-3 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Price (₱)</label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">30-Day Plan Price (₱)</label>
                                     <input
                                         type="number"
-                                        value={renewalPrice}
-                                        onChange={(e) => setRenewalPrice(Number(e.target.value))}
+                                        value={price30}
+                                        onChange={(e) => setPrice30(Number(e.target.value))}
                                         className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
                                         placeholder="99"
                                         min={1}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Duration (days)</label>
-                                    <input
-                                        type="number"
-                                        value={renewalDays}
-                                        onChange={(e) => setRenewalDays(Number(e.target.value))}
-                                        className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                        placeholder="30"
-                                        min={1}
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">60-Day Plan (₱)</label>
+                                        <input
+                                            type="number"
+                                            value={price60}
+                                            onChange={(e) => setPrice60(Number(e.target.value))}
+                                            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                            placeholder="190"
+                                            min={1}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">90-Day Plan (₱)</label>
+                                        <input
+                                            type="number"
+                                            value={price90}
+                                            onChange={(e) => setPrice90(Number(e.target.value))}
+                                            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                                            placeholder="270"
+                                            min={1}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             {renewalPriceStatus === 'saved' && (
@@ -1174,7 +1204,7 @@ const SuperAdmin: React.FC = () => {
                                 onClick={async () => {
                                     setRenewalPriceStatus('saving');
                                     try {
-                                        await setDoc(doc(db, '_superadmin', 'settings'), { renewalPrice, renewalDays }, { merge: true });
+                                        await setDoc(doc(db, '_superadmin', 'settings'), { price30, price60, price90 }, { merge: true });
                                         setRenewalPriceStatus('saved');
                                         setTimeout(() => setRenewalPriceStatus('idle'), 3000);
                                     } catch { }
@@ -1296,34 +1326,112 @@ const SuperAdmin: React.FC = () => {
                 )}
             </div>
 
+            {deleteConfirmId && (
+                <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform scale-100" style={{ animation: 'toastIn 0.2s ease-out' }}>
+                        <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
+                            <Trash2 size={28} className="text-red-500" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Delete Permanently?</h3>
+                        <p className="text-gray-400 text-sm mb-6">
+                            Are you absolutely sure? This will instantly wipe this renewal request from the database forever.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors border border-gray-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await deleteDoc(doc(db, '_superadmin', 'renewals', 'requests', deleteConfirmId));
+                                        setRenewalRequests(prev => prev.filter(r => r.id !== deleteConfirmId));
+                                        setDeleteConfirmId(null);
+                                        copyWithToast('Request deleted forever');
+                                    } catch (err) { }
+                                }}
+                                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-600/20"
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Copy Toast Notification */}
             {copyToast && (
-                <div className="fixed bottom-6 left-1/2 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-xl shadow-2xl shadow-green-500/30 flex items-center gap-2 z-50" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
+                <div className="fixed bottom-24 md:bottom-6 left-1/2 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-xl shadow-2xl shadow-green-500/30 flex items-center gap-2 z-[400]" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
                     <CheckCircle size={16} />
                     <span className="text-sm font-medium">Copied <span className="font-mono text-green-200">{copyToast}</span></span>
                 </div>
             )}
-            
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-white/10 z-[100] flex justify-around items-center p-2 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                <button
+                    onClick={() => setActiveSection('subscription')}
+                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'subscription' ? 'text-amber-400' : 'text-gray-500'}`}
+                >
+                    <div className={`p-1.5 rounded-lg ${activeSection === 'subscription' ? 'bg-amber-500/10' : ''}`}>
+                        <Power size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tight">Main</span>
+                </button>
+                <button
+                    onClick={() => { setActiveSection('renewals'); loadRenewalRequests(); }}
+                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'renewals' ? 'text-amber-400' : 'text-gray-500'}`}
+                >
+                    <div className={`p-1.5 rounded-lg relative ${activeSection === 'renewals' ? 'bg-amber-500/10' : ''}`}>
+                        <RefreshCw size={20} />
+                        {renewalRequests.some(r => r.status === 'pending') && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-950"></span>
+                        )}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tight">Renewals</span>
+                </button>
+                <button
+                    onClick={() => setActiveSection('deployment')}
+                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'deployment' ? 'text-amber-400' : 'text-gray-500'}`}
+                >
+                    <div className={`p-1.5 rounded-lg ${activeSection === 'deployment' ? 'bg-amber-500/10' : ''}`}>
+                        <Globe size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tight">Deploy</span>
+                </button>
+                <button
+                    onClick={() => setActiveSection('settings')}
+                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'settings' ? 'text-amber-400' : 'text-gray-500'}`}
+                >
+                    <div className={`p-1.5 rounded-lg ${activeSection === 'settings' ? 'bg-amber-500/10' : ''}`}>
+                        <Settings size={20} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-tight">Settings</span>
+                </button>
+            </div>
+
             {/* Zoomed Image Overlay */}
             {zoomedImage && (
                 <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setZoomedImage(null)}>
                     <div className="relative max-w-4xl w-full h-full flex items-center justify-center">
-                        <button 
+                        <button
                             className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-red-500 rounded-full p-2 transition-colors z-10"
                             onClick={(e) => { e.stopPropagation(); setZoomedImage(null); }}
                         >
                             <X size={24} />
                         </button>
-                        <img 
-                            src={zoomedImage} 
-                            alt="Zoomed" 
+                        <img
+                            src={zoomedImage}
+                            alt="Zoomed"
                             className="max-w-full max-h-[90vh] object-contain rounded-xl"
                             onClick={(e) => e.stopPropagation()}
                         />
                     </div>
                 </div>
             )}
-            
+
             <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
         </div>
     );
