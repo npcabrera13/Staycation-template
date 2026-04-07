@@ -225,7 +225,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
       </div>
 
       {/* Legend */}
-      <div className="mt-8 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-center items-center text-xs text-gray-500 dark:text-gray-400 space-x-6">
+      <div className="mt-8 pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap justify-center items-center text-xs text-gray-500 dark:text-gray-400 gap-x-4 gap-y-2">
         <div className="flex items-center">
           <div className="w-6 h-4 bg-primary rounded-sm mr-2"></div>
           <span className="font-medium">Selected</span>

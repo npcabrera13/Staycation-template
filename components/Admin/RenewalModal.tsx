@@ -5,6 +5,7 @@ import { db } from '../../firebaseConfig';
 import { Settings } from '../../types';
 import { compressImageToBase64 } from '../../utils/imageUtils';
 import { doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
+import { SUPERADMIN_DEFAULTS } from '../../constants';
 
 interface RenewalModalProps {
     expiryDays: number;
@@ -129,6 +130,27 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                 submittedAt: new Date().toISOString(),
                 status: 'pending',
             });
+
+            // Fire SuperAdmin notification email
+            try {
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: SUPERADMIN_DEFAULTS.contactInfo.email,
+                        subject: `New Renewal Request: ${settings?.siteName || 'Client'}`,
+                        type: 'superadmin_renewal',
+                        data: {
+                            clientName: settings?.siteName || 'Unknown',
+                            plan: plan.label,
+                            amount: totalPrice,
+                            days: totalDays,
+                        }
+                    })
+                });
+            } catch (emailErr) {
+                console.error("Failed to send superadmin notification:", emailErr);
+            }
 
             // Cleanup: delete older requests for this client, keeping only the 3 most recent
             try {

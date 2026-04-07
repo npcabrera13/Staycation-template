@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 interface EmailRequest {
     to: string;
     subject: string;
-    type: 'user_confirmation' | 'admin_notification';
+    type: 'user_confirmation' | 'admin_notification' | 'superadmin_renewal';
     data: {
         guestName: string;
         roomName: string;
@@ -28,6 +28,12 @@ interface EmailRequest {
         contactEmail?: string;
         contactPhone?: string;
         paymentDeadline?: string;
+        
+        // Renewal Fields
+        clientName?: string;
+        plan?: string;
+        amount?: number;
+        days?: number;
     };
 }
 
@@ -134,6 +140,44 @@ function generateAdminEmailHTML(data: EmailRequest['data']): string {
     `;
 }
 
+function generateRenewalEmailHTML(data: any): string {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; background: #fff; }
+            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+            .content { padding: 30px; }
+            .info-box { background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981; }
+            .amount { font-size: 24px; font-weight: bold; color: #047857; margin: 10px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>💸 Payment Proof Submitted!</h2>
+            </div>
+            <div class="content">
+                <p>Hello Superadmin,</p>
+                <p>A client has just submitted a renewal payment proof. Please check your Superadmin Dashboard to review the request.</p>
+                
+                <div class="info-box">
+                    <p><strong>Client / Site Name:</strong> ${data.clientName}</p>
+                    <p><strong>Requested Plan:</strong> ${data.plan}</p>
+                    <p><strong>Extension Days:</strong> +${data.days} days</p>
+                    <div class="amount">₱${data.amount?.toLocaleString()}</div>
+                </div>
+                
+                <p>Log in to your <strong>/superadmin</strong> panel to Approve or Reject this transaction.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
 export default async (req: Request) => {
     // Only allow POST requests
     if (req.method !== 'POST') {
@@ -165,13 +209,18 @@ export default async (req: Request) => {
         }
 
         // Generate HTML based on email type
-        const html = type === 'admin_notification'
-            ? generateAdminEmailHTML(data)
-            : generateUserEmailHTML(data);
+        let html = '';
+        if (type === 'superadmin_renewal') {
+            html = generateRenewalEmailHTML(data);
+        } else if (type === 'admin_notification') {
+            html = generateAdminEmailHTML(data);
+        } else {
+            html = generateUserEmailHTML(data);
+        }
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${data.siteName}" <${process.env.SMTP_EMAIL}>`,
+            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
             to: to,
             subject: subject,
             html: html

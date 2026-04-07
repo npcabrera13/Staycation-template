@@ -83,3 +83,30 @@ export const COMPANY_INFO = {
   facebook: "facebook.com/serenitystay",
   instagram: "instagram.com/serenitystay"
 };
+
+export const SUPERADMIN_DEFAULTS = {
+  contactInfo: {
+    providerName: "Aniplay Hub",
+    email: "neilpaolocabrera@gmail.com",
+    phone: "09977341367"
+  },
+  pricing: {
+    price30: 99,
+    price60: 190,
+    price90: 270
+  },
+  paymentMethods: {
+    gcash: {
+      enabled: true,
+      accountName: "Neil Paolo Cabrera",
+      accountNumber: "09977341367",
+      qrImage: "/gcash-qr.jpg"
+    },
+    bankTransfer: {
+      enabled: false,
+      bankName: "",
+      accountName: "",
+      accountNumber: ""
+    }
+  }
+};

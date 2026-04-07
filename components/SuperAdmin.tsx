@@ -3,6 +3,7 @@ import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogO
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
+import { SUPERADMIN_DEFAULTS } from '../constants';
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 
@@ -67,21 +68,21 @@ const SuperAdmin: React.FC = () => {
     const [activeSection, setActiveSection] = useState<'subscription' | 'deployment' | 'settings' | 'renewals'>('subscription');
 
     // Renewal Pricing State
-    const [price30, setPrice30] = useState(99);
-    const [price60, setPrice60] = useState(190);
-    const [price90, setPrice90] = useState(270);
+    const [price30, setPrice30] = useState(SUPERADMIN_DEFAULTS.pricing.price30);
+    const [price60, setPrice60] = useState(SUPERADMIN_DEFAULTS.pricing.price60);
+    const [price90, setPrice90] = useState(SUPERADMIN_DEFAULTS.pricing.price90);
     const [renewalPriceStatus, setRenewalPriceStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
     // SuperAdmin Payment Methods State
-    const [gcashEnabled, setGcashEnabled] = useState(false);
-    const [gcashName, setGcashName] = useState('');
-    const [gcashNumber, setGcashNumber] = useState('');
-    const [gcashQr, setGcashQr] = useState<string>('');
+    const [gcashEnabled, setGcashEnabled] = useState(SUPERADMIN_DEFAULTS.paymentMethods.gcash.enabled);
+    const [gcashName, setGcashName] = useState(SUPERADMIN_DEFAULTS.paymentMethods.gcash.accountName);
+    const [gcashNumber, setGcashNumber] = useState(SUPERADMIN_DEFAULTS.paymentMethods.gcash.accountNumber);
+    const [gcashQr, setGcashQr] = useState<string>(SUPERADMIN_DEFAULTS.paymentMethods.gcash.qrImage);
 
-    const [bankEnabled, setBankEnabled] = useState(false);
-    const [bankName, setBankName] = useState('');
-    const [bankAccountName, setBankAccountName] = useState('');
-    const [bankAccountNumber, setBankAccountNumber] = useState('');
+    const [bankEnabled, setBankEnabled] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.enabled);
+    const [bankName, setBankName] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.bankName);
+    const [bankAccountName, setBankAccountName] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.accountName);
+    const [bankAccountNumber, setBankAccountNumber] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.accountNumber);
 
     const [pmStatus, setPmStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -104,7 +105,7 @@ const SuperAdmin: React.FC = () => {
     const [showConfirmPw, setShowConfirmPw] = useState(false);
 
     // Contact info state
-    const [contactInfo, setContactInfo] = useState({ providerName: '', email: '', phone: '' });
+    const [contactInfo, setContactInfo] = useState(SUPERADMIN_DEFAULTS.contactInfo);
     const [contactStatus, setContactStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
     // AI Chat toggle

@@ -482,7 +482,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                     <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 flex-shrink-0">Select your check-in and check-out dates to see pricing.</p>
 
                                     {/* Scrollable Content Area */}
-                                    <div className="flex-1 overflow-y-auto pr-0 md:pr-2 custom-scrollbar min-h-0">
+                                    <div className="flex-1 overflow-y-auto px-1 md:px-2 custom-scrollbar min-h-0">
                                         <AvailabilityCalendar
                                             roomId={room.id}
                                             bookings={bookings}

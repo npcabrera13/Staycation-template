@@ -1751,7 +1751,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             <div className="pt-4 border-t dark:border-gray-700">
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Passcode</p>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="text"
                                         maxLength={6}
@@ -1826,6 +1826,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             ) : (
                                 <Moon size={20} className="group-hover:-rotate-12 transition-transform" />
                             )}
+                        </button>
+                        <button onClick={onExit} className="md:hidden p-2 text-red-400 hover:bg-gray-700 rounded transition-all flex items-center justify-center" title="Exit Admin">
+                            <LogOut size={20} />
                         </button>
                     </div>
                 </div>
