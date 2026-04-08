@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
-import { sendAdminNotificationEmail } from '../services/emailService';
+import { sendAdminNotificationEmail, sendUserConfirmationEmail } from '../services/emailService';
 import { compressImageToBase64 } from '../utils/imageUtils';
 
 interface BookingModalProps {
@@ -319,10 +319,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             // 3. Save to database for the first time
             await onBook(fullBooking);
             
-            // 4. Send email notifications (Admin only for now)
+            // 4. Send email notifications
             if (settings) {
                 if (settings.notifications?.sendAdminAlert && settings.notifications?.adminEmail) {
                     sendAdminNotificationEmail(fullBooking, room, settings);
+                }
+                if (settings.notifications?.sendUserConfirmation && fullBooking.email) {
+                    sendUserConfirmationEmail(fullBooking, room, settings);
                 }
             }
 
