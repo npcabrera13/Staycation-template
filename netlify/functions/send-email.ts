@@ -4,8 +4,8 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD // Use App Password for Gmail
+        user: 'visionarywebco@gmail.com',
+        pass: 'xyoprqhzmjuskgsu' 
     }
 });
 
@@ -28,7 +28,7 @@ interface EmailRequest {
         contactEmail?: string;
         contactPhone?: string;
         paymentDeadline?: string;
-        
+
         // Renewal Fields
         clientName?: string;
         plan?: string;
