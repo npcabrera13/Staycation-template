@@ -187,14 +187,7 @@ export default async (req: Request) => {
         });
     }
 
-    // Check for required environment variables
-    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
-        console.error('Missing SMTP configuration');
-        return new Response(JSON.stringify({ error: 'Email service not configured' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+    // Hardcoded credentials are used, skipping env check
 
     try {
         const payload = await req.json() as EmailRequest;
@@ -220,7 +213,7 @@ export default async (req: Request) => {
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
+            from: `"${data.siteName || data.clientName || 'System'}" <visionarywebco@gmail.com>`,
             to: to,
             subject: subject,
             html: html

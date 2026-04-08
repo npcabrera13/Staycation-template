@@ -185,11 +185,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Check for required environment variables
-    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
-        console.error('Missing SMTP configuration');
-        return res.status(500).json({ error: 'Email service not configured' });
-    }
+    // Hardcoded credentials are used, skipping env check
 
     try {
         const { to, subject, type, data } = req.body as EmailRequest;
@@ -211,7 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
+            from: `"${data.siteName || data.clientName || 'System'}" <visionarywebco@gmail.com>`,
             to: to,
             subject: subject,
             html: html
