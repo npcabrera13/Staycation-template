@@ -283,6 +283,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
 
+    // Notification Panel State
+    const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+    const notificationPanelRef = useRef<HTMLDivElement>(null);
+
+    // Close notification panel when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target as Node)) {
+                setShowNotificationPanel(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Export State
     const [showExportModal, setShowExportModal] = useState(false);
     const [showStatsModal, setShowStatsModal] = useState(false);
@@ -339,6 +354,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const filteredBookings = getFilteredBookings().sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
     const pendingBookings = processedBookings.filter(b => b.status === 'pending').sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+    // Overdue bookings: raw bookings that are still pending but check-in date has passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const overdueBookings = bookings.filter(b => {
+        if (b.status !== 'pending') return false;
+        const checkIn = new Date(b.checkIn);
+        checkIn.setHours(0, 0, 0, 0);
+        return checkIn < today;
+    });
 
     // --- Bulk Selection Logic ---
     const handleSelectAll = () => {
@@ -1802,20 +1827,104 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <h1 className="text-lg md:text-2xl font-bold font-serif tracking-wider">Admin Panel</h1>
                     </div>
                     <div className="flex items-center space-x-2 md:mt-4 md:justify-between">
-                        <button
-                            onClick={() => {
-                                if (expiryDays !== null) {
-                                    setShowExpiryWarning(true);
-                                }
-                            }}
-                            className={`relative p-2 rounded transition-colors group flex items-center justify-center ${expiryDays !== null && expiryDays <= 0 ? 'text-red-400 hover:bg-red-900/30' : expiryDays !== null && expiryDays <= 7 ? 'text-yellow-400 hover:bg-yellow-900/30' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
-                            title="Notifications"
-                        >
-                            <Clock size={20} />
-                            {expiryDays !== null && expiryDays <= 7 && (
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full animate-pulse bg-current"></span>
+                        {/* 🔔 Unified Notification Icon */}
+                        <div className="relative" ref={notificationPanelRef}>
+                            <button
+                                onClick={() => setShowNotificationPanel(prev => !prev)}
+                                className={`relative p-2 rounded transition-colors group flex items-center justify-center ${
+                                    (expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0
+                                        ? 'text-red-400 hover:bg-red-900/30'
+                                        : expiryDays !== null && expiryDays <= 7
+                                        ? 'text-yellow-400 hover:bg-yellow-900/30'
+                                        : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                                }`}
+                                title="Notifications"
+                            >
+                                <Clock size={20} />
+                                {/* Badge: total notification count */}
+                                {(() => {
+                                    const count = overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0);
+                                    return count > 0 ? (
+                                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                                            {count}
+                                        </span>
+                                    ) : null;
+                                })()}
+                            </button>
+
+                            {/* Notification Dropdown Panel */}
+                            {showNotificationPanel && (
+                                <div className="absolute left-0 md:left-auto md:right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[200] overflow-hidden animate-fade-in-up">
+                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                        <h4 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
+                                            <Bell size={14} /> Notifications
+                                        </h4>
+                                        <button onClick={() => setShowNotificationPanel(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div className="max-h-80 overflow-y-auto">
+                                        {/* License Expiry Section */}
+                                        {expiryDays !== null && expiryDays <= 7 && (
+                                            <div className="p-3 border-b border-gray-100 dark:border-gray-700">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">⏰ License</p>
+                                                <button
+                                                    onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
+                                                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+                                                        expiryDays <= 0
+                                                            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100'
+                                                            : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-100'
+                                                    }`}
+                                                >
+                                                    <AlertTriangle size={14} className="flex-shrink-0" />
+                                                    {expiryDays <= 0
+                                                        ? 'License has expired! Renew now.'
+                                                        : `License expires in ${expiryDays} day${expiryDays === 1 ? '' : 's'}.`
+                                                    }
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Overdue Bookings Section */}
+                                        {overdueBookings.length > 0 && (
+                                            <div className="p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">📅 Overdue Bookings ({overdueBookings.length})</p>
+                                                <div className="space-y-1.5">
+                                                    {overdueBookings.map(b => {
+                                                        const room = rooms.find(r => r.id === b.roomId);
+                                                        return (
+                                                            <button
+                                                                key={b.id}
+                                                                onClick={() => {
+                                                                    handleEditBookingClick(b);
+                                                                    setShowNotificationPanel(false);
+                                                                }}
+                                                                className="w-full text-left px-3 py-2.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                                                            >
+                                                                <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">{b.guestName}</p>
+                                                                <p className="text-[11px] text-orange-600 dark:text-orange-400">
+                                                                    {room?.name || 'Unknown Room'} · {format(new Date(b.checkIn), 'MMM d')} – {format(new Date(b.checkOut), 'MMM d')}
+                                                                </p>
+                                                                <p className="text-[10px] text-orange-500 font-bold mt-0.5">Did this guest show up?</p>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Empty state */}
+                                        {overdueBookings.length === 0 && !(expiryDays !== null && expiryDays <= 7) && (
+                                            <div className="p-6 text-center text-gray-400 dark:text-gray-500">
+                                                <CheckCircle size={28} className="mx-auto mb-2 text-green-400" />
+                                                <p className="text-sm font-medium">All clear! No alerts.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             )}
-                        </button>
+                        </div>
                         <button 
                             onClick={toggleTheme} 
                             className="md:hidden p-2 hover:bg-gray-700 rounded transition-all text-gray-300 hover:text-white flex items-center justify-center group"

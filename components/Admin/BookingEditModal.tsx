@@ -107,6 +107,26 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
 
                 <form onSubmit={handleSubmit} className="p-6 overflow-y-auto custom-scrollbar">
                     <div className="space-y-6">
+
+                        {/* Overdue Booking Warning Banner */}
+                        {!isNew && formData.status === 'pending' && (() => {
+                            const checkIn = new Date(formData.checkIn);
+                            checkIn.setHours(0, 0, 0, 0);
+                            const todayDate = new Date();
+                            todayDate.setHours(0, 0, 0, 0);
+                            return checkIn < todayDate;
+                        })() && (
+                            <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                                <span className="text-xl flex-shrink-0">⏰</span>
+                                <div>
+                                    <p className="text-sm font-bold text-orange-800 dark:text-orange-300">Check-in date has passed!</p>
+                                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
+                                        This booking was due on <strong>{new Date(formData.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>. Did the guest show up? Please update the booking status accordingly.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Guest Details */}
                         <div className="space-y-4">
                             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Guest Information</label>
