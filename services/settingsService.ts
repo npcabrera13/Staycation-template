@@ -100,7 +100,7 @@ export const DEFAULT_SETTINGS: Settings = {
         depositPercentage: 50,
         fixedDepositAmount: 1000,
         autoConfirmOnDeposit: true,
-        cancellationPolicy: "Deposits are non-refundable if cancelled within 24 hours of check-in. Full refund available for cancellations made 7 days or more before check-in.",
+        cancellationPolicy: "Deposits are non-refundable. Please refer to our booking rules. Full refund available for cancellations made 7 days or more before check-in.",
         paymentDeadlineHours: 24
     },
     notifications: {

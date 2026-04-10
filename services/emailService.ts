@@ -119,7 +119,8 @@ export async function sendAdminNotificationEmail(
         totalPrice: booking.totalPrice,
         depositAmount: settings.reservationPolicy?.requireDeposit ? depositAmount : undefined,
         bookingId: booking.shortId || booking.id,
-        siteName: settings.siteName || 'Serenity Staycation'
+        siteName: settings.siteName || 'Serenity Staycation',
+        adminUrl: window.location.origin + '/admin'
     };
 
     return sendEmail(

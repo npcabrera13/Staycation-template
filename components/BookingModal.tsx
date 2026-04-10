@@ -887,8 +887,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                             )}
 
                             {step === 3 && (
-                                <div className="flex flex-col items-center justify-center h-full animate-pop text-center px-4">
-                                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                                <div className="flex flex-col items-center animate-pop text-center pb-12 w-full max-w-xl mx-auto">
+                                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shrink-0 mt-4">
                                         <CheckCircle className="text-green-600 w-12 h-12" />
                                     </div>
                                     <h3 className="text-3xl font-serif font-bold text-secondary mb-2">Request Submitted!</h3>

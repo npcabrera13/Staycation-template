@@ -57,6 +57,9 @@ A new booking has been received:
 
 Please review and confirm this booking in the admin panel.
 
+[ 🔴 GO TO ADMIN PANEL ] 
+*(This button links directly to the client's /admin page)*
+
 ---
 
 ## 3. The Superadmin Renewal Email

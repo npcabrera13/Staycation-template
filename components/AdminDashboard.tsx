@@ -121,7 +121,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>(
-        () => (location.state?.activeTab as any) || 'overview'
+        () => (location.state?.activeTab as any) || 'calendar'
     );
 
     const navigateToTab = (tab: 'overview' | 'calendar' | 'rooms' | 'settings', targetId?: string) => {
@@ -169,6 +169,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 const snap = await getDoc(doc(db, '_superadmin', 'settings'));
                 if (snap.exists() && snap.data().adminPasscode) {
                     setAdminPasscode(snap.data().adminPasscode);
+                    setNewPasscode(snap.data().adminPasscode);
                 } else {
                     if (!sessionStorage.getItem('dismissedPasscodeWarning')) {
                         setShowMissingPasscodeWarning(true);
@@ -364,6 +365,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         checkIn.setHours(0, 0, 0, 0);
         return checkIn < today;
     });
+
+    const awaitingPaymentBookings = bookings
+        .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
+        .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
     // --- Bulk Selection Logic ---
     const handleSelectAll = () => {
@@ -1203,10 +1208,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {/* Awaiting Balance Actions List */}
                         {(() => {
-                            const awaitingPaymentBookings = bookings
-                                .filter(b => b.status === 'confirmed' && b.depositPaid && !b.balancePaid)
-                                .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
-
                             if (awaitingPaymentBookings.length === 0) return null;
 
                             return (
@@ -1743,11 +1744,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     />
                                     <button
-                                        onClick={async () => {
+                                        type="button"
+                                        onClick={async (e) => {
+                                            e.preventDefault();
                                             if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
                                             await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
                                             setAdminPasscode(newPasscode);
-                                            setNewPasscode('');
                                             showToast('Passcode updated', 'success');
                                         }}
                                         className="px-4 py-2 bg-primary text-white rounded-lg font-bold"
@@ -1800,7 +1802,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <Bell size={22} className={(expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0 ? '' : ''} />
                                 {/* Facebook-style notification badge */}
                                 {(() => {
-                                    const count = overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0);
+                                    const count = overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0) + awaitingPaymentBookings.length;
                                     return count > 0 ? (
                                         <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] bg-red-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-[0_2px_4px_rgba(0,0,0,0.2)] border border-white dark:border-gray-900 z-10">
                                             {count > 9 ? '9+' : count}
@@ -1828,9 +1830,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         Notifications
                                                     </h3>
                                                     <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                                                        {overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0) === 0
+                                                        {overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0) + awaitingPaymentBookings.length === 0
                                                             ? 'No new alerts'
-                                                            : `${overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0)} items pending`
+                                                            : `${overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0) + awaitingPaymentBookings.length} items pending`
                                                         }
                                                     </p>
                                                 </div>
@@ -1925,6 +1927,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Awaiting Balance Block */}
+                                            {awaitingPaymentBookings.length > 0 && (
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                                        Awaiting Balance
+                                                        <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded text-[10px] break-keep">{awaitingPaymentBookings.length} pending</span>
+                                                    </p>
+                                                    <div className="space-y-2">
+                                                        {awaitingPaymentBookings.map(b => {
+                                                            const room = rooms.find(r => r.id === b.roomId);
+                                                            return (
+                                                                <div key={b.id} className="p-3 rounded-xl border bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-500/20">
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                                            Deposit Paid
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={() => { handleEditBookingClick(b); setShowNotificationPanel(false); }}
+                                                                            className="text-xs font-bold text-primary hover:underline"
+                                                                        >
+                                                                            Update Status
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="mt-2">
+                                                                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{b.guestName}</p>
+                                                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                            {room?.name || 'Unknown Room'} · Balance: ₱{b.balanceAmount?.toLocaleString()}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

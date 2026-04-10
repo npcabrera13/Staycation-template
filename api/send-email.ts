@@ -35,6 +35,7 @@ interface EmailRequest {
         plan?: string;
         amount?: number;
         days?: number;
+        adminUrl?: string;
     };
 }
 
@@ -84,7 +85,7 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
                     ${data.balanceAmount ? `<p><strong>Balance Due:</strong> ₱${data.balanceAmount.toLocaleString()}</p>` : ''}
                 </div>
                 
-                ${data.paymentDeadline ? `<p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">⚠️ <strong>Action Required:</strong> To secure your reservation, please settle the required deposit. Any remaining balance will simply be collected upon your arrival at the property.</p>` : ''}
+                ${data.paymentDeadline ? `<p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">⚠️ <strong>Action Required:</strong> To secure your reservation, please settle the required deposit based on our policy. Any remaining balance will simply be collected upon your arrival at the property.</p>` : ''}
                 
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
                 <p>Need assistance? Reach out to us anytime at <strong>${data.contactEmail || 'our support email'}</strong>${data.contactPhone ? ` or dial <strong>${data.contactPhone}</strong>` : ''}. We are always happy to help!</p>
@@ -135,6 +136,9 @@ function generateAdminEmailHTML(data: EmailRequest['data']): string {
                 </div>
                 
                 <p>Please review and confirm this booking in the admin panel.</p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="${data.adminUrl || '#'}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Go to Admin Panel</a>
+                </div>
             </div>
         </div>
     </body>
