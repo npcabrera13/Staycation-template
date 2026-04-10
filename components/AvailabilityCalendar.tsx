@@ -8,16 +8,21 @@ interface AvailabilityCalendarProps {
   bookings: Booking[];
   onDateSelect: (start: Date | null, end: Date | null) => void;
   allowDayUse?: boolean;
+  bookingSystemType?: 'smart' | 'strict';
 }
 
-const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, bookings, onDateSelect, allowDayUse }) => {
+const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, bookings, onDateSelect, allowDayUse, bookingSystemType = 'strict' }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter bookings for this room
-  const roomBookings = bookings.filter(b => b.roomId === roomId && b.status !== 'cancelled');
+  // Filter bookings for this room - respect Smart Queue logic
+  const roomBookings = bookings.filter(b => {
+    if (b.roomId !== roomId || b.status === 'cancelled') return false;
+    // In Smart Mode, only 'confirmed' bookings block the calendar for other guests
+    return bookingSystemType === 'smart' ? b.status === 'confirmed' : true;
+  });
 
 
 

@@ -152,6 +152,7 @@ export interface Settings {
         autoConfirmOnDeposit: boolean;
         cancellationPolicy: string;
         paymentDeadlineHours: number;
+        bookingSystemType?: 'smart' | 'strict'; // 'strict' (default) blocks on pending, 'smart' blocks only on confirmed
     };
     // Email notification settings
     notifications?: {

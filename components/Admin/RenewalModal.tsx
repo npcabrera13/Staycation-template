@@ -5,8 +5,7 @@ import { db } from '../../firebaseConfig';
 import { Settings } from '../../types';
 import { compressImageToBase64 } from '../../utils/imageUtils';
 import { doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
-import { SUPERADMIN_DEFAULTS } from '../../constants';
-
+import { sendRenewalNotificationEmail } from '../../services/emailService';
 interface RenewalModalProps {
     expiryDays: number;
     expiryDate: string | null;
@@ -121,7 +120,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
             // Compress image to base64 instead of using Firebase Storage
             const base64Proof = await compressImageToBase64(proofFile);
 
-            await addDoc(collection(db, '_superadmin', 'renewals', 'requests'), {
+            const docRef = await addDoc(collection(db, '_superadmin', 'renewals', 'requests'), {
                 clientName: settings?.siteName || 'Unknown',
                 plan: plan.label,
                 daysRequested: totalDays,
@@ -133,22 +132,15 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
 
             // Fire SuperAdmin notification email
             try {
-                await fetch('/api/send-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: superAdminSettings?.contactInfo?.email || SUPERADMIN_DEFAULTS.contactInfo.email,
-                        subject: `New Renewal Request: ${settings?.siteName || 'Client'}`,
-                        type: 'superadmin_renewal',
-                        data: {
-                            clientName: settings?.siteName || 'Unknown',
-                            plan: plan.label,
-                            amount: totalPrice,
-                            days: totalDays,
-                            superadminUrl: window.location.origin + '/superadmin'
-                        }
-                    })
-                });
+                const adminUrl = window.location.origin + '/admin';
+                await sendRenewalNotificationEmail({
+                    id: docRef.id,
+                    clientName: settings?.siteName || 'Unknown',
+                    plan: plan.label,
+                    amount: totalPrice,
+                    daysRequested: totalDays,
+                    paymentProof: base64Proof
+                }, adminUrl);
             } catch (emailErr) {
                 console.error("Failed to send superadmin notification:", emailErr);
             }
