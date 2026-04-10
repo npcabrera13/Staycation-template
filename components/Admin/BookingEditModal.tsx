@@ -269,40 +269,38 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                         {/* Deposit Payment Status - Only show if booking has deposit info */}
                         {formData.depositAmount !== undefined && formData.depositAmount > 0 && (
                             <div className="space-y-4">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 mb-2">💰 Deposit Payment</label>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">💰 Deposit Payment</label>
 
-                                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3 border border-gray-100 dark:border-gray-700">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">Deposit Amount</span>
-                                        <span className="font-bold text-gray-800">₱{formData.depositAmount.toLocaleString()}</span>
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Deposit Amount</span>
+                                        <span className="font-bold text-gray-800 dark:text-white">₱{formData.depositAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">Balance Due</span>
-                                        <span className="font-medium text-gray-600">₱{(formData.balanceAmount || 0).toLocaleString()}</span>
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Balance Due</span>
+                                        <span className="font-medium text-gray-600 dark:text-gray-400">₱{(formData.balanceAmount || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">Total</span>
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Total</span>
                                         <span className="font-bold text-primary">₱{formData.totalPrice.toLocaleString()}</span>
                                     </div>
                                 </div>
-
-
                             </div>
                         )}
                         {/* Payment Proof Display */}
                         {formData.paymentProof && (
                             <div className="space-y-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 mb-2">Payment Proof</label>
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Payment Proof</label>
+                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div className="flex items-center mb-2">
                                         <ImageIcon className="text-primary mr-2" size={16} />
-                                        <span className="text-sm font-medium text-gray-700">Attached Receipt/Screenshot</span>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Attached Receipt/Screenshot</span>
                                     </div>
                                     <div className="relative group">
                                         <img
                                             src={formData.paymentProof}
                                             alt="Payment Proof"
-                                            className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-300 bg-white cursor-pointer"
+                                            className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 cursor-pointer"
                                             onClick={() => setShowProofModal(true)}
                                         />
                                         <button

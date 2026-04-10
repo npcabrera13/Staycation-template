@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2, Copy, Download, Check } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Settings } from '../../types';
 import { compressImageToBase64 } from '../../utils/imageUtils';
 import { doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
+import { Room, Booking, SUPERADMIN_DEFAULTS } from '../../constants';
 import { sendRenewalNotificationEmail } from '../../services/emailService';
 interface RenewalModalProps {
     expiryDays: number;
@@ -31,6 +32,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [superAdminSettings, setSuperAdminSettings] = useState<any>(null);
@@ -66,18 +68,27 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
         loadData();
     }, [settings?.siteName]);
 
-    // Pull payment methods and base renewal price from SuperAdmin settings
-    const gcash = superAdminSettings?.paymentMethods?.gcash;
-    const bank = superAdminSettings?.paymentMethods?.bankTransfer;
-    // Backward compatibility for base values
-    const basePrice = superAdminSettings?.renewalPrice ?? 99;
-    const baseDays = superAdminSettings?.renewalDays ?? 30;
+    // Pull settings with granular fallback to constants for payment methods
+    const gcash = superAdminSettings?.paymentMethods?.gcash?.enabled 
+        ? superAdminSettings.paymentMethods.gcash 
+        : SUPERADMIN_DEFAULTS.paymentMethods.gcash;
+        
+    const bank = superAdminSettings?.paymentMethods?.bankTransfer?.enabled 
+        ? superAdminSettings.paymentMethods.bankTransfer 
+        : SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer;
+    
+    // Determine effective settings for pricing
+    const pricingSettings = superAdminSettings || SUPERADMIN_DEFAULTS;
+    
+    // Use values from constants as the absolute base fallback
+    const basePrice = pricingSettings?.renewalPrice ?? SUPERADMIN_DEFAULTS.pricing.price30;
+    const baseDays = pricingSettings?.renewalDays ?? 30;
 
     // Build dynamic custom-priced plan options
     const PLAN_OPTIONS = [
-        { days: baseDays, label: '30 Days', price: superAdminSettings?.price30 ?? basePrice },
-        { days: baseDays * 2, label: '60 Days', price: superAdminSettings?.price60 ?? (basePrice * 2) },
-        { days: baseDays * 3, label: '90 Days', price: superAdminSettings?.price90 ?? (basePrice * 3) },
+        { days: baseDays, label: '30 Days', price: pricingSettings?.price30 ?? SUPERADMIN_DEFAULTS.pricing.price30 },
+        { days: baseDays * 2, label: '60 Days', price: pricingSettings?.price60 ?? SUPERADMIN_DEFAULTS.pricing.price60 },
+        { days: baseDays * 3, label: '90 Days', price: pricingSettings?.price90 ?? SUPERADMIN_DEFAULTS.pricing.price90 },
     ];
 
     const plan = PLAN_OPTIONS[selectedPlan];
@@ -169,6 +180,21 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
             setError(`Submission failed: ${err.message}`);
         }
         setUploading(false);
+    };
+
+    const handleCopyNumber = (num: string) => {
+        navigator.clipboard.writeText(num);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleDownloadQR = (url: string) => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'gcash-qr.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const isExpired = expiryDays <= 0;
@@ -338,6 +364,12 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                                         <div>
                                                             <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{req.plan} Plan (+{req.daysRequested} Days)</p>
                                                             <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{new Date(req.submittedAt).toLocaleDateString()}</p>
+                                                            {req.status === 'rejected' && req.rejectionReason && (
+                                                                <p className="text-[10px] text-red-500 font-medium mt-1 leading-tight flex items-start gap-1">
+                                                                    <span className="flex-shrink-0">💬</span>
+                                                                    <span>Reason: {req.rejectionReason}</span>
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         {req.paymentProofUrl && (
                                                             <button onClick={() => setZoomedImage(req.paymentProofUrl)} className="text-primary text-[10px] hover:underline font-medium">
@@ -378,21 +410,50 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                     {/* GCash */}
                                     {gcash?.enabled && gcash.accountNumber && (
                                         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                                            <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider">📱 GCash</p>
-                                            <p className="font-bold text-gray-900 dark:text-white text-sm">{gcash.accountName || 'Account Name'}</p>
-                                            <p className="text-blue-600 dark:text-blue-400 font-mono text-base tracking-wider">{gcash.accountNumber}</p>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider">📱 GCash</p>
+                                                    <p className="font-bold text-gray-900 dark:text-white text-sm">{gcash.accountName || 'Account Name'}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <p className="text-blue-600 dark:text-blue-400 font-mono text-lg font-black tracking-widest">{gcash.accountNumber}</p>
+                                                        <button 
+                                                            onClick={() => handleCopyNumber(gcash.accountNumber!)}
+                                                            className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-500 transition-all flex items-center gap-1.5 group"
+                                                            title="Copy Number"
+                                                        >
+                                                            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                                            {copied && <span className="text-[10px] font-bold text-green-500 animate-fade-in">Copied!</span>}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             {gcash.qrImage && (
-                                                <div className="mt-2 flex flex-col items-center">
+                                                <div className="mt-3 flex flex-col items-center">
                                                     <div
                                                         onClick={() => setZoomedImage(gcash.qrImage!)}
-                                                        className="relative cursor-zoom-in group"
+                                                        className="relative cursor-zoom-in group mb-3 shadow-md rounded-xl overflow-hidden border-2 border-white dark:border-gray-700"
                                                     >
-                                                        <img src={gcash.qrImage} alt="GCash QR" className="w-28 h-28 rounded-lg object-contain border border-blue-200 dark:border-blue-700 group-hover:shadow-lg transition-shadow" />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center">
-                                                            <ZoomIn size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                                        <img src={gcash.qrImage} alt="GCash QR" className="w-48 h-48 object-contain bg-white transition-transform group-hover:scale-105 duration-300" />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                                            <ZoomIn size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                                                         </div>
                                                     </div>
-                                                    <p className="text-[9px] text-blue-400 mt-1">Tap QR to zoom</p>
+                                                    
+                                                    <div className="flex gap-2 w-full">
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); handleDownloadQR(gcash.qrImage!); }}
+                                                            className="flex-1 py-2 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                                        >
+                                                            <Download size={14} /> Download QR
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setZoomedImage(gcash.qrImage!); }}
+                                                            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                                        >
+                                                            <ZoomIn size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

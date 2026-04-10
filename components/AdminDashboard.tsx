@@ -789,10 +789,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
-            case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'confirmed': return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30';
+            case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30';
+            case 'cancelled': return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30';
+            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
         }
     };
 
@@ -1180,7 +1180,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         {b.guests} Guests
                                                     </p>
                                                     {b.paymentProof && (
-                                                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30">
                                                             <ImageIcon size={10} className="mr-1" /> Proof Uploaded
                                                         </div>
                                                     )}
@@ -2269,7 +2269,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         );
 
                         return (
-                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 border border-blue-200 dark:border-gray-700/50 rounded-xl p-3 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="font-bold text-blue-800 dark:text-blue-200 flex items-center text-sm">
                                         <CalendarIcon size={16} className="mr-2" />
@@ -2289,24 +2289,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 key={booking.id}
                                                 onClick={() => handleEditBookingClick(booking)}
                                                 className={`flex-shrink-0 p-2 rounded-lg border-2 text-left transition-all hover:shadow-md ${isToday
-                                                    ? 'bg-green-100 dark:bg-green-900/50 border-green-400 dark:border-green-600'
+                                                    ? 'bg-green-100 dark:bg-green-900/40 border-green-400 dark:border-green-500/50'
                                                     : isTomorrow
-                                                        ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-600'
-                                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'
+                                                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-600/50'
+                                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                                                     }`}
                                                 style={{ minWidth: '120px', maxWidth: '140px' }}
                                             >
-                                                <div className={`text-[9px] font-bold uppercase mb-1 ${isToday ? 'text-green-700 dark:text-green-300' : isTomorrow ? 'text-yellow-700 dark:text-yellow-300' : 'text-blue-600 dark:text-blue-300'
+                                                <div className={`text-[9px] font-bold uppercase mb-1 ${isToday ? 'text-green-700 dark:text-green-400' : isTomorrow ? 'text-yellow-700 dark:text-yellow-400' : 'text-blue-600 dark:text-blue-400'
                                                     }`}>
                                                     {isToday ? '🔔 TODAY' : isTomorrow ? '⏰ Tomorrow' : format(checkInDate, 'EEE, MMM d')}
                                                 </div>
                                                 <div className="font-bold text-gray-800 dark:text-white text-xs truncate">{booking.guestName}</div>
-                                                <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{room?.name || 'Room'}</div>
-                                                <div className="text-[9px] text-gray-400 mt-0.5 truncate">
+                                                <div className="text-[10px] text-gray-500 dark:text-gray-300 truncate">{room?.name || 'Room'}</div>
+                                                <div className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
                                                     {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
                                                 </div>
                                                 {booking.status === 'pending' && (
-                                                    <div className="mt-1 text-[8px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/50 px-1 py-0.5 rounded inline-block">
+                                                    <div className="mt-1 text-[8px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-500/20 px-1 py-0.5 rounded inline-block border border-yellow-200/50 dark:border-yellow-500/30">
                                                         PENDING
                                                     </div>
                                                 )}
@@ -2460,8 +2460,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} tickFormatter={(val) => `₱${val / 1000}k`} width={45} />
                                             <Tooltip
-                                                cursor={{ fill: '#F3F4F6' }}
-                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                                cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6' }}
+                                                contentStyle={{ 
+                                                    borderRadius: '12px', 
+                                                    border: 'none', 
+                                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                    backgroundColor: isDark ? '#111827' : '#FFFFFF',
+                                                    color: isDark ? '#F3F4F6' : '#111827',
+                                                    padding: '8px 12px'
+                                                }}
+                                                itemStyle={{ color: isDark ? '#F3F4F6' : '#111827' }}
+                                                labelStyle={{ color: isDark ? '#9CA3AF' : '#6B7280', marginBottom: '4px', fontSize: '10px', fontWeight: 'bold' }}
                                                 formatter={(value) => [`₱${Number(value).toLocaleString()}`, 'Revenue']}
                                             />
                                             <Bar dataKey="revenue" fill="#2A9D8F" radius={[4, 4, 0, 0]} barSize={40} />
@@ -2689,42 +2698,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     {filteredBookings.map((booking) => {
                                         const roomName = rooms.find(r => r.id === booking.roomId)?.name || 'Unknown Room';
                                         return (
-                                            <div key={booking.id} className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-lg shadow-sm p-3 sm:p-4 relative">
-                                                <div className="flex justify-between items-start mb-1 sm:mb-2">
-                                                    <div>
+                                            <div key={booking.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-sm p-3 sm:p-4 relative">
+                                                <div className="flex justify-between items-start mb-1 sm:mb-2 text-left">
+                                                    <div className="text-left">
                                                         <h4 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white">{booking.guestName}</h4>
-                                                        <p className="text-[10px] sm:text-xs text-gray-500">{roomName}</p>
+                                                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300">{roomName}</p>
                                                     </div>
                                                     <span className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border ${getStatusColor(booking.status)}`}>
                                                         {booking.status}
                                                     </span>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-1 sm:gap-2 text-sm text-gray-600 my-2 sm:my-3">
-                                                    <div>
-                                                        <span className="block text-[10px] sm:text-xs text-gray-400">Dates & Times</span>
-                                                        <div className="font-medium text-xs sm:text-sm">{booking.checkIn} - {booking.checkOut}</div>
-                                                        <div className="text-[10px] sm:text-xs text-gray-500 flex items-center mt-0.5">
+                                                <div className="grid grid-cols-2 gap-1 sm:gap-2 text-sm text-gray-600 dark:text-gray-400 my-2 sm:my-3">
+                                                    <div className="text-left">
+                                                        <span className="block text-[10px] sm:text-xs text-gray-400 dark:text-primary/70 font-bold uppercase tracking-tight">Dates & Times</span>
+                                                        <div className="font-medium text-xs sm:text-sm text-gray-800 dark:text-white">{booking.checkIn} - {booking.checkOut}</div>
+                                                        <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 flex items-center mt-0.5">
                                                             <Clock size={10} className="mr-1" />
                                                             {booking.estimatedArrival || '14:00'} - {booking.estimatedDeparture || '11:00'}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="block text-[10px] sm:text-xs text-gray-400">Total</span>
+                                                        <span className="block text-[10px] sm:text-xs text-gray-400 dark:text-primary/70 font-bold uppercase tracking-tight">Total</span>
                                                         <span className="font-bold text-sm sm:text-base text-primary">₱{booking.totalPrice.toLocaleString()}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex justify-end border-t border-gray-50 pt-2 sm:pt-3 space-x-2 sm:space-x-3">
+                                                <div className="flex justify-end border-t border-gray-50 dark:border-gray-700 pt-2 sm:pt-3 space-x-2 sm:space-x-3">
                                                     <button
                                                         onClick={() => handleEditBookingClick(booking)}
-                                                        className="flex items-center text-[10px] sm:text-xs font-medium text-indigo-600 bg-indigo-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded"
+                                                        className="flex items-center text-[10px] sm:text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 px-3 sm:px-4 py-1.5 rounded-lg border border-transparent dark:border-indigo-500/20 active:scale-95 transition-all"
                                                     >
                                                         <Edit size={12} className="mr-1" /> Edit
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteBookingClick(booking.id)}
-                                                        className="flex items-center text-[10px] sm:text-xs font-medium text-red-600 bg-red-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded"
+                                                        className="flex items-center text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 px-3 sm:px-4 py-1.5 rounded-lg border border-transparent dark:border-red-500/20 active:scale-95 transition-all"
                                                     >
                                                         <Trash2 size={12} className="mr-1" /> Delete
                                                     </button>
@@ -2749,8 +2758,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="animate-fade-in space-y-6">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">Room Management</h2>
-                                    <p className="text-gray-500 text-sm">Add, edit, or remove rooms and amenities</p>
+                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Room Management</h2>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Add, edit, or remove rooms and amenities</p>
                                 </div>
                                 {!isAddingRoom && (
                                     <button
@@ -2789,14 +2798,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             <div className="flex space-x-2">
                                                                 <button
                                                                     onClick={() => handleEditRoomClick(room)}
-                                                                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                                                    className="p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors border border-transparent dark:border-indigo-500/20"
                                                                     title="Edit"
                                                                 >
                                                                     <Edit size={18} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteRoomClick(room.id)}
-                                                                    className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                                                    className="p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors border border-transparent dark:border-red-500/20"
                                                                     title="Delete"
                                                                 >
                                                                     <Trash2 size={18} />
@@ -2878,12 +2887,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {/* Add/Edit Room Modal */}
                             {(isAddingRoom || editingRoomId) && (
-                                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-                                    <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-4xl relative animate-pop max-h-[90vh] overflow-y-auto">
-                                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                                            <h3 className="text-lg font-bold text-gray-800">
-                                                {isAddingRoom ? 'Add New Room' : 'Edit Room'}
-                                            </h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-4xl relative animate-pop max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
+                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+                                {isAddingRoom ? 'Add New Room' : 'Edit Room'}
+                            </h3>
                                             <button
                                                 onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
                                                 className="text-gray-400 hover:text-gray-600 p-1"
@@ -3007,7 +3016,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                             {/* Gallery Images */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Gallery Images</label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gallery Images</label>
                                                 <div className="space-y-2">
                                                     {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
                                                         <div key={idx} className="flex gap-2 items-center group">
@@ -3035,13 +3044,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                     type="text"
                                                                     value={img}
                                                                     onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
-                                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                                                                     placeholder="Image URL"
                                                                 />
                                                             </div>
                                                             <button 
                                                                 onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)} 
-                                                                className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
                                                                 title="Remove Image"
                                                             >
                                                                 <Trash2 size={16} />
@@ -3059,7 +3068,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                             {/* Amenities */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amenities</label>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                                                     {PREDEFINED_AMENITIES.map(amenity => {
                                                         const currentAmenities = isAddingRoom ? (newRoom.amenities || []) : (editForm.amenities || []);
@@ -3068,7 +3077,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             <div
                                                                 key={amenity.name}
                                                                 onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
-                                                                className={`cursor-pointer flex items-center p-2 rounded-lg border text-sm transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 hover:border-gray-300'}`}
+                                                                className={`cursor-pointer flex items-center p-2 rounded-lg border text-sm transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
                                                             >
                                                                 {renderAmenityIcon(amenity.icon)}
                                                                 <span className="ml-2">{amenity.name}</span>
@@ -3085,13 +3094,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             placeholder="Custom amenity name"
                                                             value={isAddingRoom ? newRoomCustomAmenity : customAmenityInput}
                                                             onChange={(e) => isAddingRoom ? setNewRoomCustomAmenity(e.target.value) : setCustomAmenityInput(e.target.value)}
-                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white outline-none focus:ring-1 focus:ring-primary"
                                                         />
                                                     </div>
                                                     <div className="relative" ref={isAddingRoom ? newRoomIconPickerRef : iconPickerRef}>
                                                         <button
                                                             onClick={() => isAddingRoom ? setShowNewRoomIconPicker(!showNewRoomIconPicker) : setShowIconPicker(!showIconPicker)}
-                                                            className="border border-gray-300 rounded-lg p-2 text-gray-600 hover:bg-gray-50"
+                                                            className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                                                             title="Select Icon"
                                                         >
                                                             {renderAmenityIcon(isAddingRoom ? newRoomCustomIcon : customAmenityIcon)}
@@ -3130,12 +3139,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 {/* Amenities List Display for Custom items or all */}
                                                 <div className="flex flex-wrap gap-2 mt-3">
                                                     {((isAddingRoom ? newRoom.amenities : editForm.amenities) || []).filter(a => !PREDEFINED_AMENITIES.some(p => p.name === a.name)).map((amenity, idx) => (
-                                                        <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 shadow-sm">
                                                             {renderAmenityIcon(amenity.icon)}
                                                             <span className="ml-1.5 mr-1">{amenity.name}</span>
                                                             <button
                                                                 onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
-                                                                className="text-gray-400 hover:text-red-500 ml-1"
+                                                                className="text-gray-400 hover:text-red-500 ml-1 transition-colors"
                                                             >
                                                                 <X size={12} />
                                                             </button>
@@ -3145,10 +3154,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             </div>
                                         </div>
 
-                                        <div className="mt-8 flex justify-end space-x-3 border-t border-gray-100 pt-6">
+                                        <div className="mt-8 flex justify-end space-x-3 border-t border-gray-100 dark:border-gray-700 pt-6">
                                             <button
                                                 onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
-                                                className="px-5 py-2 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+                                                className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                             >
                                                 Cancel
                                             </button>

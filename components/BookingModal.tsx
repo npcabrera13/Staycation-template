@@ -80,6 +80,168 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         }
     };
 
+    const handleDownloadReceipt = () => {
+        if (!createdBooking || !room) return;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            alert("Could not generate snapshot. Please try again.");
+            return;
+        }
+
+        // Snapshot high-res dimensions
+        canvas.width = 600;
+        canvas.height = 800;
+
+        // Detect current theme
+        const isDark = document.documentElement.classList.contains('dark');
+
+        // Theme-Aware Palette (Matches current Light or Dark mode)
+        const colors = isDark ? {
+            bg: '#111827', // dark gray-900
+            cardBg: '#1f2937', // gray-800
+            title: '#3b82f6', // blue-500
+            text: '#9ca3af', // gray-400
+            highlight: '#ffffff', // white
+            accent: '#10b981', // emerald-500
+            border: '#374151' // gray-700
+        } : {
+            bg: '#ffffff', // white
+            cardBg: '#f9fafb', // gray-50
+            title: '#2563eb', // blue-600
+            text: '#4b5563', // gray-600
+            highlight: '#111827', // gray-900
+            accent: '#059669', // emerald-600
+            border: '#e5e7eb' // gray-200
+        };
+
+        // 1. Full Background
+        ctx.fillStyle = colors.bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Green Check Icon
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, 80, 40, 0, Math.PI * 2);
+        ctx.fillStyle = colors.accent;
+        ctx.fill();
+        // Checkmark symbol
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2 - 15, 80);
+        ctx.lineTo(canvas.width / 2 - 5, 90);
+        ctx.lineTo(canvas.width / 2 + 15, 70);
+        ctx.stroke();
+
+        // 3. Header Text
+        ctx.textAlign = 'center';
+        ctx.fillStyle = colors.title;
+        ctx.font = 'bold 36px serif';
+        ctx.fillText('Request Submitted!', canvas.width / 2, 160);
+
+        // Subheader (Personalized)
+        ctx.fillStyle = colors.text;
+        ctx.font = '16px sans-serif';
+        const subheaderLines = [
+            `Thank you, ${createdBooking.guestName}! Your reservation request`,
+            `for ${room.name} has been received.`
+        ];
+        subheaderLines.forEach((line, i) => {
+            ctx.fillText(line, canvas.width / 2, 205 + (i * 25));
+        });
+
+        // 4. "What Happens Next?" Card
+        const cardX = 40;
+        const cardY = 280;
+        const cardWidth = canvas.width - (cardX * 2);
+        const cardHeight = 360;
+
+        ctx.fillStyle = colors.cardBg;
+        ctx.strokeStyle = colors.border;
+        ctx.lineWidth = 1;
+        // Draw rounded rect
+        const radius = 12;
+        ctx.beginPath();
+        ctx.moveTo(cardX + radius, cardY);
+        ctx.lineTo(cardX + cardWidth - radius, cardY);
+        ctx.quadraticCurveTo(cardX + cardWidth, cardY, cardX + cardWidth, cardY + radius);
+        ctx.lineTo(cardX + cardWidth, cardY + cardHeight - radius);
+        ctx.quadraticCurveTo(cardX + cardWidth, cardY + cardHeight, cardX + cardWidth - radius, cardY + cardHeight);
+        ctx.lineTo(cardX + radius, cardY + cardHeight);
+        ctx.quadraticCurveTo(cardX, cardY + cardHeight, cardX, cardY + cardHeight - radius);
+        ctx.lineTo(cardX, cardY + radius);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Card Content
+        ctx.textAlign = 'left';
+        ctx.fillStyle = colors.text;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('WHAT HAPPENS NEXT?', cardX + 25, cardY + 35);
+
+        // Details Grid (Simplified from Screen)
+        const drawStep = (icon: string, title: string, sub: string, yPos: number) => {
+            ctx.font = '18px sans-serif';
+            ctx.fillText(icon, cardX + 25, yPos);
+            ctx.fillStyle = colors.highlight;
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(title, cardX + 60, yPos - 5);
+            ctx.fillStyle = colors.text;
+            ctx.font = '12px sans-serif';
+            ctx.fillText(sub, cardX + 60, yPos + 15);
+        };
+
+        drawStep('✅', 'Payment Proof Received', 'Your screenshot is attached to the booking.', cardY + 85);
+        drawStep('🔍', 'Track Status Anytime', 'Find your reservation in "Find My Booking".', cardY + 145);
+        drawStep('📧', 'Email Confirmation Sent', createdBooking.email, cardY + 205);
+
+        // Divider
+        ctx.strokeStyle = colors.border;
+        ctx.beginPath();
+        ctx.moveTo(cardX + 25, cardY + 245);
+        ctx.lineTo(cardX + cardWidth - 25, cardY + 245);
+        ctx.stroke();
+
+        // Check-in / Out Summary
+        const infoY = cardY + 280;
+        ctx.fillStyle = colors.text;
+        ctx.font = '10px sans-serif';
+        ctx.fillText('CHECK-IN', cardX + 25, infoY);
+        ctx.fillText('CHECK-OUT', cardX + cardWidth / 2 + 10, infoY);
+
+        ctx.fillStyle = colors.highlight;
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(createdBooking.checkIn, cardX + 25, infoY + 25);
+        ctx.fillText(createdBooking.checkOut, cardX + cardWidth / 2 + 10, infoY + 25);
+        
+        ctx.fillStyle = colors.text;
+        ctx.font = '11px sans-serif';
+        ctx.fillText(`@ ${createdBooking.estimatedArrival}`, cardX + 25, infoY + 45);
+        ctx.fillText(`@ ${createdBooking.estimatedDeparture}`, cardX + cardWidth / 2 + 10, infoY + 45);
+
+        // 5. Footer / Booking ID
+        ctx.textAlign = 'center';
+        ctx.font = 'italic 12px sans-serif';
+        ctx.fillStyle = colors.text;
+        ctx.fillText(`Booking Reference: ${createdBooking.shortId}`, canvas.width / 2, canvas.height - 80);
+        ctx.font = '10px sans-serif';
+        ctx.fillText(`Downloaded on ${new Date().toLocaleString('en-PH')}`, canvas.width / 2, canvas.height - 60);
+
+        // Convert and download
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Booking-Snapshot-${createdBooking.shortId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     // Error State
     const [errors, setErrors] = useState<{ name?: string, email?: string, phone?: string, guests?: string, date?: string }>({});
 
@@ -320,6 +482,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
             // 3. Save to database for the first time
             await onBook(fullBooking);
+            setCreatedBooking(fullBooking); // Update with final proof and amounts
             
             // 4. Send email notifications
             if (settings) {
@@ -659,15 +822,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     <span>Guest</span>
                                                     <span className="font-semibold">{guestName}</span>
                                                 </div>
-                                                <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
+                                                <div className="flex justify-between text-blue-800/80 dark:text-gray-300 border-b border-blue-200/50 dark:border-gray-600 pb-2">
                                                     <span>Contact</span>
-                                                    <span className="font-semibold text-xs">{email} <br /> {phoneNumber}</span>
+                                                    <span className="font-semibold text-xs text-right truncate max-w-[200px]">{email} <br /> {phoneNumber}</span>
                                                 </div>
-                                                <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
+                                                <div className="flex justify-between text-blue-800/80 dark:text-gray-300 border-b border-blue-200/50 dark:border-gray-600 pb-2">
                                                     <span>Room & Guests</span>
                                                     <span className="font-semibold">{room.name} ({guestCount} pax)</span>
                                                 </div>
-                                                <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
+                                                <div className="flex justify-between text-blue-800/80 dark:text-gray-300 border-b border-blue-200/50 dark:border-gray-600 pb-2">
                                                     <span>Dates</span>
                                                     <span className="font-semibold text-right">
                                                         {selectedStart?.toLocaleDateString()} {nights > 0 && selectedEnd ? `- ${selectedEnd.toLocaleDateString()}` : ''}
@@ -680,7 +843,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 {/* Deposit breakdown if applicable */}
                                                 {displayDeposit > 0 ? (
                                                     <>
-                                                        <div className="flex justify-between text-blue-800/80 border-b border-blue-200/50 pb-2">
+                                                        <div className="flex justify-between text-blue-800/80 dark:text-gray-300 border-b border-blue-200/50 dark:border-gray-600 pb-2">
                                                             <span>Room Total</span>
                                                             <span className="font-semibold">₱{totalPrice.toLocaleString()}</span>
                                                         </div>
@@ -693,8 +856,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     type="button"
                                                                     onClick={() => setPaymentChoice('deposit')}
                                                                     className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'deposit'
-                                                                        ? 'border-green-500 bg-green-50 text-green-700'
-                                                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                                                                        ? 'border-green-500 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                                                                        : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
                                                                         }`}
                                                                 >
                                                                     <div className="flex justify-between items-center">
@@ -707,8 +870,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     type="button"
                                                                     onClick={() => setPaymentChoice('full')}
                                                                     className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'full'
-                                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                                        : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                                                        : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
                                                                         }`}
                                                                 >
                                                                     <div className="flex justify-between items-center">
@@ -721,14 +884,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                         </div>
 
                                                         {/* Payment Prompt Message */}
-                                                        <div className={`py-3 -mx-4 md:-mx-6 px-4 md:px-6 text-center ${paymentChoice === 'full' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                                                            <p className={`text-lg font-bold ${paymentChoice === 'full' ? 'text-blue-800' : 'text-green-800'}`}>
+                                                        <div className={`py-3 -mx-4 md:-mx-6 px-4 md:px-6 text-center ${paymentChoice === 'full' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
+                                                            <p className={`text-lg font-bold ${paymentChoice === 'full' ? 'text-blue-800 dark:text-blue-300' : 'text-green-800 dark:text-green-300'}`}>
                                                                 {paymentChoice === 'full'
                                                                     ? `💳 Please send ₱${totalPrice.toLocaleString()}`
                                                                     : `💰 Please send ₱${displayDeposit.toLocaleString()} deposit`}
                                                             </p>
                                                             {paymentChoice === 'deposit' && (
-                                                                <p className="text-sm text-green-700 mt-1">
+                                                                <p className="text-sm text-green-700 dark:text-green-400 mt-1">
                                                                     Balance of ₱{displayBalance.toLocaleString()} due upon arrival
                                                                 </p>
                                                             )}
@@ -924,22 +1087,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         Thank you, {guestName}! Your reservation request for {room.name} has been received. We'll send a confirmation email to {email}.
                                     </p>
 
-                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 w-full max-w-md mb-4 text-left space-y-2">
-                                        <p className="text-[10px] text-gray-500 uppercase font-extrabold tracking-wider mb-2">What Happens Next?</p>
+                                    <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-full max-w-md mb-4 text-left space-y-2">
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-extrabold tracking-wider mb-2">What Happens Next?</p>
 
                                         <div className="flex items-start gap-3">
                                             <span className="text-xl leading-none">✅</span>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-800">We received your payment proof</p>
-                                                <p className="text-xs text-gray-500">Your screenshot has been attached to your reservation.</p>
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">We received your payment proof</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Your screenshot has been attached to your reservation.</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3">
                                             <span className="text-xl leading-none">🔍</span>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-800">Track your booking anytime</p>
-                                                <p className="text-xs text-gray-500">You can view your booking status under{' '}
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Track your booking anytime</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">You can view your booking status under{' '}
                                                     <button
                                                         onClick={() => { onClose(); setTimeout(() => onOpenMyBookings?.(), 200); }}
                                                         className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80 transition-colors cursor-pointer"
@@ -953,21 +1116,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                         <div className="flex items-start gap-3">
                                             <span className="text-xl leading-none">📧</span>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-800">Confirmation goes to your email</p>
-                                                <p className="text-xs text-gray-500 break-all">{email}</p>
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Confirmation goes to your email</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{email}</p>
                                             </div>
                                         </div>
 
-                                        <div className="border-t border-gray-200 pt-2 mt-0.5">
+                                        <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-0.5">
                                             <div className="grid grid-cols-2 gap-4 text-xs">
                                                 <div>
-                                                    <p className="text-gray-500 text-[10px] mb-0.5">Check-in</p>
-                                                    <p className="font-bold text-gray-800">{selectedStart?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                    <p className="text-gray-500 dark:text-gray-400 text-[10px] mb-0.5">Check-in</p>
+                                                    <p className="font-bold text-gray-800 dark:text-gray-100">{selectedStart?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                                     <p className="text-[10px] text-gray-400">@ {estimatedArrival}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-500 text-[10px] mb-0.5">Check-out</p>
-                                                    <p className="font-bold text-gray-800">{selectedEnd?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                    <p className="text-gray-500 dark:text-gray-400 text-[10px] mb-0.5">Check-out</p>
+                                                    <p className="font-bold text-gray-800 dark:text-gray-100">{selectedEnd?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                                     <p className="text-[10px] text-gray-400">@ {estimatedDeparture}</p>
                                                 </div>
                                             </div>
@@ -1059,7 +1222,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                     )}
 
                                     <div className="flex gap-4 w-full max-w-md">
-                                        <button onClick={() => alert("Downloading receipt...")} className="flex-1 flex items-center justify-center py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <button onClick={handleDownloadReceipt} className="flex-1 flex items-center justify-center py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                             <Download size={18} className="mr-2" /> Receipt
                                         </button>
                                         <button onClick={onClose} className="flex-1 py-3 bg-secondary text-white rounded-lg font-bold hover:bg-primary transition-colors">

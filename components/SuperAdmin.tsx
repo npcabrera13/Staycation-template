@@ -91,6 +91,8 @@ const SuperAdmin: React.FC = () => {
     const [renewalRequests, setRenewalRequests] = useState<any[]>([]);
     const [requestsLoading, setRequestsLoading] = useState(false);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [rejectionRequestId, setRejectionRequestId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
     // Password change state
     const [storedPassword, setStoredPassword] = useState(SUPERADMIN_PASSWORD);
@@ -114,6 +116,7 @@ const SuperAdmin: React.FC = () => {
     // Admin passcode (read-only in SuperAdmin)
     const [adminPasscode, setAdminPasscode] = useState('');
     const [showAdminPasscode, setShowAdminPasscode] = useState(false);
+    const [showResetPasscodeConfirm, setShowResetPasscodeConfirm] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -212,13 +215,16 @@ const SuperAdmin: React.FC = () => {
         setProcessingId(null);
     };
 
-    const handleRejectRenewal = async (request: any) => {
-        setProcessingId(request.id);
+    const handleRejectRenewal = async (requestId: string, reason: string) => {
+        setProcessingId(requestId);
         try {
-            await updateDoc(doc(db, '_superadmin', 'renewals', 'requests', request.id), {
+            await updateDoc(doc(db, '_superadmin', 'renewals', 'requests', requestId), {
                 status: 'rejected',
-                rejectedAt: new Date().toISOString()
+                rejectedAt: new Date().toISOString(),
+                rejectionReason: reason
             });
+            setRejectionRequestId(null);
+            setRejectionReason('');
             await loadRenewalRequests();
         } catch (e: any) {
             alert('Error rejecting: ' + e.message);
@@ -680,13 +686,27 @@ const SuperAdmin: React.FC = () => {
                                                     {req.status === 'pending' ? '⏳ Pending' : req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                                                 </span>
                                                 {req.status !== 'pending' && (
-                                                    <button
-                                                        onClick={() => setDeleteConfirmId(req.id)}
-                                                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors border border-white/10 hover:border-red-500/30"
-                                                        title="Delete permanently"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => setDeleteConfirmId(req.id)}
+                                                            className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors border border-white/10 hover:border-red-500/30"
+                                                            title="Delete permanently"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                        {req.status === 'rejected' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setRejectionRequestId(req.id);
+                                                                    setRejectionReason(req.rejectionReason || '');
+                                                                }}
+                                                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-amber-500/20 text-gray-400 hover:text-amber-400 flex items-center justify-center transition-colors border border-white/10 hover:border-amber-500/30"
+                                                                title="Edit reason"
+                                                            >
+                                                                <Edit size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -721,6 +741,28 @@ const SuperAdmin: React.FC = () => {
                                             </button>
                                         )}
 
+                                        {/* Rejection Reason Display */}
+                                        {req.status === 'rejected' && req.rejectionReason && (
+                                            <div className="mb-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl relative group">
+                                                <p className="text-[10px] uppercase font-bold text-red-400/60 mb-1 flex items-center gap-1">
+                                                    <MessageSquare size={10} /> Rejection Reason
+                                                </p>
+                                                <p className="text-xs text-red-200/80 italic leading-relaxed pr-8">
+                                                    "{req.rejectionReason}"
+                                                </p>
+                                                <button 
+                                                    onClick={() => {
+                                                        setRejectionRequestId(req.id);
+                                                        setRejectionReason(req.rejectionReason);
+                                                    }}
+                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-400 hover:bg-red-500/20 rounded"
+                                                    title="Edit reason"
+                                                >
+                                                    <Edit size={12} />
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {/* Actions */}
                                         {req.status === 'pending' && (
                                             <div className="flex gap-2">
@@ -733,7 +775,7 @@ const SuperAdmin: React.FC = () => {
                                                     Approve & Extend
                                                 </button>
                                                 <button
-                                                    onClick={() => handleRejectRenewal(req)}
+                                                    onClick={() => setRejectionRequestId(req.id)}
                                                     disabled={processingId === req.id}
                                                     className="flex-1 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-xl transition-colors border border-red-500/30 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
                                                 >
@@ -755,6 +797,43 @@ const SuperAdmin: React.FC = () => {
                         >
                             <RefreshCw size={14} /> Refresh
                         </button>
+
+                        {/* Rejection Reason Modal */}
+                        {rejectionRequestId && (
+                            <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                                <div className="bg-gray-800 border border-red-500/30 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                                    <div className="flex items-center gap-3 mb-4 text-red-400">
+                                        <AlertCircle size={24} />
+                                        <h4 className="font-bold text-lg">{renewalRequests.find(r => r.id === rejectionRequestId)?.status === 'rejected' ? 'Update Rejection Reason' : 'Reason for Rejection'}</h4>
+                                    </div>
+                                    <p className="text-gray-400 text-xs mb-4 leading-relaxed">
+                                        Tell the client why their request was rejected. This will help them fix the issue and try again.
+                                    </p>
+                                    <textarea
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        placeholder="e.g. Blurred receipt, Incorrect amount, Mismatched name..."
+                                        className="w-full h-24 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-gray-600 mb-4 resize-none"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => {setRejectionRequestId(null); setRejectionReason('');}}
+                                            className="flex-1 py-2.5 text-gray-400 hover:text-white font-bold rounded-xl transition-colors bg-white/5 hover:bg-white/10 text-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            onClick={() => handleRejectRenewal(rejectionRequestId, rejectionReason)}
+                                            disabled={!rejectionReason.trim() || processingId === rejectionRequestId}
+                                            className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-500/20 text-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                        >
+                                            {processingId === rejectionRequestId ? <Loader size={12} className="animate-spin" /> : <><AlertCircle size={14} /> Confirm Rejection</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1124,12 +1203,7 @@ const SuperAdmin: React.FC = () => {
                                         </button>
                                     </div>
                                     <button
-                                        onClick={async () => {
-                                            try {
-                                                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
-                                                setAdminPasscode('');
-                                            } catch { }
-                                        }}
+                                        onClick={() => setShowResetPasscodeConfirm(true)}
                                         className="w-full py-2 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-medium"
                                     >
                                         Reset Admin Passcode
@@ -1344,6 +1418,41 @@ const SuperAdmin: React.FC = () => {
                                 className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-600/20"
                             >
                                 Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showResetPasscodeConfirm && (
+                <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform scale-100" style={{ animation: 'toastIn 0.2s ease-out' }}>
+                        <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+                            <Key size={28} className="text-amber-500" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Reset Passcode?</h3>
+                        <p className="text-gray-400 text-sm mb-6">
+                            Are you sure you want to reset the admin panel passcode? This will allow immediate access without a code until they set a new one.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowResetPasscodeConfirm(false)}
+                                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors border border-gray-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
+                                        setAdminPasscode('');
+                                        setShowResetPasscodeConfirm(false);
+                                        copyWithToast('Admin passcode reset successfully');
+                                    } catch (err) { }
+                                }}
+                                className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/20"
+                            >
+                                Yes, Reset
                             </button>
                         </div>
                     </div>

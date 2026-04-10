@@ -21,6 +21,7 @@ import LicenseProvider from './components/LicenseProvider';
 import SuperAdmin from './components/SuperAdmin';
 import AdminPasscodeGate from './components/AdminPasscodeGate';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function AppContent() {
   const navigate = useNavigate();
@@ -556,11 +557,13 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <LicenseProvider>
-        <NotificationProvider>
-          <AppContent />
-        </NotificationProvider>
-      </LicenseProvider>
+      <ThemeProvider>
+        <LicenseProvider>
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
+        </LicenseProvider>
+      </ThemeProvider>
     </Router>
   );
 }
