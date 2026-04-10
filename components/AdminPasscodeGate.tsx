@@ -49,18 +49,33 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
     const handleDigitChange = (index: number, value: string) => {
         if (error) setError('');
 
-        // Only allow digits
-        const digit = value.replace(/\D/g, '').slice(-1);
-        const newDigits = [...digits];
-        newDigits[index] = digit;
-        setDigits(newDigits);
-
-        // Auto-advance to next input
-        if (digit && index < PASSCODE_LENGTH - 1) {
-            inputRefs.current[index + 1]?.focus();
+        // Handle multiple digits (for fast typing or partial paste)
+        const cleaned = value.replace(/\D/g, '');
+        if (!cleaned) {
+            const newDigits = [...digits];
+            newDigits[index] = '';
+            setDigits(newDigits);
+            return;
         }
 
-        // Check if all digits entered
+        const newDigits = [...digits];
+        let nextIndex = index;
+
+        // Spread the digits across the boxes starting from current index
+        for (let i = 0; i < cleaned.length && nextIndex < PASSCODE_LENGTH; i++) {
+            newDigits[nextIndex] = cleaned[i];
+            nextIndex++;
+        }
+        
+        setDigits(newDigits);
+
+        // Move focus to the next empty box or the last used box
+        const focusTarget = nextIndex < PASSCODE_LENGTH ? nextIndex : PASSCODE_LENGTH - 1;
+        if (focusTarget !== index) {
+            inputRefs.current[focusTarget]?.focus();
+        }
+
+        // Check if all digits are now entered
         const code = newDigits.join('');
         if (code.length === PASSCODE_LENGTH) {
             if (code === adminPasscode) {

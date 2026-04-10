@@ -1733,29 +1733,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
 
                             <div className="pt-4 border-t dark:border-gray-700">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Passcode</p>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Admin Passcode {!adminPasscode && <span className="text-red-500 text-xs ml-2 font-bold">(Currently Unprotected)</span>}
+                                </p>
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="text"
                                         maxLength={6}
-                                        placeholder="New 6-digit passcode"
+                                        placeholder={adminPasscode ? "Update 6-digit passcode" : "Set a 6-digit passcode"}
                                         className="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg font-mono outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                                         value={newPasscode}
                                         onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={async (e) => {
-                                            e.preventDefault();
-                                            if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
-                                            await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
-                                            setAdminPasscode(newPasscode);
-                                            showToast('Passcode updated', 'success');
-                                        }}
-                                        className="px-4 py-2 bg-primary text-white rounded-lg font-bold"
-                                    >
-                                        Update
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
+                                                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
+                                                setAdminPasscode(newPasscode);
+                                                showToast('Passcode updated', 'success');
+                                            }}
+                                            className="px-4 py-2 bg-primary text-white rounded-lg font-bold flex-1 sm:flex-none"
+                                        >
+                                            {adminPasscode ? 'Update' : 'Set Passcode'}
+                                        </button>
+                                        {adminPasscode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    showConfirm({
+                                                        title: "Remove Passcode",
+                                                        message: "Are you sure you want to remove the admin passcode? This will leave your Admin Panel accessible to anyone without protection.",
+                                                        isDangerous: true,
+                                                        confirmLabel: "Remove Passcode",
+                                                        onConfirm: async () => {
+                                                            await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
+                                                            setAdminPasscode('');
+                                                            setNewPasscode('');
+                                                            showToast('Passcode removed', 'success');
+                                                        }
+                                                    });
+                                                }}
+                                                className="px-4 py-2 text-red-500 hover:text-red-600 font-bold transition-colors border border-red-200 rounded-lg hover:bg-red-50 flex-1 sm:flex-none text-center"
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
