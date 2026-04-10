@@ -137,7 +137,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        to: SUPERADMIN_DEFAULTS.contactInfo.email,
+                        to: superAdminSettings?.contactInfo?.email || SUPERADMIN_DEFAULTS.contactInfo.email,
                         subject: `New Renewal Request: ${settings?.siteName || 'Client'}`,
                         type: 'superadmin_renewal',
                         data: {
@@ -145,6 +145,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                             plan: plan.label,
                             amount: totalPrice,
                             days: totalDays,
+                            superadminUrl: window.location.origin + '/superadmin'
                         }
                     })
                 });

@@ -221,6 +221,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const confirmPayment = () => {
         setIsProcessing(true);
         const id = crypto.randomUUID();
+        const generatedShortId = `BK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
         // Format dates using local timezone (not UTC!)
         const formatLocalDate = (date: Date) => {
@@ -257,6 +258,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         setTimeout(() => {
             const newBooking: Booking = {
                 id: id,
+                shortId: generatedShortId,
                 roomId: room.id,
                 guestName,
                 email,

@@ -611,19 +611,7 @@ const SuperAdmin: React.FC = () => {
                                     placeholder="e.g. Hotel Sunshine"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Plan</label>
-                                <select
-                                    value={subscription.plan}
-                                    onChange={(e) => setSubscription({ ...subscription, plan: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                >
-                                    <option value="trial" className="bg-gray-800">Trial</option>
-                                    <option value="monthly" className="bg-gray-800">Monthly</option>
-                                    <option value="yearly" className="bg-gray-800">Yearly</option>
-                                    <option value="lifetime" className="bg-gray-800">Lifetime</option>
-                                </select>
-                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
                                 <textarea

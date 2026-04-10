@@ -18,6 +18,7 @@ export interface Room {
 
 export interface Booking {
     id: string;
+    shortId?: string;
     roomId: string;
     guestName: string;
     email: string;

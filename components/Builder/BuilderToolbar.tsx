@@ -365,20 +365,23 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                 { key: 'showTiktok', label: 'TikTok Icon', icon: 'tiktok' as const },
                                 { key: 'showAirbnb', label: 'Airbnb Icon', icon: 'airbnb' as const },
                                 { key: 'showCustom', label: 'Custom Link Icon', icon: 'customUrl' as const },
-                            ].map(({ key, label }) => (
-                                <label key={key} className="flex items-center justify-between cursor-pointer group">
-                                    <span className="text-xs font-bold text-gray-600 group-hover:text-primary transition-colors">{label}</span>
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={(settings?.social as any)?.[key] !== false} // Default to true if undefined
-                                            onChange={(e) => onUpdateSettings?.('social', key, e.target.checked)}
-                                        />
-                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                    </div>
-                                </label>
-                            ))}
+                            ].map(({ key, label }) => {
+                                const isCommon = key === 'showFacebook' || key === 'showInstagram' || key === 'showTiktok';
+                                return (
+                                    <label key={key} className="flex items-center justify-between cursor-pointer group">
+                                        <span className="text-xs font-bold text-gray-600 group-hover:text-primary transition-colors">{label}</span>
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={(settings?.social as any)?.[key] ?? isCommon}
+                                                onChange={(e) => onUpdateSettings?.('social', key, e.target.checked)}
+                                            />
+                                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                        </div>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
                 </AccordionItem>

@@ -86,14 +86,14 @@ export const COMPANY_INFO = {
 
 export const SUPERADMIN_DEFAULTS = {
   contactInfo: {
-    providerName: "Aniplay Hub",
+    providerName: "Neil Paolo Cabrera",
     email: "neilpaolocabrera@gmail.com",
-    phone: "09977341367"
+    phone: "+63 997 734 1367"
   },
   pricing: {
     price30: 99,
-    price60: 190,
-    price90: 270
+    price60: 198,
+    price90: 297
   },
   paymentMethods: {
     gcash: {

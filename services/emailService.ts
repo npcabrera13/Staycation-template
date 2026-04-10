@@ -75,7 +75,7 @@ export async function sendUserConfirmationEmail(
         totalPrice: booking.totalPrice,
         depositAmount: settings.reservationPolicy?.requireDeposit ? depositAmount : undefined,
         balanceAmount: settings.reservationPolicy?.requireDeposit ? balanceAmount : undefined,
-        bookingId: booking.id,
+        bookingId: booking.shortId || booking.id,
         siteName: settings.siteName || 'Serenity Staycation',
         contactEmail: settings.contact?.email,
         contactPhone: settings.contact?.phone,
@@ -118,7 +118,7 @@ export async function sendAdminNotificationEmail(
         nights: booking.nights,
         totalPrice: booking.totalPrice,
         depositAmount: settings.reservationPolicy?.requireDeposit ? depositAmount : undefined,
-        bookingId: booking.id,
+        bookingId: booking.shortId || booking.id,
         siteName: settings.siteName || 'Serenity Staycation'
     };
 

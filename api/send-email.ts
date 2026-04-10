@@ -84,9 +84,10 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
                     ${data.balanceAmount ? `<p><strong>Balance Due:</strong> ₱${data.balanceAmount.toLocaleString()}</p>` : ''}
                 </div>
                 
-                ${data.paymentDeadline ? `<p>⏰ Please pay the deposit within <strong>${data.paymentDeadline}</strong> to confirm your reservation.</p>` : ''}
+                ${data.paymentDeadline ? `<p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">⚠️ <strong>Action Required:</strong> To secure your reservation, please settle the required deposit. Any remaining balance will simply be collected upon your arrival at the property.</p>` : ''}
                 
-                <p>If you have any questions, contact us at <strong>${data.contactEmail || 'our email'}</strong>${data.contactPhone ? ` or call <strong>${data.contactPhone}</strong>` : ''}.</p>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                <p>Need assistance? Reach out to us anytime at <strong>${data.contactEmail || 'our support email'}</strong>${data.contactPhone ? ` or dial <strong>${data.contactPhone}</strong>` : ''}. We are always happy to help!</p>
                 
                 <p>We look forward to hosting you!</p>
                 <p>Warm regards,<br><strong>${data.siteName} Team</strong></p>
@@ -172,6 +173,9 @@ function generateRenewalEmailHTML(data: any): string {
                 </div>
                 
                 <p>Log in to your <strong>/superadmin</strong> panel to Approve or Reject this transaction.</p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="${data.superadminUrl || '#'}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Go to Superadmin Panel</a>
+                </div>
             </div>
         </div>
     </body>

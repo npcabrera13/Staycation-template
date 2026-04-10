@@ -71,14 +71,9 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
     // 2. No Start Date Selected yet -> Set Start
     if (!startDate) {
       setStartDate(date);
-      if (allowDayUse) {
-        // If Day Use is enabled, immediately treat the first click as a single-day booking
-        setEndDate(date);
-        onDateSelect(date, date);
-      } else {
-        setEndDate(null);
-        onDateSelect(date, null);
-      }
+      // Immediately treat the first click as a single-day booking
+      setEndDate(date);
+      onDateSelect(date, date);
       return;
     }
 

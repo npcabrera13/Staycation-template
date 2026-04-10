@@ -879,46 +879,56 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         today.setHours(0, 0, 0, 0);
                         const isPast = date < today;
                         const isToday = isSameDay(date, today);
+                        
+                        // Prevent popup cropping on edges
+                        const dayOfWeek = idx % 7;
+                        const popupPositionClass = dayOfWeek === 0 ? 'left-0 origin-top-left' : dayOfWeek === 6 ? 'right-0 origin-top-right' : 'left-1/2 -translate-x-1/2 origin-top';
 
                         return (
                             <div key={idx} className={`min-h-[60px] md:min-h-[100px] p-1 md:p-2 relative group transition-colors 
                                 ${!isCurrentMonth 
                                     ? 'bg-gray-50/50 dark:bg-gray-900/40 text-gray-300 dark:text-gray-600' 
                                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-white'} 
-                                ${isPast && isCurrentMonth ? 'opacity-50' : ''} 
+                                ${isPast && isCurrentMonth ? 'bg-gray-50/80 dark:bg-gray-800/50 text-gray-400' : ''} 
                                 ${isCurrentMonth && !isPast ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
                                 <div className={`text-xs md:text-sm font-medium mb-0.5 md:mb-1 ${isToday ? 'bg-primary text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-sm shadow-sm' : ''}`}>
                                     {date.getDate()}
                                 </div>
 
-                                <div className="space-y-0.5 md:space-y-1">
+                                <div className="space-y-0.5 md:space-y-1 mt-1">
                                     {dayBookings.slice(0, 2).map(booking => {
                                         const roomIndex = rooms.findIndex(r => r.id === booking.roomId);
                                         const roomColors = ['bg-purple-500 border-purple-600', 'bg-orange-500 border-orange-600', 'bg-teal-500 border-teal-600', 'bg-rose-500 border-rose-600', 'bg-emerald-500 border-emerald-600', 'bg-indigo-500 border-indigo-600'];
                                         const baseColorClass = roomIndex !== -1 ? roomColors[roomIndex % roomColors.length] : 'bg-slate-500 border-slate-600';
                                         const isPending = booking.status === 'pending';
                                         const roomName = roomIndex !== -1 ? rooms[roomIndex].name : 'Unknown Room';
+                                        const isOnlyBooking = dayBookings.length === 1;
 
                                         return (
                                             <button
                                                 key={booking.id}
                                                 onClick={(e) => { e.stopPropagation(); handleEditBookingClick(booking); }}
-                                                className={`w-full text-left text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 rounded border font-medium hover:opacity-90 transition-opacity truncate leading-none text-white shadow-sm ${baseColorClass}`}
+                                                className={`w-full text-left rounded border font-medium hover:opacity-100 transition-opacity overflow-hidden text-white shadow-sm ${baseColorClass} ${isPast ? 'opacity-60 saturate-50' : ''} ${isOnlyBooking ? 'text-[9px] md:text-[11px] px-1 py-1.5 md:px-1.5 md:py-2' : 'text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 truncate leading-none'}`}
                                                 title={`Room: ${roomName}\nGuest: ${booking.guestName} (${booking.guests} guests)\nTime: ${booking.estimatedArrival || '14:00'} - ${booking.estimatedDeparture || '11:00'}\nStatus: ${booking.status.toUpperCase()}`}
                                             >
-                                                <div className="flex items-center gap-[2px] w-full overflow-hidden">
-                                                    {isPending ? <Clock size={9} className="shrink-0 text-yellow-300" strokeWidth={3} /> : <CheckCircle size={9} className="shrink-0 text-green-200" strokeWidth={3} />}
-                                                    <span className="truncate flex-1 font-medium tracking-tight">{booking.guestName}</span>
+                                                <div className={`flex items-center gap-[2px] w-full overflow-hidden ${isOnlyBooking ? 'mb-0.5' : ''}`}>
+                                                    {isPending ? <Clock size={isOnlyBooking ? 11 : 9} className="shrink-0 text-yellow-300" strokeWidth={3} /> : <CheckCircle size={isOnlyBooking ? 11 : 9} className="shrink-0 text-green-200" strokeWidth={3} />}
+                                                    <span className={`truncate flex-1 font-bold ${isOnlyBooking ? 'tracking-normal' : 'tracking-tight'}`}>{booking.guestName}</span>
                                                 </div>
+                                                {isOnlyBooking && (
+                                                    <div className="text-[8px] font-normal opacity-90 truncate hidden sm:block leading-none pl-[14px]">
+                                                        {roomName}
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
                                     {dayBookings.length > 2 && (
                                         <details className="mt-1 relative z-20 group/overflow" onClick={(e) => e.stopPropagation()}>
-                                            <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer text-[10px] sm:text-xs text-primary bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-center py-[2px] rounded font-bold transition-colors border border-blue-100 dark:border-blue-800 shadow-sm mx-1 outline-none">
+                                            <summary className={`list-none [&::-webkit-details-marker]:hidden cursor-pointer text-[10px] sm:text-xs text-primary bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-center py-[2px] rounded font-bold transition-colors border border-blue-100 dark:border-blue-800 shadow-sm mx-1 outline-none ${isPast ? 'opacity-75' : ''}`}>
                                                 +{dayBookings.length - 2} more
                                             </summary>
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[120px] md:w-[160px] z-30 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded p-1 space-y-1 animate-fade-in">
+                                            <div className={`absolute top-full ${popupPositionClass} mt-1 w-[130px] md:w-[180px] z-50 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded p-1 space-y-1 animate-fade-in`}>
                                                 {dayBookings.slice(2).map(booking => {
                                                     const roomIndex = rooms.findIndex(r => r.id === booking.roomId);
                                                     const roomColors = ['bg-purple-500 border-purple-600', 'bg-orange-500 border-orange-600', 'bg-teal-500 border-teal-600', 'bg-rose-500 border-rose-600', 'bg-emerald-500 border-emerald-600', 'bg-indigo-500 border-indigo-600'];
@@ -930,7 +940,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         <button
                                                             key={'overflow-' + booking.id}
                                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEditBookingClick(booking); }}
-                                                            className={`w-full text-left text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 rounded border font-medium hover:opacity-90 transition-opacity truncate leading-none text-white shadow-sm ${baseColorClass}`}
+                                                            className={`w-full text-left text-[8px] md:text-[10px] px-0.5 py-0.5 md:px-1 md:py-1 rounded border font-medium hover:opacity-100 transition-opacity truncate leading-none text-white shadow-sm ${baseColorClass} ${isPast ? 'opacity-70 saturate-50' : ''}`}
                                                             title={`Room: ${roomName}\nGuest: ${booking.guestName} (${booking.guests} guests)\nStatus: ${booking.status.toUpperCase()}`}
                                                         >
                                                             <div className="flex items-center gap-[2px] w-full overflow-hidden">
@@ -1133,7 +1143,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {/* Pending Actions List */}
                         {pendingBookings.length > 0 && (
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-900/50 overflow-hidden flex-1 min-h-[300px]">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-900/50 overflow-hidden">
                                 <div className="bg-yellow-50 dark:bg-yellow-900/20 px-5 py-4 border-b border-yellow-100 dark:border-yellow-900/30">
                                     <h3 className="text-yellow-800 dark:text-yellow-200 font-bold flex items-center">
                                         <Bell className="mr-2" size={18} /> Pending ({pendingBookings.length})
@@ -1200,7 +1210,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             if (awaitingPaymentBookings.length === 0) return null;
 
                             return (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/50 overflow-hidden flex-1 min-h-[300px]">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/50 overflow-hidden">
                                     <div className="bg-orange-50 dark:bg-orange-900/20 px-5 py-4 border-b border-orange-100 dark:border-orange-900/30">
                                         <h3 className="text-orange-800 dark:text-orange-200 font-bold flex items-center">
                                             ⏳ Awaiting Balance ({awaitingPaymentBookings.length})
@@ -1590,60 +1600,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Social Media Links */}
-                    <div id="settings-social" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                            <Share2 size={20} className="mr-2 text-primary" /> Social Media Links
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Connect your social accounts so guests can follow you.</p>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook URL</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://facebook.com/yourpage"
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.social?.facebook || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, facebook: e.target.value, facebookLabel: 'Facebook' } as any })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instagram URL</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://instagram.com/yourpage"
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.social?.instagram || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, instagram: e.target.value, instagramLabel: 'Instagram' } as any })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Airbnb URL</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://airbnb.com/rooms/12345"
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.social?.airbnb || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, airbnb: e.target.value, airbnbLabel: 'Airbnb' } as any })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website or Other Link</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://yourwebsite.com"
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.social?.customUrl || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, social: { ...settingsForm.social, customUrl: e.target.value, customLabel: 'Website' } as any })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Reservation & Deposit Settings */}
+                    </div>                    {/* Reservation & Deposit Settings */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <CreditCard className="mr-2 text-primary" size={20} />
@@ -1831,96 +1788,144 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="relative" ref={notificationPanelRef}>
                             <button
                                 onClick={() => setShowNotificationPanel(prev => !prev)}
-                                className={`relative p-2 rounded transition-colors group flex items-center justify-center ${
+                                className={`relative p-2 rounded-xl transition-colors group flex items-center justify-center ${
                                     (expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0
-                                        ? 'text-red-400 hover:bg-red-900/30'
+                                        ? 'text-gray-800 dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
                                         : expiryDays !== null && expiryDays <= 7
-                                        ? 'text-yellow-400 hover:bg-yellow-900/30'
-                                        : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                                        ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30'
+                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
                                 }`}
                                 title="Notifications"
                             >
-                                <Clock size={20} />
-                                {/* Badge: total notification count */}
+                                <Bell size={22} className={(expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0 ? '' : ''} />
+                                {/* Facebook-style notification badge */}
                                 {(() => {
                                     const count = overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0);
                                     return count > 0 ? (
-                                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                                            {count}
-                                        </span>
+                                        <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] bg-red-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-[0_2px_4px_rgba(0,0,0,0.2)] border border-white dark:border-gray-900 z-10">
+                                            {count > 9 ? '9+' : count}
+                                        </div>
                                     ) : null;
                                 })()}
                             </button>
 
-                            {/* Notification Dropdown Panel */}
+                            {/* 🔔 Notification Center — Matching RenewalModal Style */}
                             {showNotificationPanel && (
-                                <div className="absolute left-0 md:left-auto md:right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[200] overflow-hidden animate-fade-in-up">
-                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                                        <h4 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
-                                            <Bell size={14} /> Notifications
-                                        </h4>
-                                        <button onClick={() => setShowNotificationPanel(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
+                                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                                    {/* Backdrop click to close */}
+                                    <div className="absolute inset-0" onClick={() => setShowNotificationPanel(false)} />
 
-                                    <div className="max-h-80 overflow-y-auto">
-                                        {/* License Expiry Section */}
-                                        {expiryDays !== null && expiryDays <= 7 && (
-                                            <div className="p-3 border-b border-gray-100 dark:border-gray-700">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">⏰ License</p>
-                                                <button
-                                                    onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
-                                                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
-                                                        expiryDays <= 0
-                                                            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100'
-                                                            : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-100'
-                                                    }`}
-                                                >
-                                                    <AlertTriangle size={14} className="flex-shrink-0" />
-                                                    {expiryDays <= 0
-                                                        ? 'License has expired! Renew now.'
-                                                        : `License expires in ${expiryDays} day${expiryDays === 1 ? '' : 's'}.`
-                                                    }
-                                                </button>
-                                            </div>
-                                        )}
+                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md md:max-w-lg w-full border border-gray-200 dark:border-gray-700 overflow-hidden max-h-[92vh] flex flex-col relative z-10">
 
-                                        {/* Overdue Bookings Section */}
-                                        {overdueBookings.length > 0 && (
-                                            <div className="p-3">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">📅 Overdue Bookings ({overdueBookings.length})</p>
-                                                <div className="space-y-1.5">
-                                                    {overdueBookings.map(b => {
-                                                        const room = rooms.find(r => r.id === b.roomId);
-                                                        return (
-                                                            <button
-                                                                key={b.id}
-                                                                onClick={() => {
-                                                                    handleEditBookingClick(b);
-                                                                    setShowNotificationPanel(false);
-                                                                }}
-                                                                className="w-full text-left px-3 py-2.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                                                            >
-                                                                <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">{b.guestName}</p>
-                                                                <p className="text-[11px] text-orange-600 dark:text-orange-400">
-                                                                    {room?.name || 'Unknown Room'} · {format(new Date(b.checkIn), 'MMM d')} – {format(new Date(b.checkOut), 'MMM d')}
-                                                                </p>
-                                                                <p className="text-[10px] text-orange-500 font-bold mt-0.5">Did this guest show up?</p>
-                                                            </button>
-                                                        );
-                                                    })}
+                                        {/* ─── Header ─── */}
+                                        <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-transparent">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/40">
+                                                    <Bell size={20} className="text-blue-500" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">
+                                                        Notifications
+                                                    </h3>
+                                                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                                        {overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0) === 0
+                                                            ? 'No new alerts'
+                                                            : `${overdueBookings.length + ((expiryDays !== null && expiryDays <= 7) ? 1 : 0)} items pending`
+                                                        }
+                                                    </p>
                                                 </div>
                                             </div>
-                                        )}
+                                            <button onClick={() => setShowNotificationPanel(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-gray-700 transition-colors">
+                                                <X size={18} />
+                                            </button>
+                                        </div>
 
-                                        {/* Empty state */}
-                                        {overdueBookings.length === 0 && !(expiryDays !== null && expiryDays <= 7) && (
-                                            <div className="p-6 text-center text-gray-400 dark:text-gray-500">
-                                                <CheckCircle size={28} className="mx-auto mb-2 text-green-400" />
-                                                <p className="text-sm font-medium">All clear! No alerts.</p>
+                                        {/* ─── Scrollable Body ─── */}
+                                        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+
+                                            {/* License Info block */}
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">License & Renewal</p>
+                                                <button
+                                                    onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
+                                                    className={`w-full relative rounded-xl p-3 flex items-center justify-between transition-all border ${
+                                                        expiryDays !== null && expiryDays <= 0
+                                                            ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-500/20'
+                                                            : expiryDays !== null && expiryDays <= 7
+                                                            ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-500/20'
+                                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                                            expiryDays !== null && expiryDays <= 0 ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' :
+                                                            expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                            'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
+                                                        }`}>
+                                                            {expiryDays !== null && expiryDays <= 7 ? <AlertTriangle size={16} /> : <CheckCircle size={16} />}
+                                                        </div>
+                                                        <div className="text-left flex-1">
+                                                            <span className="block font-bold text-sm text-gray-900 dark:text-white">
+                                                                {expiryDays === null ? 'View Details'
+                                                                    : expiryDays <= 0 ? 'Subscription Expired'
+                                                                    : expiryDays <= 7 ? 'Expiring Soon'
+                                                                    : 'Active Subscription'}
+                                                            </span>
+                                                            <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                {expiryDays !== null && expiryDays > 7
+                                                                    ? `${expiryDays} days remaining${expiryDate ? ' · Expires ' + expiryDate : ''}`
+                                                                    : 'Tap to view or renew'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </button>
                                             </div>
-                                        )}
+
+                                            {/* Overdue Bookings Block */}
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                                    Overdue Check-ins
+                                                    {overdueBookings.length > 0 && (
+                                                        <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded text-[10px] break-keep">{overdueBookings.length} pending</span>
+                                                    )}
+                                                </p>
+
+                                                {overdueBookings.length === 0 ? (
+                                                    <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20 rounded-xl p-4 text-center">
+                                                        <CheckCircle size={24} className="text-green-500 mx-auto mb-2" />
+                                                        <p className="text-sm font-bold text-green-700 dark:text-green-400 mb-1">All Good!</p>
+                                                        <p className="text-xs text-green-600 dark:text-green-500">No overdue bookings found.</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {overdueBookings.map(b => {
+                                                            const room = rooms.find(r => r.id === b.roomId);
+                                                            return (
+                                                                <div key={b.id} className="p-3 rounded-xl border bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-500/20">
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                                            Overdue
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={() => { handleEditBookingClick(b); setShowNotificationPanel(false); }}
+                                                                            className="text-xs font-bold text-primary hover:underline"
+                                                                        >
+                                                                            Update Status
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="mt-2">
+                                                                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{b.guestName}</p>
+                                                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                            {room?.name || 'Unknown Room'} · {format(new Date(b.checkIn), 'MMM d')} – {format(new Date(b.checkOut), 'MMM d')}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -2221,41 +2226,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {/* Stats Cards - Compact on mobile */}
                             <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                                 <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
-                                        <div className="p-1.5 sm:p-2 md:p-3 bg-teal-50 rounded-lg text-primary">
-                                            <CalendarIcon size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                                        <div className="p-2 bg-teal-50 dark:bg-teal-500/20 rounded-lg text-teal-600 dark:text-teal-400 shrink-0">
+                                            <CalendarIcon size={18} className="sm:w-6 sm:h-6" />
                                         </div>
-                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Bookings</span>
+                                        <span className="text-[9px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Bookings</span>
                                     </div>
-                                    <div className="flex items-end space-x-1 sm:space-x-2">
-                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rangeBookingsCount}</span>
-                                        <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">In Range</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2 mt-auto">
+                                        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rangeBookingsCount}</span>
+                                        <span className="text-[9px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 hidden sm:inline">In Range</span>
                                     </div>
                                 </div>
 
                                 <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
-                                        <div className="p-1.5 sm:p-2 md:p-3 bg-orange-50 rounded-lg text-accent">
-                                            <TrendingUp size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                                        <div className="p-2 bg-green-50 dark:bg-green-500/20 rounded-lg text-green-600 dark:text-green-400 shrink-0">
+                                            <TrendingUp size={18} className="sm:w-6 sm:h-6" />
                                         </div>
-                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
+                                        <span className="text-[9px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue</span>
                                     </div>
-                                    <div className="flex items-end space-x-1 sm:space-x-2">
-                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none truncate">₱{rangeRevenue.toLocaleString()}</span>
-                                        <span className="text-[9px] sm:text-xs text-green-500 font-bold mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">+12%</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2 mt-auto">
+                                        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none truncate overflow-hidden text-ellipsis w-full">₱{rangeRevenue.toLocaleString()}</span>
                                     </div>
                                 </div>
 
                                 <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-                                    <div className="flex justify-between items-start mb-1 sm:mb-3 md:mb-4">
-                                        <div className="p-1.5 sm:p-2 md:p-3 bg-blue-50 rounded-lg text-secondary">
-                                            <BedDouble size={16} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                                        <div className="p-2 bg-blue-50 dark:bg-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
+                                            <BedDouble size={18} className="sm:w-6 sm:h-6" />
                                         </div>
-                                        <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">Rooms</span>
+                                        <span className="text-[9px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Rooms</span>
                                     </div>
-                                    <div className="flex items-end space-x-1 sm:space-x-2">
-                                        <span className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rooms.length}</span>
-                                        <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 md:mb-1.5 hidden sm:inline">Active</span>
+                                    <div className="flex items-end space-x-1 sm:space-x-2 mt-auto">
+                                        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white leading-none">{rooms.length}</span>
+                                        <span className="text-[9px] md:text-xs text-gray-400 mb-0.5 sm:mb-1 hidden sm:inline">Active</span>
                                     </div>
                                 </div>
                             </div>

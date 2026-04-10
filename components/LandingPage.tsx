@@ -1208,24 +1208,34 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                     {/* Carousel Content */}
                                     <div className="w-full max-w-5xl aspect-[4/3] md:aspect-video relative overflow-hidden flex items-center justify-center">
-                                        {displayGalleryImages.map((img, i) => (
-                                            <div
-                                                key={i}
-                                                className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out transform ${i === activeAboutSlide
-                                                    ? 'opacity-100 translate-x-0 scale-100 z-10'
-                                                    : i < activeAboutSlide
-                                                        ? 'opacity-0 -translate-x-full scale-95 z-0'
-                                                        : 'opacity-0 translate-x-full scale-95 z-0'
-                                                    }`}
-                                            >
-                                                <img
+                                        {displayGalleryImages.map((img, i) => {
+                                            const len = displayGalleryImages.length;
+                                            const forwardDiff = (i - activeAboutSlide + len) % len;
+                                            const backwardDiff = (activeAboutSlide - i + len) % len;
+                                            
+                                            let positionClass = '';
+                                            if (i === activeAboutSlide) {
+                                                positionClass = 'opacity-100 translate-x-0 scale-100 z-10';
+                                            } else if (forwardDiff <= backwardDiff) {
+                                                positionClass = 'opacity-0 translate-x-full scale-95 z-0';
+                                            } else {
+                                                positionClass = 'opacity-0 -translate-x-full scale-95 z-0';
+                                            }
+
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out transform ${positionClass}`}
+                                                >
+                                                    <img
                                                     src={img}
                                                     alt={`Gallery large ${i + 1}`}
                                                     className="max-h-full max-w-full object-contain shadow-2xl rounded-sm sm:rounded-xl"
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
                                             </div>
-                                        ))}
+                                        );
+                                        })}
                                     </div>
                                 </div>
 
