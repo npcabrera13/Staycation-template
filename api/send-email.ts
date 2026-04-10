@@ -14,7 +14,7 @@ export const transporter = nodemailer.createTransport({
 interface EmailRequest {
     to: string;
     subject: string;
-    type: 'user_confirmation' | 'admin_notification';
+    type: 'user_confirmation' | 'admin_notification' | 'superadmin_renewal';
     data: {
         guestName?: string;
         roomName?: string;
@@ -30,8 +30,6 @@ interface EmailRequest {
         contactEmail?: string;
         contactPhone?: string;
         paymentDeadline?: string;
-<<<<<<< Updated upstream
-=======
 
         // Renewal Fields
         clientName?: string;
@@ -42,7 +40,6 @@ interface EmailRequest {
         superadminUrl?: string;
         adminUrl?: string; // Also used as fallback
         paymentProof?: string; // Base64
->>>>>>> Stashed changes
     };
 }
 
@@ -167,9 +164,6 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
                 </div>
                 ` : ''}
                 
-<<<<<<< Updated upstream
-                <p>Please review and confirm this booking in the admin panel.</p>
-=======
                 <div class="action-box">
                     <h3 style="margin-top: 0; color: #dc2626;">Instant Actions</h3>
                     <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the receipt above and click to action:</p>
@@ -245,7 +239,6 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
                 <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <a href="${data.superadminUrl || data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Go to Superadmin Panel</a>
                 </div>
->>>>>>> Stashed changes
             </div>
         </div>
     </body>
@@ -279,11 +272,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const baseUrl = `${protocol}://${host}`;
 
         // Generate HTML based on email type
-<<<<<<< Updated upstream
-        const html = type === 'admin_notification'
-            ? generateAdminEmailHTML(data)
-            : generateUserEmailHTML(data);
-=======
         let html = '';
         let attachments: any[] = [];
 
@@ -316,11 +304,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else {
             html = generateUserEmailHTML(data);
         }
->>>>>>> Stashed changes
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${data.siteName}" <${process.env.SMTP_EMAIL}>`,
+            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
             to: to,
             subject: subject,
             html: html,

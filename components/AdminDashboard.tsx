@@ -1876,20 +1876,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         value={newPasscode}
                                         onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     />
-<<<<<<< Updated upstream
-                                    <button
-                                        onClick={async () => {
-                                            if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
-                                            await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
-                                            setAdminPasscode(newPasscode);
-                                            setNewPasscode('');
-                                            showToast('Passcode updated', 'success');
-                                        }}
-                                        className="px-4 py-2 bg-primary text-white rounded-lg font-bold"
-                                    >
-                                        Update
-                                    </button>
-=======
                                     <div className="flex flex-wrap items-center gap-3">
                                         <button
                                             type="button"
@@ -1929,7 +1915,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             </button>
                                         )}
                                     </div>
->>>>>>> Stashed changes
                                 </div>
                             </div>
                         </div>

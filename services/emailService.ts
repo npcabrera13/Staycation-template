@@ -4,22 +4,30 @@
 import { Booking, Room, Settings } from '../types';
 
 interface EmailData {
-    guestName: string;
-    roomName: string;
-    checkIn: string;
-    checkOut: string;
-    guests: number;
+    guestName?: string;
+    roomName?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: number;
     nights?: number;
-    totalPrice: number;
+    totalPrice?: number;
     depositAmount?: number;
     balanceAmount?: number;
-    bookingId: string;
-    siteName: string;
+    bookingId?: string;
+    siteName?: string;
     contactEmail?: string;
     contactPhone?: string;
     paymentDeadline?: string;
     paymentProof?: string;
     adminUrl?: string;
+
+    // Renewal Fields
+    clientName?: string;
+    plan?: string;
+    amount?: number;
+    days?: number;
+    requestId?: string;
+    superadminUrl?: string;
 }
 
 /**
@@ -28,12 +36,13 @@ interface EmailData {
 async function sendEmail(
     to: string,
     subject: string,
-    type: 'user_confirmation' | 'admin_notification',
+    type: 'user_confirmation' | 'admin_notification' | 'superadmin_renewal',
     data: EmailData
 ): Promise<boolean> {
     try {
         console.log(`📧 Sending ${type} email to:`, to);
 
+        // Uses a relative path which works on both Vercel and Netlify (via redirects or identical path structures)
         const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -120,21 +129,44 @@ export async function sendAdminNotificationEmail(
         nights: booking.nights,
         totalPrice: booking.totalPrice,
         depositAmount: settings.reservationPolicy?.requireDeposit ? depositAmount : undefined,
-<<<<<<< Updated upstream
-        bookingId: booking.id,
-        siteName: settings.siteName || 'Serenity Staycation'
-=======
         bookingId: booking.id, // Use full ID for API actions
         siteName: settings.siteName || 'Serenity Staycation',
         adminUrl: window.location.origin + '/admin',
         paymentProof: booking.paymentProof
->>>>>>> Stashed changes
     };
 
     return sendEmail(
         adminEmail,
         `🔔 New Booking from ${booking.guestName}`,
         'admin_notification',
+        data
+    );
+}
+
+/**
+ * Send renewal notification to Superadmin
+ */
+export async function sendRenewalNotificationEmail(
+    request: { id: string; clientName: string; plan: string; amount: number; daysRequested: number; paymentProof: string },
+    adminUrl: string
+): Promise<boolean> {
+    const superadminEmail = 'visionarywebco@gmail.com'; // Hardcoded for your safety
+
+    const data: EmailData = {
+        clientName: request.clientName,
+        plan: request.plan,
+        amount: request.amount,
+        days: request.daysRequested,
+        requestId: request.id,
+        paymentProof: request.paymentProof,
+        superadminUrl: window.location.origin + '/superadmin',
+        adminUrl: adminUrl
+    };
+
+    return sendEmail(
+        superadminEmail,
+        `💸 Renewal Proof: ${request.clientName}`,
+        'superadmin_renewal',
         data
     );
 }

@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 interface EmailRequest {
     to: string;
     subject: string;
-    type: 'user_confirmation' | 'admin_notification';
+    type: 'user_confirmation' | 'admin_notification' | 'superadmin_renewal';
     data: {
         guestName?: string;
         roomName?: string;
@@ -29,8 +29,6 @@ interface EmailRequest {
         contactEmail?: string;
         contactPhone?: string;
         paymentDeadline?: string;
-<<<<<<< Updated upstream
-=======
 
         // Renewal Fields
         clientName?: string;
@@ -41,7 +39,6 @@ interface EmailRequest {
         superadminUrl?: string;
         adminUrl?: string; // Also used as fallback
         paymentProof?: string; // Base64
->>>>>>> Stashed changes
     };
 }
 
@@ -185,8 +182,6 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
     `;
 }
 
-<<<<<<< Updated upstream
-=======
 function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
     const token = generateActionToken(data.requestId || data.bookingId);
     const approveUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=approve-renewal&token=${token}`;
@@ -200,7 +195,6 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; background: #fff; }
             .header { background: #10b981; color: white; padding: 20px; text-align: center; }
-            .header h2 { margin: 0; }
             .content { padding: 30px; }
             .info-box { background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981; }
             .amount { font-size: 24px; font-weight: bold; color: #047857; margin: 10px 0; }
@@ -252,7 +246,6 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
     `;
 }
 
->>>>>>> Stashed changes
 export default async (req: Request) => {
     // Only allow POST requests
     if (req.method !== 'POST') {
@@ -262,18 +255,6 @@ export default async (req: Request) => {
         });
     }
 
-<<<<<<< Updated upstream
-    // Check for required environment variables
-    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
-        console.error('Missing SMTP configuration');
-        return new Response(JSON.stringify({ error: 'Email service not configured' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-
-=======
->>>>>>> Stashed changes
     try {
         const payload = await req.json() as EmailRequest;
         const { to, subject, type, data } = payload;
@@ -292,11 +273,6 @@ export default async (req: Request) => {
         const baseUrl = `${protocol}://${host}`;
 
         // Generate HTML based on email type
-<<<<<<< Updated upstream
-        const html = type === 'admin_notification'
-            ? generateAdminEmailHTML(data)
-            : generateUserEmailHTML(data);
-=======
         let html = '';
         let attachments: any[] = [];
 
@@ -325,11 +301,10 @@ export default async (req: Request) => {
         } else {
             html = generateUserEmailHTML(data);
         }
->>>>>>> Stashed changes
 
         // Send email
         const info = await transporter.sendMail({
-            from: `"${data.siteName}" <${process.env.SMTP_EMAIL}>`,
+            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
             to: to,
             subject: subject,
             html: html,
