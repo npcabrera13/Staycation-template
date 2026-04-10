@@ -8,7 +8,7 @@ import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Moon, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2, Info
 } from 'lucide-react';
 
 import { useLocation } from 'react-router-dom';
@@ -82,12 +82,16 @@ const getStartOfWeek = (date: Date) => {
     return d;
 };
 
-const HelpTooltip: React.FC<{ text: string }> = ({ text }) => (
+const HelpTooltip: React.FC<{ text: string, align?: 'center' | 'right' }> = ({ text, align = 'center' }) => (
     <div className="group relative inline-block ml-1.5 cursor-help align-middle">
         <HelpCircle size={13} className="text-gray-400 hover:text-primary transition-colors" />
-        <div className="invisible group-hover:visible absolute z-[9999] bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900/95 backdrop-blur-md text-white text-[10px] leading-relaxed rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none text-center font-medium">
+        <div className={`invisible group-hover:visible absolute z-[9999] bottom-full mb-2 w-48 p-2 bg-gray-900/95 backdrop-blur-md text-white text-[10px] leading-relaxed rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none text-center font-medium ${
+            align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
+        }`}>
             {text}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900/95"></div>
+            <div className={`absolute top-full -mt-1 border-4 border-transparent border-t-gray-900/95 ${
+                align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-2'
+            }`}></div>
         </div>
     </div>
 );
@@ -1730,6 +1734,118 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
                     </div>
 
+                    {/* Booking Control Mode */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-4 border-b dark:border-gray-700 pb-2">
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center text-sm md:text-lg">
+                                <Key className="mr-2 text-primary" size={20} /> Calendar Blocking Mode
+                            </h3>
+                            <HelpTooltip text="Choose how strictly the calendar blocks dates for new guests." align="right" />
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const updatedPolicy = settingsForm?.reservationPolicy 
+                                            ? { ...settingsForm.reservationPolicy, bookingSystemType: 'strict' as const }
+                                            : { 
+                                                requireDeposit: true, 
+                                                depositType: 'percentage' as const, 
+                                                depositPercentage: 50, 
+                                                fixedDepositAmount: 1000, 
+                                                autoConfirmOnDeposit: false, 
+                                                cancellationPolicy: '', 
+                                                paymentDeadlineHours: 24,
+                                                bookingSystemType: 'strict' as const
+                                            };
+                                        const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
+                                        setSettingsForm(newSettings);
+                                        
+                                        // Auto-save setting
+                                        if (onUpdateSettings) {
+                                            await onUpdateSettings(newSettings);
+                                            showToast("Mode set to Strict (Auto-saved)", "success");
+                                        }
+                                    }}
+                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${
+                                        (settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}
+                                >
+                                    <div className="flex items-center mb-1">
+                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${
+                                            (settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
+                                                ? 'border-primary' : 'border-gray-300'
+                                        }`}>
+                                            {(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict' && (
+                                                <div className="w-2 h-2 bg-primary rounded-full" />
+                                            )}
+                                        </div>
+                                        <span className="font-bold text-gray-800 dark:text-white text-sm">Strict Mode</span>
+                                    </div>
+                                    <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Blocks dates immediately when a guest submits a request. Safest against double-booking.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const updatedPolicy = settingsForm?.reservationPolicy 
+                                            ? { ...settingsForm.reservationPolicy, bookingSystemType: 'smart' as const }
+                                            : { 
+                                                requireDeposit: true, 
+                                                depositType: 'percentage' as const, 
+                                                depositPercentage: 50, 
+                                                fixedDepositAmount: 1000, 
+                                                autoConfirmOnDeposit: false, 
+                                                cancellationPolicy: '', 
+                                                paymentDeadlineHours: 24,
+                                                bookingSystemType: 'smart' as const
+                                            };
+                                        const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
+                                        setSettingsForm(newSettings);
+
+                                        // Auto-save setting
+                                        if (onUpdateSettings) {
+                                            await onUpdateSettings(newSettings);
+                                            showToast("Mode set to Smart (Auto-saved)", "success");
+                                        }
+                                    }}
+                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${
+                                        settingsForm.reservationPolicy?.bookingSystemType === 'smart'
+                                            ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500'
+                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}
+                                >
+                                    <div className="flex items-center mb-1">
+                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${
+                                            settingsForm.reservationPolicy?.bookingSystemType === 'smart'
+                                                ? 'border-amber-500' : 'border-gray-300'
+                                        }`}>
+                                            {settingsForm.reservationPolicy?.bookingSystemType === 'smart' && (
+                                                <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                                            )}
+                                        </div>
+                                        <span className="font-bold text-gray-800 dark:text-white text-sm">Smart Mode (Troll Protection)</span>
+                                    </div>
+                                    <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Only blocks dates after you manually confirm. Prevents malicious users from locking up your days.</p>
+                                </button>
+                            </div>
+
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-4 rounded-xl flex gap-3">
+                                <Info className="text-blue-500 shrink-0 mt-0.5" size={18} />
+                                <div className="text-[11px] md:text-xs text-blue-700 dark:text-blue-300">
+                                    <p className="font-bold mb-1 italic">Why this matters:</p>
+                                    <p className="leading-relaxed">
+                                        In <strong>Strict Mode</strong>, if a troll fills out your form, that date becomes unavailable to everyone else. In <strong>Smart Mode</strong>, the date stays open until you accept a real booking. Don&apos;t worry—if two people try to book the same day in Smart Mode, the website will show them a warning first!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Email Passcode Section */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
@@ -1760,6 +1876,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         value={newPasscode}
                                         onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     />
+<<<<<<< Updated upstream
                                     <button
                                         onClick={async () => {
                                             if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
@@ -1772,6 +1889,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     >
                                         Update
                                     </button>
+=======
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                if (newPasscode.length !== 6) { showToast('6 digits required', 'error'); return; }
+                                                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
+                                                setAdminPasscode(newPasscode);
+                                                showToast('Passcode updated', 'success');
+                                            }}
+                                            className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-md hover:bg-primary-dark transition-all flex-1 sm:flex-none"
+                                        >
+                                            {adminPasscode ? 'Update Passcode' : 'Set Passcode'}
+                                        </button>
+                                        
+                                        {adminPasscode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    showConfirm({
+                                                        title: "Remove Passcode",
+                                                        message: "Are you sure you want to remove the admin passcode? This will leave your Admin Panel accessible to anyone without protection.",
+                                                        isDangerous: true,
+                                                        confirmLabel: "Remove Passcode",
+                                                        onConfirm: async () => {
+                                                            await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: '' }, { merge: true });
+                                                            setAdminPasscode('');
+                                                            setNewPasscode('');
+                                                            showToast('Passcode removed', 'success');
+                                                        }
+                                                    });
+                                                }}
+                                                className="flex items-center gap-1.5 px-3 py-2 text-red-500 hover:text-red-600 font-semibold transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-sm"
+                                            >
+                                                <Trash2 size={14} />
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+>>>>>>> Stashed changes
                                 </div>
                             </div>
                         </div>

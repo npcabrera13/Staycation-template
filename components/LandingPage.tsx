@@ -406,7 +406,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
             // 2. Availability Check
             if (searchCriteria.checkIn && searchCriteria.checkOut) {
-                const roomBookings = bookings.filter(b => b.roomId === room.id && b.status !== 'cancelled');
+                const isSmartMode = workingSettings.reservationPolicy?.bookingSystemType === 'smart';
+                const roomBookings = bookings.filter(b => {
+                    if (b.roomId !== room.id || b.status === 'cancelled') return false;
+                    // In Smart Mode, only 'confirmed' bookings block the search results
+                    return isSmartMode ? b.status === 'confirmed' : true;
+                });
 
                 const hasOverlap = roomBookings.some(b => {
                     const bookedStart = new Date(b.checkIn);

@@ -488,7 +488,35 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                             bookings={bookings}
                                             onDateSelect={handleDateSelect}
                                             allowDayUse={room.dayUsePrice !== undefined && room.dayUsePrice > 0}
+                                            bookingSystemType={settings?.reservationPolicy?.bookingSystemType ?? 'strict'}
                                         />
+
+                                        {/* Smart Queue - Overlap Warning */}
+                                        {(() => {
+                                            if (!selectedStart || !selectedEnd || (settings?.reservationPolicy?.bookingSystemType !== 'smart')) return null;
+
+                                            const overlapsPending = bookings.some(b => {
+                                                if (b.roomId !== room.id || b.status !== 'pending' || b.id === newBookingId) return false;
+                                                const bStart = new Date(b.checkIn);
+                                                const bEnd = new Date(b.checkOut);
+                                                // Check overlap between selected range and this pending booking
+                                                return (selectedStart < bEnd && selectedEnd > bStart);
+                                            });
+
+                                            if (!overlapsPending) return null;
+
+                                            return (
+                                                <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800/30 rounded-xl flex gap-3 animate-pulse-subtle">
+                                                    <Info className="text-amber-500 shrink-0 mt-0.5" size={20} />
+                                                    <div className="text-sm text-amber-800 dark:text-amber-300">
+                                                        <p className="font-bold mb-1">Heads Up!</p>
+                                                        <p className="leading-relaxed opacity-90">
+                                                            Another guest is currently inquiring about these dates. You can still submit your request, but the dates will only be secured for the person who pays their deposit first. Priority is given to whoever completes payment first!
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         <div className="space-y-4 mt-6 pb-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

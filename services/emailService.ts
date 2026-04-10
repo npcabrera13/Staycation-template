@@ -18,6 +18,8 @@ interface EmailData {
     contactEmail?: string;
     contactPhone?: string;
     paymentDeadline?: string;
+    paymentProof?: string;
+    adminUrl?: string;
 }
 
 /**
@@ -118,8 +120,15 @@ export async function sendAdminNotificationEmail(
         nights: booking.nights,
         totalPrice: booking.totalPrice,
         depositAmount: settings.reservationPolicy?.requireDeposit ? depositAmount : undefined,
+<<<<<<< Updated upstream
         bookingId: booking.id,
         siteName: settings.siteName || 'Serenity Staycation'
+=======
+        bookingId: booking.id, // Use full ID for API actions
+        siteName: settings.siteName || 'Serenity Staycation',
+        adminUrl: window.location.origin + '/admin',
+        paymentProof: booking.paymentProof
+>>>>>>> Stashed changes
     };
 
     return sendEmail(

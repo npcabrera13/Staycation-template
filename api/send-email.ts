@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 // Create reusable transporter using Gmail SMTP
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.SMTP_EMAIL,
@@ -15,24 +16,47 @@ interface EmailRequest {
     subject: string;
     type: 'user_confirmation' | 'admin_notification';
     data: {
-        guestName: string;
-        roomName: string;
-        checkIn: string;
-        checkOut: string;
-        guests: number;
+        guestName?: string;
+        roomName?: string;
+        checkIn?: string;
+        checkOut?: string;
+        guests?: number;
         nights?: number;
-        totalPrice: number;
+        totalPrice?: number;
         depositAmount?: number;
         balanceAmount?: number;
-        bookingId: string;
-        siteName: string;
+        bookingId?: string;
+        siteName?: string;
         contactEmail?: string;
         contactPhone?: string;
         paymentDeadline?: string;
+<<<<<<< Updated upstream
+=======
+
+        // Renewal Fields
+        clientName?: string;
+        plan?: string;
+        amount?: number;
+        days?: number;
+        requestId?: string;
+        superadminUrl?: string;
+        adminUrl?: string; // Also used as fallback
+        paymentProof?: string; // Base64
+>>>>>>> Stashed changes
     };
 }
 
-function generateUserEmailHTML(data: EmailRequest['data']): string {
+// Secure token configuration
+const SECRET = process.env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
+
+function generateActionToken(id?: string): string {
+    return crypto
+        .createHash('sha256')
+        .update((id || 'default') + SECRET)
+        .digest('hex');
+}
+
+export function generateUserEmailHTML(data: EmailRequest['data']): string {
     return `
     <!DOCTYPE html>
     <html>
@@ -73,9 +97,9 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
                 
                 <div class="payment-box">
                     <h3 style="margin-top: 0;">💰 Payment Summary</h3>
-                    <p><strong>Total Amount:</strong> ₱${data.totalPrice.toLocaleString()}</p>
-                    ${data.depositAmount ? `<p><strong>Required Deposit:</strong> ₱${data.depositAmount.toLocaleString()}</p>` : ''}
-                    ${data.balanceAmount ? `<p><strong>Balance Due:</strong> ₱${data.balanceAmount.toLocaleString()}</p>` : ''}
+                    <p><strong>Total Amount:</strong> ₱${data.totalPrice?.toLocaleString() || '0'}</p>
+                    ${data.depositAmount ? `<p><strong>Required Deposit:</strong> ₱${data.depositAmount?.toLocaleString()}</p>` : ''}
+                    ${data.balanceAmount ? `<p><strong>Balance Due:</strong> ₱${data.balanceAmount?.toLocaleString()}</p>` : ''}
                 </div>
                 
                 ${data.paymentDeadline ? `<p>⏰ Please pay the deposit within <strong>${data.paymentDeadline}</strong> to confirm your reservation.</p>` : ''}
@@ -95,7 +119,11 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
     `;
 }
 
-function generateAdminEmailHTML(data: EmailRequest['data']): string {
+function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
+    const token = generateActionToken(data.bookingId);
+    const approveUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=approve&token=${token}`;
+    const rejectUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=reject&token=${token}`;
+
     return `
     <!DOCTYPE html>
     <html>
@@ -106,6 +134,11 @@ function generateAdminEmailHTML(data: EmailRequest['data']): string {
             .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .info-box { background: #f3f4f6; padding: 15px; margin: 10px 0; border-radius: 8px; }
+            .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #fff1f2; border-radius: 12px; border: 1px solid #fecaca; }
+            .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
+            .btn-approve { background-color: #059669; color: white !important; }
+            .btn-reject { background-color: #dc2626; color: white !important; }
+            .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
         </style>
     </head>
     <body>
@@ -122,12 +155,97 @@ function generateAdminEmailHTML(data: EmailRequest['data']): string {
                     <p><strong>Check-in:</strong> ${data.checkIn}</p>
                     <p><strong>Check-out:</strong> ${data.checkOut}</p>
                     <p><strong>Guests:</strong> ${data.guests}</p>
-                    <p><strong>Total:</strong> ₱${data.totalPrice.toLocaleString()}</p>
-                    ${data.depositAmount ? `<p><strong>Deposit:</strong> ₱${data.depositAmount.toLocaleString()}</p>` : ''}
+                    <p><strong>Total:</strong> ₱${data.totalPrice?.toLocaleString() || '0'}</p>
+                    ${data.depositAmount ? `<p><strong>Deposit:</strong> ₱${data.depositAmount?.toLocaleString()}</p>` : ''}
                     <p><strong>Booking ID:</strong> ${data.bookingId}</p>
                 </div>
+
+                ${data.paymentProof ? `
+                <div style="margin-top: 20px;">
+                    <p><strong>📸 Payment Proof:</strong></p>
+                    <img src="cid:payment-proof" class="receipt-preview" alt="Payment Receipt" />
+                </div>
+                ` : ''}
                 
+<<<<<<< Updated upstream
                 <p>Please review and confirm this booking in the admin panel.</p>
+=======
+                <div class="action-box">
+                    <h3 style="margin-top: 0; color: #dc2626;">Instant Actions</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the receipt above and click to action:</p>
+                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve</a>
+                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
+                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will confirm the dates and notify the guest.</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <a href="${data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Open Full Admin Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
+function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
+    const token = generateActionToken(data.requestId || data.bookingId);
+    const approveUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=approve-renewal&token=${token}`;
+    const rejectUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=reject-renewal&token=${token}`;
+
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; background: #fff; }
+            .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+            .content { padding: 30px; }
+            .info-box { background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981; }
+            .amount { font-size: 24px; font-weight: bold; color: #047857; margin: 10px 0; }
+            .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bcf0da; }
+            .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
+            .btn-approve { background-color: #059669; color: white !important; }
+            .btn-reject { background-color: #dc2626; color: white !important; }
+            .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>💸 Renewal Proof Submitted!</h2>
+            </div>
+            <div class="content">
+                <p>Hello Superadmin,</p>
+                <p>A client has just submitted a renewal payment proof. Please review the details below:</p>
+                
+                <div class="info-box">
+                    <p><strong>Client / Site Name:</strong> ${data.clientName}</p>
+                    <p><strong>Requested Plan:</strong> ${data.plan}</p>
+                    <p><strong>Extension Days:</strong> +${data.days} days</p>
+                    <div class="amount">₱${data.amount?.toLocaleString()}</div>
+                </div>
+
+                ${data.paymentProof ? `
+                <div style="margin-top: 20px;">
+                    <p><strong>📸 Payment Receipt:</strong></p>
+                    <img src="cid:payment-proof" class="receipt-preview" alt="Payment Receipt" />
+                </div>
+                ` : ''}
+
+                <div class="action-box">
+                    <h3 style="margin-top: 0; color: #059669;">Superadmin Actions</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Verify the receipt and click to activate subscription:</p>
+                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve & Extend</a>
+                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
+                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will instantly update their expiry date.</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <a href="${data.superadminUrl || data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Go to Superadmin Panel</a>
+                </div>
+>>>>>>> Stashed changes
             </div>
         </div>
     </body>
@@ -155,17 +273,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Detect Base URL
+        const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'localhost:3000';
+        const baseUrl = `${protocol}://${host}`;
+
         // Generate HTML based on email type
+<<<<<<< Updated upstream
         const html = type === 'admin_notification'
             ? generateAdminEmailHTML(data)
             : generateUserEmailHTML(data);
+=======
+        let html = '';
+        let attachments: any[] = [];
+
+        if (type === 'superadmin_renewal') {
+            html = generateRenewalEmailHTML(data, baseUrl);
+
+            // Handle payment proof attachment for renewals
+            if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
+                const [meta, base64] = data.paymentProof.split(',');
+                const extension = meta.split('/')[1].split(';')[0] || 'png';
+                attachments.push({
+                    filename: `receipt.${extension}`,
+                    content: Buffer.from(base64, 'base64'),
+                    cid: 'payment-proof'
+                });
+            }
+        } else if (type === 'admin_notification') {
+            html = generateAdminEmailHTML(data, baseUrl);
+
+            // Handle payment proof attachment
+            if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
+                const [meta, base64] = data.paymentProof.split(',');
+                const extension = meta.split('/')[1].split(';')[0] || 'png';
+                attachments.push({
+                    filename: `receipt.${extension}`,
+                    content: Buffer.from(base64, 'base64'),
+                    cid: 'payment-proof' // Matches cid in HTML
+                });
+            }
+        } else {
+            html = generateUserEmailHTML(data);
+        }
+>>>>>>> Stashed changes
 
         // Send email
         const info = await transporter.sendMail({
             from: `"${data.siteName}" <${process.env.SMTP_EMAIL}>`,
             to: to,
             subject: subject,
-            html: html
+            html: html,
+            attachments: attachments
         });
 
         console.log('Email sent:', info.messageId);
