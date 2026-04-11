@@ -199,26 +199,34 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
                             className={`flex justify-center gap-2 sm:gap-3 mb-6 transition-transform ${shake ? 'animate-shake' : ''}`}
                         >
                             {digits.map((digit, i) => (
-                                <input
-                                    key={i}
-                                    ref={el => { inputRefs.current[i] = el; }}
-                                    type={showPasscode ? 'text' : 'password'}
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={e => handleDigitChange(i, e.target.value)}
-                                    onKeyDown={e => handleKeyDown(i, e)}
-                                    onPaste={i === 0 ? handlePaste : undefined}
-                                    className={`w-10 sm:w-12 h-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all duration-200 outline-none
-                                    ${digit
-                                            ? 'bg-white/10 border-primary text-white shadow-[0_0_15px_rgba(var(--color-primary),0.3)]'
-                                            : 'bg-white/5 border-white/10 text-white hover:border-white/20 hover:bg-white/10'
-                                        }
-                                    focus:border-primary focus:bg-white/15 focus:ring-4 focus:ring-primary/20
-                                    ${error ? 'border-red-500/60 bg-red-500/10' : ''}
-                                `}
-                                    style={{ caretColor: 'transparent' }}
-                                />
+                    <input
+                                key={i}
+                                ref={el => { inputRefs.current[i] = el; }}
+                                type={showPasscode ? 'text' : 'tel'}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                autoComplete="one-time-code"
+                                maxLength={PASSCODE_LENGTH}
+                                value={digit}
+                                onChange={e => handleDigitChange(i, e.target.value)}
+                                onKeyDown={e => handleKeyDown(i, e)}
+                                onPaste={i === 0 ? handlePaste : undefined}
+                                className={`w-10 sm:w-12 h-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all duration-200 outline-none
+                                ${digit
+                                        ? 'bg-white/10 border-primary text-white shadow-[0_0_15px_rgba(var(--color-primary),0.3)]'
+                                        : 'bg-white/5 border-white/10 text-white hover:border-white/20 hover:bg-white/10'
+                                    }
+                                focus:border-primary focus:bg-white/15 focus:ring-4 focus:ring-primary/20
+                                ${error ? 'border-red-500/60 bg-red-500/10' : ''}
+                            `}
+                                style={{
+                                    caretColor: 'transparent',
+                                    // Visually mask digits when showPasscode is off, without type=password
+                                    // This avoids password manager interference on HTTPS (Vercel)
+                                    WebkitTextSecurity: showPasscode ? 'none' : 'disc',
+                                    fontFamily: showPasscode ? 'inherit' : 'text-security-disc'
+                                } as React.CSSProperties}
+                            />
                             ))}
                         </div>
 
