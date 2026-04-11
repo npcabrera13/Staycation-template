@@ -838,8 +838,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 </section>
 
 
-                {/* About/Promo Section */}
-                <section id="about" className="py-24 md:py-32 bg-white dark:bg-gray-800 overflow-hidden scroll-mt-20">
+                {/* About/Promo Section - Removed overflow-hidden to prevent clipping absolute popovers */}
+                <section id="about" className="py-24 md:py-32 bg-white dark:bg-gray-800 scroll-mt-20 overflow-visible relative">
                     <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
                         <div className="md:w-1/2 order-2 md:order-1">
                             <RevealOnScroll className="mb-10 text-center md:text-left">
@@ -969,7 +969,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 key={index} 
                                                 delay={100 * (index + 1)} 
                                                 width="full" 
-                                                className={shouldCenter ? "col-span-2 w-full flex justify-center lg:col-span-1" : "w-full"}
+                                                className={`${shouldCenter ? "col-span-2 w-full flex justify-center lg:col-span-1" : "w-full"} ${activeIconPicker === index ? 'z-[100]' : ''}`}
                                             > 
                                                 <div className={`flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 md:gap-8 group cursor-default relative ${shouldCenter ? "max-w-xs md:max-w-none" : ""}`}>
                                             {isEditing && (
@@ -1000,7 +1000,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                                                     {/* Icon Picker Popover */}
                                                     {isEditing && activeIconPicker === index && (
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[100] w-48 animate-fade-in">
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 p-3 pb-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[110] w-56 animate-fade-in max-h-[300px] overflow-y-auto scrollbar-thin">
                                                             <div className="flex items-center justify-between mb-2 px-1">
                                                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Select Icon</span>
                                                                 <button onClick={() => setActiveIconPicker(null)} className="text-gray-400 hover:text-red-500 transition-colors">

@@ -3118,7 +3118,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                             {renderAmenityIcon(isAddingRoom ? newRoomCustomIcon : customAmenityIcon)}
                                                         </button>
                                                         {(isAddingRoom ? showNewRoomIconPicker : showIconPicker) && (
-                                                            <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 p-2 grid grid-cols-6 gap-2 z-50 max-h-40 overflow-y-auto">
+                                                            <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 pb-6 grid grid-cols-6 gap-2 z-[100] max-h-64 overflow-y-auto scrollbar-thin">
                                                                 {ICON_OPTIONS.map(icon => (
                                                                     <button
                                                                         key={icon}

@@ -191,15 +191,15 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
         </div>
       </div>
 
-      {/* Mobile/Tablet Menu - Updated background to white */}
+      {/* Mobile/Tablet Menu - Updated background to white with dark mode support */}
       {isOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-2xl animate-slide-down overflow-hidden">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 shadow-2xl animate-slide-down overflow-hidden">
           <div className="px-4 pt-4 pb-6 space-y-2">
-            <button onClick={() => scrollToSection('hero')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">Home</button>
-            <button onClick={() => scrollToSection('rooms')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">Rooms</button>
-            <button onClick={() => scrollToSection('about')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">About</button>
-            <button onClick={() => scrollToSection('contact')} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium">Contact</button>
-            <button onClick={() => { onOpenMyBookings(); setIsOpen(false); }} className="w-full text-left block px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary rounded-lg transition-colors font-medium border-t border-gray-100 mt-2">Find My Booking</button>
+            <button onClick={() => scrollToSection('hero')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Home</button>
+            <button onClick={() => scrollToSection('rooms')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Rooms</button>
+            <button onClick={() => scrollToSection('about')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">About</button>
+            <button onClick={() => scrollToSection('contact')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Contact</button>
+            <button onClick={() => { onOpenMyBookings(); setIsOpen(false); }} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium border-t border-gray-100 dark:border-gray-800 mt-2">Find My Booking</button>
 
             {/* Dark Mode Toggle - Mobile */}
             <button

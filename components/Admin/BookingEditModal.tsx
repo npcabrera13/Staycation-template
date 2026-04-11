@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, User, Mail, Phone, Calendar, Plus, Clock, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { Booking, Room } from '../../types';
 import { format, addDays } from 'date-fns';
+import ConfirmationModal from '../UI/ConfirmationModal';
 
 interface BookingEditModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface BookingEditModalProps {
 const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, booking, rooms = [], onSave }) => {
     const [formData, setFormData] = useState<Booking | null>(null);
     const [showProofModal, setShowProofModal] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
 
     // Default state for new booking
     const defaultBooking: Booking = {
@@ -325,9 +327,17 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    const updated = { ...formData, status: 'cancelled' as const };
-                                    onSave(updated);
-                                    onClose();
+                                    setConfirmConfig({
+                                        isOpen: true,
+                                        title: "Decline Booking?",
+                                        message: "Are you sure you want to decline this booking? This will cancel the reservation and free up the room dates.",
+                                        onConfirm: () => {
+                                            const updated = { ...formData, status: 'cancelled' as const };
+                                            onSave(updated);
+                                            onClose();
+                                            setConfirmConfig(null);
+                                        }
+                                    });
                                 }}
                                 className="px-4 py-3 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-500 font-bold uppercase tracking-widest text-[9px] hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
                             >
@@ -400,9 +410,17 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            const updated = { ...formData, status: 'cancelled' as const };
-                                            onSave(updated);
-                                            onClose();
+                                            setConfirmConfig({
+                                                isOpen: true,
+                                                title: "Decline Booking?",
+                                                message: "Are you sure you want to decline this booking? This will cancel the reservation and free up the room dates.",
+                                                onConfirm: () => {
+                                                    const updated = { ...formData, status: 'cancelled' as const };
+                                                    onSave(updated);
+                                                    onClose();
+                                                    setConfirmConfig(null);
+                                                }
+                                            });
                                         }}
                                         className="flex-1 px-4 py-3 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-500 font-bold uppercase tracking-widest text-xs hover:bg-red-50 dark:hover:bg-red-900/10 transition-all flex items-center justify-center gap-2 outline-none focus:ring-4 focus:ring-red-500/20"
                                     >
@@ -433,6 +451,20 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
             {/* Full size image modal */}
             {showProofModal && formData.paymentProof && (
                 <ImageModal src={formData.paymentProof} onClose={() => setShowProofModal(false)} />
+            )}
+
+            {/* Confirmation Modal */}
+            {confirmConfig && (
+                <ConfirmationModal
+                    isOpen={confirmConfig.isOpen}
+                    title={confirmConfig.title}
+                    message={confirmConfig.message}
+                    confirmLabel="Yes, Decline"
+                    cancelLabel="No, Keep"
+                    isDangerous={true}
+                    onConfirm={confirmConfig.onConfirm}
+                    onCancel={() => setConfirmConfig(null)}
+                />
             )}
         </div>
     );
