@@ -2,15 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-// Create reusable transporter using Gmail SMTP
-export const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD // Use App Password for Gmail
-    }
-});
-
 interface EmailRequest {
     to: string;
     subject: string;
@@ -304,6 +295,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else {
             html = generateUserEmailHTML(data);
         }
+
+        // Create transporter lazily inside the handler
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.SMTP_EMAIL,
+                pass: process.env.SMTP_PASSWORD
+            }
+        });
 
         // Send email
         const info = await transporter.sendMail({

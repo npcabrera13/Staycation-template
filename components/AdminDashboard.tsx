@@ -1994,15 +1994,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">License & Renewal</p>
                                                 <button
                                                     onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
-                                                    className={`w-full relative rounded-xl p-3 flex items-center justify-between transition-all border ${
+                                                    className={`group w-full relative rounded-xl p-3.5 flex items-center justify-between transition-all border shadow-sm hover:shadow-md active:scale-[0.98] ${
                                                         expiryDays !== null && expiryDays <= 0
-                                                            ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-500/20'
+                                                            ? 'bg-red-50 border-red-200 hover:bg-red-100/50 dark:bg-red-900/10 dark:border-red-500/20 dark:hover:bg-red-900/20'
                                                             : expiryDays !== null && expiryDays <= 7
-                                                            ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-500/20'
+                                                            ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/50 dark:bg-amber-900/10 dark:border-amber-500/20 dark:hover:bg-amber-900/20'
                                                             : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 flex-1">
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                                                             expiryDays !== null && expiryDays <= 0 ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' :
                                                             expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
@@ -2017,12 +2017,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                     : expiryDays <= 7 ? 'Expiring Soon'
                                                                     : 'Active Subscription'}
                                                             </span>
-                                                            <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">
                                                                 {expiryDays !== null && expiryDays > 7
                                                                     ? `${expiryDays} days remaining${expiryDate ? ' · Expires ' + expiryDate : ''}`
-                                                                    : 'Tap to view or renew'}
+                                                                    : 'Tap to view details & renew'}
                                                             </span>
                                                         </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 pl-4">
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md transition-colors ${
+                                                            expiryDays !== null && expiryDays <= 7 
+                                                                ? 'bg-amber-500 text-white' 
+                                                                : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
+                                                        }`}>
+                                                            {expiryDays !== null && expiryDays <= 7 ? 'Renew Now' : 'Manage'}
+                                                        </span>
+                                                        <ChevronRight size={14} className={`transition-transform group-hover:translate-x-0.5 ${
+                                                            expiryDays !== null && expiryDays <= 7 ? 'text-amber-500' : 'text-gray-400'
+                                                        }`} />
                                                     </div>
                                                 </button>
                                             </div>
