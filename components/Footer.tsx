@@ -176,7 +176,7 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                 )}
 
                 {/* X (formerly Twitter) */}
-                {settings?.social?.showX !== false && (
+                {settings?.social?.showX === true && (
                   <a
                     href={isEditing ? '#' : settings?.social?.x}
                     onClick={(e) => handleSocialClick(e, 'x')}
@@ -188,7 +188,7 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                 )}
 
                 {/* Airbnb */}
-                {settings?.social?.showAirbnb !== false && (
+                {settings?.social?.showAirbnb === true && (
                   <a
                     href={isEditing ? '#' : settings?.social?.airbnb}
                     onClick={(e) => handleSocialClick(e, 'airbnb')}
@@ -202,7 +202,7 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                 )}
 
                 {/* Custom URL */}
-                {settings?.social?.showCustom !== false && (
+                {settings?.social?.showCustom === true && (
                   <a
                     href={isEditing ? '#' : settings?.social?.customUrl}
                     onClick={(e) => handleSocialClick(e, 'customUrl')}

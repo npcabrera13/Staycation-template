@@ -57,12 +57,18 @@ export const DEFAULT_SETTINGS: Settings = {
     },
     social: {
         facebook: COMPANY_INFO.facebook,
+        showFacebook: true,
         instagram: COMPANY_INFO.instagram,
+        showInstagram: true,
         x: "https://x.com",
+        showX: false,
         tiktok: "https://tiktok.com",
+        showTiktok: true,
         airbnb: "",
+        showAirbnb: false,
         customUrl: "",
-        customLabel: ""
+        customLabel: "",
+        showCustom: false
     },
     roomsSection: {
         title: "Our Exclusive Rooms"

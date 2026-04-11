@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints, SlidersHorizontal } from 'lucide-react';
 import { Settings } from '../../types';
 import InfoTooltip from '../UI/InfoTooltip';
@@ -74,7 +74,6 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
     const [mobileExpanded, setMobileExpanded] = useState(false);
-
 
     if (!isEditing) {
         return (
@@ -501,7 +500,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     </div>
 
                     {/* Scrollable Theme Presets Row */}
-                    <div className="flex gap-2 overflow-x-auto px-3 pb-2 scrollbar-hide">
+                    <div className="flex gap-2 overflow-x-auto px-3 pt-2 pb-3 scrollbar-hide">
                         {THEME_PRESETS.map(preset => (
                             <button
                                 key={preset.name}

@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2, Copy, Download, Check } from 'lucide-react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import { Settings } from '../../types';
+import { Settings, Room, Booking } from '../../types';
 import { compressImageToBase64 } from '../../utils/imageUtils';
-import { doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
-import { Room, Booking, SUPERADMIN_DEFAULTS } from '../../constants';
+import { SUPERADMIN_DEFAULTS } from '../../constants';
 import { sendRenewalNotificationEmail } from '../../services/emailService';
 interface RenewalModalProps {
     expiryDays: number;

@@ -26,7 +26,20 @@ const InlineColorBlock: React.FC<InlineColorBlockProps> = ({
     isEditing
 }) => {
     const [isFocused, setIsFocused] = useState(false);
+    const [popupPosition, setPopupPosition] = useState<'above' | 'below'>('below');
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isFocused && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            // If element is in bottom 45% of screen, open above; otherwise below
+            if (rect.top > window.innerHeight * 0.55) {
+                setPopupPosition('above');
+            } else {
+                setPopupPosition('below');
+            }
+        }
+    }, [isFocused]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -68,9 +81,12 @@ const InlineColorBlock: React.FC<InlineColorBlockProps> = ({
 
             {isFocused && (
                 <div
-                    className="absolute top-full mt-4 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-[9999] animate-fade-in-up md:w-max min-w-[280px]"
+                    className={`absolute ${popupPosition === 'above' ? 'bottom-full mb-4' : 'top-full mt-4'} left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-[9999] animate-fade-in-up md:w-max min-w-[280px]`}
                     onClick={(e) => e.stopPropagation()}
                 >
+                    {/* Triangle pointer */}
+                    <div className={`absolute ${popupPosition === 'above' ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'} left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-gray-100 transform rotate-45 shadow-sm`}></div>
+
                     <div className="flex flex-col gap-3">
                         <div>
                             <label className="text-xs font-bold text-gray-500 mb-2 block">Divider Color</label>
