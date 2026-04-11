@@ -109,8 +109,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
             isEditing={isEditing}
             onClick={handleSearchClick}
             icon={<Search size={20} className="mr-2" />}
-            className="w-full h-[50px] shadow-md hover:shadow-lg px-6 py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center whitespace-nowrap"
+            className="w-full h-[50px] shadow-md hover:shadow-lg px-6 py-3.5 rounded-xl flex items-center justify-center whitespace-nowrap"
           />
+
         </div>
       </div>
     </div>

@@ -267,7 +267,7 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         return (
             <button
                 onClick={onClick}
-                className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300 transform hover:scale-105 shadow-2xl group cursor-pointer ${className}`}
+                className={`inline-flex items-center justify-center px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-[background-color,color,transform,box-shadow] duration-150 hover:scale-105 active:scale-95 shadow-2xl group cursor-pointer ${className}`}
                 style={{ 
                     backgroundColor: color, 
                     color: textColor || getContrastColor(color), 
