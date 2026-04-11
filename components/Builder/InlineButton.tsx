@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Palette, Type } from 'lucide-react';
 
 const COLOR_CATEGORIES: Record<string, { color: string, name: string }[]> = {
@@ -127,22 +128,70 @@ const InlineButton: React.FC<InlineButtonProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const popupRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [buttonColorCategory, setButtonColorCategory] = useState("Theme Basics");
     const [fontColorCategory, setFontColorCategory] = useState("Theme Basics");
-    const [popupPosition, setPopupPosition] = useState<'above' | 'below'>('above');
+    // Two-phase positioning: state triggers the mount, direct DOM mutation handles scroll
+    const [popupMounted, setPopupMounted] = useState(false);
+    const computedPopup = useRef<{ top?: number; bottom?: number; left: number; width: number }>({
+        top: 0, left: 0, width: 320
+    });
 
-    // Smart positioning: detect if there's room above or should flip below
-    useEffect(() => {
-        if (isFocused && wrapperRef.current) {
-            const rect = wrapperRef.current.getBoundingClientRect();
-            // If button is in the top 55% of viewport, open below; otherwise above
-            if (rect.top < window.innerHeight * 0.55) {
-                setPopupPosition('below');
-            } else {
-                setPopupPosition('above');
-            }
+    // Compute popup position — mount once via state, track scroll via direct DOM mutation
+    useLayoutEffect(() => {
+        if (!isFocused || !wrapperRef.current) {
+            setPopupMounted(false);
+            return;
         }
+
+        const computePosition = () => {
+            if (!wrapperRef.current) return null;
+            const rect = wrapperRef.current.getBoundingClientRect();
+            const POPUP_WIDTH = Math.min(320, window.innerWidth * 0.92);
+            const MARGIN = 8;
+
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            const openBelow = spaceBelow >= 200 || spaceBelow >= spaceAbove;
+
+            const centerX = rect.left + rect.width / 2;
+            const idealLeft = centerX - POPUP_WIDTH / 2;
+            const left = Math.max(MARGIN, Math.min(idealLeft, window.innerWidth - POPUP_WIDTH - MARGIN));
+
+            return { openBelow, top: rect.bottom + 8, bottom: window.innerHeight - rect.top + 8, left, width: POPUP_WIDTH };
+        };
+
+        // Phase 1: mount with correct initial position
+        const initial = computePosition();
+        if (initial) {
+            computedPopup.current = initial.openBelow
+                ? { top: initial.top, left: initial.left, width: initial.width }
+                : { bottom: initial.bottom, left: initial.left, width: initial.width };
+            setPopupMounted(true);
+        }
+
+        // Phase 2: scroll/resize — directly mutate DOM, zero re-renders
+        const updateDirect = () => {
+            const pos = computePosition();
+            if (!pos || !popupRef.current) return;
+            if (pos.openBelow) {
+                popupRef.current.style.top = pos.top + 'px';
+                popupRef.current.style.bottom = 'auto';
+            } else {
+                popupRef.current.style.top = 'auto';
+                popupRef.current.style.bottom = pos.bottom + 'px';
+            }
+            popupRef.current.style.left = pos.left + 'px';
+            popupRef.current.style.width = pos.width + 'px';
+        };
+
+        window.addEventListener('scroll', updateDirect, { capture: true, passive: true });
+        window.addEventListener('resize', updateDirect, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', updateDirect, true);
+            window.removeEventListener('resize', updateDirect);
+        };
     }, [isFocused]);
 
     // Map fontFamily key to actual CSS font-family string
@@ -176,24 +225,21 @@ const InlineButton: React.FC<InlineButtonProps> = ({
         '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#000000', '#ffffff'
     ];
 
-    // Close toolbar when clicking outside
+    // Close popup when clicking outside — must check both wrapperRef and popupRef (portal)
     useEffect(() => {
+        if (!isFocused) return;
         const handleClickOutside = (event: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                wrapperRef.current && !wrapperRef.current.contains(target) &&
+                popupRef.current && !popupRef.current.contains(target)
+            ) {
                 setIsFocused(false);
                 setShowColorPicker(false);
             }
         };
-
-        if (isFocused) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isFocused]);
 
     const handleButtonClick = (e: React.MouseEvent) => {
@@ -236,9 +282,23 @@ const InlineButton: React.FC<InlineButtonProps> = ({
 
     return (
         <div className="relative inline-block hover:z-[40] focus-within:z-[50]" ref={wrapperRef}>
-            {/* Custom Toolbar Popup */}
-            {isFocused && (
-                <div className={`absolute ${popupPosition === 'above' ? 'bottom-full mb-4' : 'top-full mt-4'} left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-[9999] animate-fade-in-up w-[320px] max-w-[90vw] flex flex-col gap-3 max-h-[70vh] overflow-y-auto`}>
+            {/* Portal: render popup into document.body to escape parent overflow/transform */}
+            {isFocused && popupMounted && createPortal(
+                <div
+                    ref={popupRef}
+                    className="bg-white rounded-xl shadow-2xl border border-gray-100 p-4 animate-fade-in-up flex flex-col gap-3"
+                    style={{
+                        position: 'fixed',
+                        top: computedPopup.current.top,
+                        bottom: computedPopup.current.bottom,
+                        left: computedPopup.current.left,
+                        width: computedPopup.current.width,
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                        zIndex: 9999,
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                >
                     <div className="flex items-center gap-2">
                         <Type size={16} className="text-gray-400" />
                         <input
@@ -388,9 +448,9 @@ const InlineButton: React.FC<InlineButtonProps> = ({
                         </div>
                     </div>
 
-                    {/* Triangle pointer */}
-                    <div className={`absolute ${popupPosition === 'above' ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'} left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-gray-100 transform rotate-45 shadow-sm`}></div>
-                </div>
+
+                </div>,
+                document.body
             )}
 
             {/* Editing Button */}

@@ -1335,9 +1335,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Hero & Features Note */}
-                    <div className="bg-blue-50 dark:bg-blue-900/30 p-4 sm:p-6 rounded-xl border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row items-start sm:items-center">
-                        <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mb-3 sm:mb-0 sm:mr-4 text-blue-600 dark:text-blue-300">
-                            <Edit size={20} className="sm:w-6 sm:h-6" />
+                    <div className="hidden md:flex bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-200 dark:border-blue-800 flex-col md:flex-row items-start md:items-center">
+                        <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full md:mr-4 text-blue-600 dark:text-blue-300">
+                            <Edit size={24} className="md:w-6 md:h-6" />
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-1">Visual Builder Enabled</h3>
@@ -1347,7 +1347,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {onEnterVisualBuilder && (
                                 <button
                                     onClick={onEnterVisualBuilder}
-                                    className="w-full sm:w-auto justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-sm flex items-center"
+                                    className="md:w-auto justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-sm flex items-center"
                                 >
                                     <Palette size={16} className="mr-2" /> Launch Visual Editor
                                 </button>
