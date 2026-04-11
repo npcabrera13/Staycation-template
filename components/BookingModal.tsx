@@ -665,10 +665,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
                                             const overlapsPending = bookings.some(b => {
                                                 if (b.roomId !== room.id || b.status !== 'pending' || b.id === newBookingId) return false;
-                                                const bStart = new Date(b.checkIn);
-                                                const bEnd = new Date(b.checkOut);
-                                                // Check overlap between selected range and this pending booking
-                                                return (selectedStart < bEnd && selectedEnd > bStart);
+                                                const [sy, sm, sd] = b.checkIn.split('-').map(Number);
+                                                const [ey, em, ed] = b.checkOut.split('-').map(Number);
+                                                const bStart = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+                                                const bEnd = new Date(ey, em - 1, ed, 0, 0, 0, 0);
+                                                // Use <= / >= so day-use (start===end) overlaps are caught
+                                                return selectedStart <= bEnd && selectedEnd >= bStart;
                                             });
 
                                             if (!overlapsPending) return null;
@@ -685,6 +687,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 </div>
                                             );
                                         })()}
+
 
                                         <div className="space-y-4 mt-6 pb-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

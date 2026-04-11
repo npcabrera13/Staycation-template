@@ -55,6 +55,20 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
     return range.some(date => isDateBooked(date));
   };
 
+  // For Smart Queue warning in BookingModal - checks pending overlaps including day-use (start===end)
+  // Uses >= and <= so that same-day day-use bookings are caught
+  const hasOverlapWithPending = (start: Date, end: Date) => {
+    return bookings.some(b => {
+      if (b.roomId !== roomId || b.status !== 'pending') return false;
+      const [sy, sm, sd] = b.checkIn.split('-').map(Number);
+      const [ey, em, ed] = b.checkOut.split('-').map(Number);
+      const bStart = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+      const bEnd = new Date(ey, em - 1, ed, 0, 0, 0, 0);
+      // Use >= and <= to catch day-use where bStart === bEnd
+      return start <= bEnd && end >= bStart;
+    });
+  };
+
   const handleDateClick = (date: Date) => {
     // Normalize today to midnight local time
     const today = new Date();
@@ -199,7 +213,8 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({ roomId, boo
           } else if (booked) {
             bgClass = 'bg-red-50/50 dark:bg-red-900/30 text-red-300 dark:text-red-400 cursor-not-allowed';
           } else if (isToday) {
-            bgClass = 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-primary/30 text-primary font-black cursor-pointer hover:bg-blue-100';
+            // Today: subtle bold text only — NO ring/highlight so it doesn't look selected
+            bgClass = 'text-primary font-black cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/30';
           }
 
           // Combine classes
