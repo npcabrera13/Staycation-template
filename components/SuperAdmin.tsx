@@ -121,6 +121,7 @@ const SuperAdmin: React.FC = () => {
     useEffect(() => {
         if (isAuthenticated) {
             loadSubscription();
+            loadRenewalRequests(); // Pre-load so badge count shows immediately
         }
     }, [isAuthenticated]);
 
@@ -408,9 +409,14 @@ const SuperAdmin: React.FC = () => {
                     </button>
                     <button
                         onClick={() => { setActiveSection('renewals'); loadRenewalRequests(); }}
-                        className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'renewals' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 relative flex items-center justify-center py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${activeSection === 'renewals' ? 'bg-amber-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         <RefreshCw size={16} className="mr-1.5 sm:mr-2" /> Renewals
+                        {renewalRequests.filter((r: any) => r.status === 'pending').length > 0 && (
+                            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg">
+                                {renewalRequests.filter((r: any) => r.status === 'pending').length}
+                            </span>
+                        )}
                     </button>
                     <button
                         onClick={() => setActiveSection('deployment')}

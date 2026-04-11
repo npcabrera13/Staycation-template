@@ -2,8 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
-
-import { transporter, generateUserEmailHTML } from './send-email';
+import nodemailer from 'nodemailer';
+import { generateUserEmailHTML } from './send-email';
 
 // Re-use Firebase config from env
 const firebaseConfig = {
@@ -110,6 +110,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                     // 2. Send automatic confirmation email to guest
                     try {
+                        // Create transporter lazily (only when needed) to avoid cold-start crashes
+                        const transporter = nodemailer.createTransport({
+                            service: 'gmail',
+                            auth: {
+                                user: process.env.SMTP_EMAIL,
+                                pass: process.env.SMTP_PASSWORD
+                            }
+                        });
+
                         const emailData = {
                             guestName: bookingData.guestName,
                             roomName: bookingData.roomName,
