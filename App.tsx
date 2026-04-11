@@ -10,7 +10,7 @@ import AIChat from './components/AIChat';
 import RevealOnScroll from './components/RevealOnScroll';
 import SearchBar from './components/SearchBar';
 import { MOCK_ROOMS, INITIAL_BOOKINGS, COMPANY_INFO } from './constants';
-import { Room, Booking, Settings } from './types';
+import { Room, Booking, Settings, BookingFilter } from './types';
 import { roomService } from './services/roomService';
 import { bookingService } from './services/bookingService';
 import { settingsService, DEFAULT_SETTINGS } from './services/settingsService';
@@ -263,6 +263,25 @@ function AppContent() {
     }
   };
 
+  /**
+   * Server-side booking filter handler.
+   * Called by AdminDashboard when the filter dropdown changes.
+   * Returns only the bookings matching the date range from Firebase.
+   */
+  const handleFetchFilteredBookings = async (filter: BookingFilter): Promise<Booking[]> => {
+    try {
+      const filtered = await bookingService.getByFilter(filter);
+      // Also sync the main bookings state if fetching 'all' (keeps calendar/stats in sync)
+      if (filter === 'all') {
+        setBookings(filtered);
+      }
+      return filtered;
+    } catch (e) {
+      console.error('Failed to fetch filtered bookings:', e);
+      return [];
+    }
+  };
+
   const handleUpdateSettings = async (newSettings: Settings) => {
     try {
       await settingsService.updateSettings(newSettings);
@@ -357,6 +376,7 @@ function AppContent() {
                 onDeleteBookings={handleDeleteBookings}
                 onAddBooking={handleAddBooking}
                 onRefresh={refreshData}
+                onFetchFilteredBookings={handleFetchFilteredBookings}
                 onSeed={handleSeed}
                 settings={settings}
                 onUpdateSettings={handleUpdateSettings}

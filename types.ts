@@ -180,3 +180,6 @@ export interface MonthlyStats {
     revenue: number;
     bookings: number;
 }
+
+// The date-range filter options for the Admin Bookings tab
+export type BookingFilter = 'all' | 'this_month' | 'last_month' | 'last_3_months' | 'last_6_months' | 'this_year';

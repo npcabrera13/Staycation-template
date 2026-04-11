@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Booking, Room, Amenity, Settings } from '../types';
+import { Booking, Room, Amenity, Settings, BookingFilter } from '../types';
 import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebaseConfig';
@@ -34,6 +34,7 @@ interface AdminDashboardProps {
     onDeleteBookings?: (bookingIds: string[]) => void;
     onRefresh?: () => void;
     onSeed?: () => void;
+    onFetchFilteredBookings?: (filter: BookingFilter) => Promise<Booking[]>;
     settings?: Settings;
     onUpdateSettings?: (settings: Settings) => Promise<void>;
     onExit: () => void;
@@ -51,7 +52,6 @@ interface AdminDashboardProps {
 
 
 type ExportFormat = 'doc' | 'csv' | 'txt';
-type BookingFilter = 'all' | 'this_month' | 'last_month' | 'last_3_months' | 'last_6_months' | 'this_year';
 
 const PREDEFINED_AMENITIES = [
     { name: 'Wifi', icon: 'wifi' },
@@ -110,6 +110,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onDeleteBookings,
     onRefresh,
     onSeed,
+    onFetchFilteredBookings,
     settings,
     onUpdateSettings,
     onExit,
@@ -251,6 +252,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [bookingFilter, setBookingFilter] = useState<BookingFilter>('all');
     const [selectedBookingIds, setSelectedBookingIds] = useState<Set<string>>(new Set());
 
+    // Server-side filtered bookings for the Bookings Table
+    const [tableBookings, setTableBookings] = useState<Booking[]>([]);
+    const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+
+    // Fetch bookings from Firebase when the filter or onFetchFilteredBookings changes
+    useEffect(() => {
+        if (!onFetchFilteredBookings) return;
+        setIsLoadingBookings(true);
+        setSelectedBookingIds(new Set());
+        onFetchFilteredBookings(bookingFilter)
+            .then(fetched => {
+                setTableBookings(fetched);
+                setIsLoadingBookings(false);
+            })
+            .catch(() => setIsLoadingBookings(false));
+    }, [bookingFilter, onFetchFilteredBookings]);
+
     // Process bookings to auto-cancel pending ones that have passed
     const processedBookings = useMemo(() => {
         const now = new Date();
@@ -357,7 +375,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
     };
 
-    const filteredBookings = getFilteredBookings().sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
+    // filteredBookings now uses the server-fetched tableBookings (already date-filtered by Firebase)
+    // We only apply a local status filter (exclude pending, which are in the Awaiting Approval section)
+    const filteredBookings = (tableBookings.length > 0 || isLoadingBookings
+        ? tableBookings
+        : processedBookings
+    )
+        .filter(b => b.status !== 'pending')
+        .sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
+
     const pendingBookings = processedBookings.filter(b => b.status === 'pending').sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
     // Overdue bookings: raw bookings that are still pending but check-in date has passed
@@ -2617,8 +2643,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 </div>
 
+                                {/* Loading Overlay */}
+                                {isLoadingBookings && (
+                                    <div className="flex items-center justify-center py-12 gap-3 text-gray-400">
+                                        <Loader size={18} className="animate-spin text-primary" />
+                                        <span className="text-sm font-medium">Fetching bookings...</span>
+                                    </div>
+                                )}
+
                                 {/* Desktop Table View */}
-                                <div className="hidden lg:block overflow-x-auto">
+                                <div className={`hidden lg:block overflow-x-auto ${isLoadingBookings ? 'opacity-30 pointer-events-none' : ''}`}>
                                     <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
                                         <thead>
                                             <tr className="bg-gray-50/50 dark:bg-gray-700/50">
