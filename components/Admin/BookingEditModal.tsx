@@ -65,7 +65,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                     const end = new Date(newData.checkOut.split('T')[0]);
                     const nights = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
                     newData.totalPrice = nights * selectedRoom.price;
-                } catch(e) {}
+                } catch (e) { }
             }
         }
         setFormData(newData as Booking);
@@ -118,16 +118,16 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
                             todayDate.setHours(0, 0, 0, 0);
                             return checkIn < todayDate;
                         })() && (
-                            <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
-                                <span className="text-xl flex-shrink-0">⏰</span>
-                                <div>
-                                    <p className="text-sm font-bold text-orange-800 dark:text-orange-300">Check-in date has passed!</p>
-                                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
-                                        This booking was due on <strong>{new Date(formData.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>. Did the guest show up? Please update the booking status accordingly.
-                                    </p>
+                                <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                                    <span className="text-xl flex-shrink-0">⏰</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-orange-800 dark:text-orange-300">Check-in date has passed!</p>
+                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
+                                            This booking was due on <strong>{new Date(formData.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>. Did the guest show up? Please update the booking status accordingly.
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
                         {/* Guest Details */}
                         <div className="space-y-4">
@@ -172,7 +172,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
 
                         <div className="space-y-4">
                             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Stay Details</label>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block font-medium">Check-in</label>
