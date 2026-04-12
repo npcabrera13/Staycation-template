@@ -56,6 +56,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
       className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 border border-gray-100 dark:border-gray-700 flex flex-col h-full min-h-[480px] transform-gpu relative isolation-isolate"
       // This mask-image fixes the safari/chrome bug where border-radius is lost during child transform
       style={{ maskImage: 'radial-gradient(white, black)', WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+      // Preload the BookingModal JS chunk the moment a finger/cursor touches the card
+      // so by the time they click "View Details", the download is already done
+      onMouseEnter={() => import('./BookingModal')}
     >
       <div
         className="h-64 overflow-hidden relative bg-gray-200 cursor-pointer rounded-t-2xl z-0 flex-shrink-0"
@@ -69,8 +72,8 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
           onSelect(room, true);
         }}
       >
-        {/* Wrapper div for transform - transform applied here, not on image */}
-        <div className="absolute inset-0 transform group-hover:scale-110 transition-transform duration-[1.5s] ease-out">
+        {/* Image wrapper - no zoom */}
+        <div className="absolute inset-0">
           <img
             src={room.image}
             alt={room.name}

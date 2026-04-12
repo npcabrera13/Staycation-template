@@ -3,7 +3,67 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
-import { generateUserEmailHTML } from './send-email';
+
+// Inlined here because Vercel bundles each /api/ file independently —
+// cross-imports between serverless functions break at runtime.
+function generateUserEmailHTML(data: any): string {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; background: #fff; }
+            .header { background: linear-gradient(135deg, #2A9D8F, #264653); color: white; padding: 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 24px; }
+            .content { padding: 30px; }
+            .booking-box { background: #f8f9fa; border-left: 4px solid #2A9D8F; padding: 20px; margin: 20px 0; }
+            .booking-box p { margin: 8px 0; }
+            .payment-box { background: #fef3c7; padding: 20px; margin: 20px 0; border-radius: 8px; }
+            .footer { background: #264653; color: white; padding: 20px; text-align: center; font-size: 12px; }
+            .highlight { color: #2A9D8F; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🎉 Booking Confirmed!</h1>
+                <p style="margin: 10px 0 0;">${data.siteName}</p>
+            </div>
+            
+            <div class="content">
+                <p>Hi <strong>${data.guestName}</strong>,</p>
+                <p>Great news! Your reservation for <strong>${data.roomName}</strong> has been <strong style="color: #059669;">confirmed</strong>.</p>
+                
+                <div class="booking-box">
+                    <h3 style="margin-top: 0; color: #264653;">📋 Reservation Details</h3>
+                    <p><strong>Booking ID:</strong> ${data.bookingId}</p>
+                    <p><strong>Room:</strong> ${data.roomName}</p>
+                    <p><strong>Check-in:</strong> ${data.checkIn}</p>
+                    <p><strong>Check-out:</strong> ${data.checkOut}</p>
+                    <p><strong>Guests:</strong> ${data.guests}</p>
+                    ${data.nights ? `<p><strong>Nights:</strong> ${data.nights}</p>` : ''}
+                </div>
+                
+                <div class="payment-box">
+                    <h3 style="margin-top: 0;">💰 Payment Summary</h3>
+                    <p><strong>Total Amount:</strong> ₱${data.totalPrice?.toLocaleString() || '0'}</p>
+                </div>
+                
+                <p>If you have any questions, contact us at <strong>${data.contactEmail || 'our email'}</strong>.</p>
+                
+                <p>We look forward to hosting you!</p>
+                <p>Warm regards,<br><strong>${data.siteName} Team</strong></p>
+            </div>
+            
+            <div class="footer">
+                <p>© ${data.siteName} | Thank you for choosing us!</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
 
 // Re-use Firebase config from env
 const firebaseConfig = {

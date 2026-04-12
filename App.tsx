@@ -26,7 +26,7 @@ const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
 
-// Shared loading bar used as the Suspense fallback
+// Simple loading bar — only shown as Suspense fallback for Admin/SuperAdmin routes
 const PageLoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
     <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -195,9 +195,8 @@ function AppContent() {
     }
   }, [location.pathname]);
 
-  if (isLoading) {
-    return <PageLoadingFallback />;
-  }
+  // No loading gate here — the homepage renders immediately.
+  // Only the rooms section in LandingPage checks isLoading to show skeletons.
 
   const handleUpdateRoom = async (updatedRoom: Room) => {
     try {
@@ -367,6 +366,7 @@ function AppContent() {
       <Routes>
         <Route path="/admin" element={
           <AdminPasscodeGate onBack={() => navigate('/')}>
+            <Suspense fallback={<PageLoadingFallback />}>
             <div className="relative">
               <AdminDashboard
                 bookings={bookings}
@@ -454,6 +454,7 @@ function AppContent() {
                 </div>
               )}
             </div>
+            </Suspense>
           </AdminPasscodeGate>
         } />
 
@@ -549,30 +550,35 @@ function AppContent() {
             )}
           </>
         } />
-        <Route path="/superadmin" element={<SuperAdmin />} />
+        <Route path="/superadmin" element={<Suspense fallback={<PageLoadingFallback />}><SuperAdmin /></Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       {/* Modals */}
       {selectedRoom && (
-        <BookingModal
-          room={selectedRoom}
-          onClose={() => setSelectedRoom(null)}
-          bookings={bookings}
-          onBook={handleBooking}
-          onUpdateBooking={async (b) => { await handleUpdateBooking(b); }}
-          initialGalleryOpen={startInGallery}
-          settings={settings}
-          onOpenMyBookings={() => setIsMyBookingsOpen(true)}
-        />
+        // Individual Suspense: modal chunk loads without touching the rest of the page
+        <Suspense fallback={null}>
+          <BookingModal
+            room={selectedRoom}
+            onClose={() => setSelectedRoom(null)}
+            bookings={bookings}
+            onBook={handleBooking}
+            onUpdateBooking={async (b) => { await handleUpdateBooking(b); }}
+            initialGalleryOpen={startInGallery}
+            settings={settings}
+            onOpenMyBookings={() => setIsMyBookingsOpen(true)}
+          />
+        </Suspense>
       )}
 
-      <BookingLookupModal
-        isOpen={isMyBookingsOpen}
-        onClose={() => setIsMyBookingsOpen(false)}
-        bookings={bookings}
-        rooms={rooms}
-      />
+      <Suspense fallback={null}>
+        <BookingLookupModal
+          isOpen={isMyBookingsOpen}
+          onClose={() => setIsMyBookingsOpen(false)}
+          bookings={bookings}
+          rooms={rooms}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -583,8 +589,8 @@ function App() {
       <ThemeProvider>
         <LicenseProvider>
           <NotificationProvider>
-            {/* Suspense catches lazy-loaded components (AdminDashboard, SuperAdmin, BookingModal, BookingLookupModal) */}
-            <Suspense fallback={<PageLoadingFallback />}>
+            {/* Safety-net Suspense — individual components have their own boundaries now */}
+            <Suspense fallback={null}>
               <AppContent />
             </Suspense>
           </NotificationProvider>

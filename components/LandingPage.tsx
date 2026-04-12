@@ -510,7 +510,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 />
 
                 {/* Setup Wizard — mandatory until user changes the default name */}
-                {workingSettings?.siteName === 'Serenity Staycation' && onUpdateSettings && (
+                {!isLoading && workingSettings?.siteName === 'Serenity Staycation' && onUpdateSettings && (
                     <SetupWizard
                         settings={workingSettings}
                         rooms={rooms}
@@ -746,9 +746,26 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         {isLoading ? (
-                            <div className="flex justify-center items-center py-24">
-                                <Loader className="animate-spin text-primary mr-2" size={32} />
-                                <span className="text-gray-500">Loading rooms...</span>
+                            /* Skeleton cards — match the real card dimensions so there's zero layout shift */
+                            <div className="flex items-stretch gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 overflow-hidden">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="w-[85vw] max-w-[340px] md:w-[45%] md:max-w-none lg:w-[32%] flex-shrink-0 rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg min-h-[480px] animate-pulse">
+                                        {/* Image area */}
+                                        <div className="h-64 bg-gray-200 dark:bg-gray-700" />
+                                        {/* Content area */}
+                                        <div className="p-6 space-y-3">
+                                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                                            <div className="flex gap-2 mt-6">
+                                                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                                <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                            </div>
+                                            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl mt-4" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : filteredRooms.length > 0 ? (
                             <div className="relative group">
