@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Room } from '../types';
 import {
   Users, Wifi, Wind, Coffee, ArrowRight, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
@@ -137,4 +137,4 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
   );
 };
 
-export default RoomCard;
+export default memo(RoomCard);

@@ -555,6 +555,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             <img
                                                 src={mobileImage}
                                                 alt="Hero Background"
+                                                fetchPriority="high"
+                                                loading="eager"
                                                 className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
                                                 style={{ objectPosition: focusPosition }}
                                             />
@@ -587,6 +589,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             <img
                                                 src={mobileImage}
                                                 alt="Hero Background"
+                                                fetchPriority="high"
+                                                loading="eager"
                                                 className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
                                                 style={{ objectPosition: focusPosition }}
                                             />

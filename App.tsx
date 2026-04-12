@@ -1,11 +1,8 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import RoomCard from './components/RoomCard';
-import BookingModal from './components/BookingModal';
-import BookingLookupModal from './components/BookingLookupModal';
-import AdminDashboard from './components/AdminDashboard';
 import AIChat from './components/AIChat';
 import RevealOnScroll from './components/RevealOnScroll';
 import SearchBar from './components/SearchBar';
@@ -18,10 +15,35 @@ import { ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Lock, Mail, Ale
 import { useLicense } from './components/LicenseProvider';
 import LandingPage from './components/LandingPage';
 import LicenseProvider from './components/LicenseProvider';
-import SuperAdmin from './components/SuperAdmin';
 import AdminPasscodeGate from './components/AdminPasscodeGate';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+
+// Heavy components — loaded on demand, not on initial page load
+// Guests save ~445KB of JS they'd never need
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
+const BookingModal = lazy(() => import('./components/BookingModal'));
+const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
+
+// Shared loading bar used as the Suspense fallback
+const PageLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
+    <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div
+        className="h-full bg-primary rounded-full"
+        style={{ animation: 'loadingSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}
+      />
+    </div>
+    <style>{`
+      @keyframes loadingSlide {
+        0% { width: 0%; margin-left: 0%; }
+        50% { width: 60%; margin-left: 20%; }
+        100% { width: 0%; margin-left: 100%; }
+      }
+    `}</style>
+  </div>
+);
 
 function AppContent() {
   const navigate = useNavigate();
@@ -173,27 +195,8 @@ function AppContent() {
     }
   }, [location.pathname]);
 
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
-        <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full"
-            style={{
-              animation: 'loadingSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-            }}
-          />
-        </div>
-        <style>{`
-          @keyframes loadingSlide {
-            0% { width: 0%; margin-left: 0%; }
-            50% { width: 60%; margin-left: 20%; }
-            100% { width: 0%; margin-left: 100%; }
-          }
-        `}</style>
-      </div>
-    );
+    return <PageLoadingFallback />;
   }
 
   const handleUpdateRoom = async (updatedRoom: Room) => {
@@ -580,7 +583,10 @@ function App() {
       <ThemeProvider>
         <LicenseProvider>
           <NotificationProvider>
-            <AppContent />
+            {/* Suspense catches lazy-loaded components (AdminDashboard, SuperAdmin, BookingModal, BookingLookupModal) */}
+            <Suspense fallback={<PageLoadingFallback />}>
+              <AppContent />
+            </Suspense>
           </NotificationProvider>
         </LicenseProvider>
       </ThemeProvider>
