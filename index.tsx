@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './index.css'; // Local Tailwind build — replaces the CDN script
 import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
 

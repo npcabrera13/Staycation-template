@@ -32,7 +32,7 @@
   <meta property="twitter:title" content="%VITE_OG_TITLE%">
   <meta property="twitter:description" content="%VITE_OG_DESCRIPTION%">
   <meta property="twitter:image" content="%VITE_OG_IMAGE%">
-  <script src="https://cdn.tailwindcss.com"></script>
+
   <script>
     // Polyfill process for browser environment to prevent crash
     window.process = { env: { API_KEY: '' } };
@@ -60,78 +60,8 @@
       } catch (e) { }
     })();
   </script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: 'var(--color-primary)',
-            'primary-hover': 'var(--color-primary-hover)',
-            secondary: 'var(--color-secondary)',
-            accent: 'var(--color-accent)',
-            surface: '#F4F1DE',
-            text: '#333333'
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['Playfair Display', 'serif']
-          },
-          animation: {
-            'fade-in-up': 'fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-            'fade-in': 'fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-            'slide-in-left': 'slideInLeft 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-            'slide-in-right': 'slideInRight 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-            'pop': 'pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'slide-down': 'slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-          },
-          keyframes: {
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(40px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            slideInLeft: {
-              '0%': { opacity: '0', transform: 'translateX(-40px)' },
-              '100%': { opacity: '1', transform: 'translateX(0)' },
-            },
-            slideInRight: {
-              '0%': { opacity: '0', transform: 'translateX(40px)' },
-              '100%': { opacity: '1', transform: 'translateX(0)' },
-            },
-            pop: {
-              '0%': { opacity: '0', transform: 'scale(0.95)' },
-              '100%': { opacity: '1', transform: 'scale(1)' },
-            },
-            slideDown: {
-              '0%': { opacity: '0', transform: 'translateY(-10px)', maxHeight: '0' },
-              '100%': { opacity: '1', transform: 'translateY(0)', maxHeight: '500px' },
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Hide scrollbar globally for Chrome, Safari and Opera */
-    ::-webkit-scrollbar {
-      display: none;
-    }
 
-    /* Hide scrollbar globally for IE, Edge and Firefox */
-    html,
-    body,
-    * {
-      -ms-overflow-style: none;
-      /* IE and Edge */
-      scrollbar-width: none;
-      /* Firefox */
-    }
-  </style>
+
   <!-- Non-render-blocking Google Fonts (swap instead of blocking the page) -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"></noscript>
