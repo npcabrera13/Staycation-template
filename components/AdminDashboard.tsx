@@ -2525,7 +2525,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <div className={`flex flex-col ${roomPopularity.some(r => r.value > 0) ? 'md:flex-row' : ''} items-center gap-4`}>
                                         {/* Only show pie chart if there's data */}
                                         {roomPopularity.some(r => r.value > 0) && (
-                                            <div className="w-full md:w-1/2 h-48">
+                                            <div className="w-full md:w-1/2 h-56">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart>
                                                         <Pie

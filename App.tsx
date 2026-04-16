@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -270,7 +270,7 @@ function AppContent() {
    * Called by AdminDashboard when the filter dropdown changes.
    * Returns only the bookings matching the date range from Firebase.
    */
-  const handleFetchFilteredBookings = async (filter: BookingFilter): Promise<Booking[]> => {
+  const handleFetchFilteredBookings = useCallback(async (filter: BookingFilter): Promise<Booking[]> => {
     try {
       const filtered = await bookingService.getByFilter(filter);
       // Also sync the main bookings state if fetching 'all' (keeps calendar/stats in sync)
@@ -282,7 +282,7 @@ function AppContent() {
       console.error('Failed to fetch filtered bookings:', e);
       return [];
     }
-  };
+  }, []);
 
   const handleUpdateSettings = async (newSettings: Settings) => {
     try {
@@ -459,7 +459,7 @@ function AppContent() {
         } />
 
         <Route path="/" element={
-          <>
+          isLoading ? <PageLoadingFallback /> : <>
             <LandingPage
               rooms={rooms}
               bookings={bookings}

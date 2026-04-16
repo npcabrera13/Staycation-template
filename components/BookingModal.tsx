@@ -967,7 +967,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                 <button 
                                                                     onClick={() => handleDownloadQr(settings.paymentMethods!.bankTransfer!.qrImage!, 'bank-qr.png')}
                                                                     className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 hover:bg-green-200 py-1.5 rounded-lg transition-colors"
-                                                                >
+                                                                    >
                                                                     <Download size={12} /> Download QR
                                                                 </button>
                                                             </div>
