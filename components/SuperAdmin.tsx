@@ -992,6 +992,32 @@ const SuperAdmin: React.FC = () => {
                                 )}
                             </div>
                         </div>
+
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+                            <h4 className="text-md font-bold text-white mb-4 flex items-center">
+                                <Mail size={18} className="mr-2 text-red-400" /> Email System Config (2)
+                            </h4>
+                            <p className="text-gray-400 text-xs mb-4">
+                                Required by Vercel / Netlify backend servers to send automated booking emails via Gmail.
+                            </p>
+                            <div className="space-y-3">
+                                {[
+                                    { key: 'SMTP_EMAIL', desc: 'The Gmail address sending the automated emails (e.g. your agency email)' },
+                                    { key: 'SMTP_PASSWORD', desc: 'The 16-character Google App Password (NOT your regular login password)' },
+                                ].map(({ key, desc }, index) => (
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
+                                        <div className="flex items-center w-full md:w-auto overflow-hidden">
+                                            <span className="text-red-500/50 font-bold mr-2 text-xs">{index + 12}.</span>
+                                            <span className="font-mono text-xs text-red-300 truncate mr-2">{key}</span>
+                                            <button onClick={() => copyWithToast(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                                <Copy size={14} />
+                                            </button>
+                                        </div>
+                                        <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
 
