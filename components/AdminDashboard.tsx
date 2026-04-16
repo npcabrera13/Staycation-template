@@ -1880,7 +1880,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <input
-                                        type="text"
+                                        type="tel"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         maxLength={6}
                                         placeholder={adminPasscode ? "Update 6-digit passcode" : "Set a 6-digit passcode"}
                                         className="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg font-mono outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
