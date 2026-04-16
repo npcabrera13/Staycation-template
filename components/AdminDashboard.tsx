@@ -1334,29 +1334,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     onChange={(e) => setSettingsForm({ ...settingsForm, siteName: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Description
-                                    <HelpTooltip text="A short tagline or description for your website (Meta information)" />
-                                </label>
-                                <input
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.description}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Logo URL
-                                    <HelpTooltip text="Direct link to your logo image (recommended size: 200x50px)" />
-                                </label>
-                                <input
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    value={settingsForm.logo || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, logo: e.target.value })}
-                                    placeholder="https://example.com/logo.png"
-                                />
-                            </div>
                         </div>
                     </div>
 

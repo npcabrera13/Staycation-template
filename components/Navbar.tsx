@@ -137,19 +137,14 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             </div>
 
             <span className="font-serif text-xl font-bold tracking-wider text-primary dark:text-white">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={settings?.siteName || ''}
-                  onChange={(e) => onUpdateSettings && onUpdateSettings('siteName' as any, '', e.target.value)}
-                  className="bg-transparent border-2 border-dashed border-gray-400/50 hover:border-gray-400 focus:border-blue-500 rounded px-2 py-1 outline-none text-xl font-bold font-serif tracking-wider text-primary dark:text-white w-full min-w-[300px] transition-colors"
-                  placeholder="Site Name"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                settings?.siteName || 'Serenity'
-              )}
-            </span>
+            <InlineText
+              value={settings?.siteName || ''}
+              onChange={(val) => onUpdateSettings && onUpdateSettings('siteName' as any, '', val)}
+              isEditing={isEditing}
+              className="text-xl font-bold font-serif tracking-wider text-primary dark:text-white"
+              placeholder="Site Name"
+            />
+          </span>
           </div>
 
           {/* Desktop Menu (Visible on Large Screens Only) */}

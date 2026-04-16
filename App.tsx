@@ -45,6 +45,12 @@ const PageLoadingFallback = () => (
   </div>
 );
 
+const stripHtml = (html: string) => {
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
 function AppContent() {
   const navigate = useNavigate();
   const { 
@@ -110,7 +116,7 @@ function AppContent() {
 
         // Apply theme
         if (fetchedSettings) {
-          document.title = fetchedSettings.siteName || "Staycation";
+          document.title = stripHtml(fetchedSettings.siteName) || "Staycation";
 
           // Sync favicon to logoUrl
           let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
@@ -290,7 +296,7 @@ function AppContent() {
       setSettings(newSettings);
 
       // Apply theme immediately
-      document.title = newSettings.siteName || "Staycation";
+      document.title = stripHtml(newSettings.siteName) || "Staycation";
 
       // Sync favicon to logoUrl
       let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
