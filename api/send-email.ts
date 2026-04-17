@@ -108,9 +108,7 @@ export function generateUserEmailHTML(data: EmailRequest['data']): string {
 }
 
 function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
-    const token = generateActionToken(data.bookingId);
-    const approveUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=approve&token=${token}`;
-    const rejectUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=reject&token=${token}`;
+    const dashboardUrl = data.adminUrl || `${baseUrl}/admin`;
 
     return `
     <!DOCTYPE html>
@@ -123,9 +121,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
             .content { padding: 20px; }
             .info-box { background: #f3f4f6; padding: 15px; margin: 10px 0; border-radius: 8px; }
             .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #fff1f2; border-radius: 12px; border: 1px solid #fecaca; }
-            .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
-            .btn-approve { background-color: #059669; color: white !important; }
-            .btn-reject { background-color: #dc2626; color: white !important; }
+            .btn { display: inline-block; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; background-color: #dc2626; color: white !important; font-size: 16px; }
             .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
         </style>
     </head>
@@ -156,15 +152,9 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
                 ` : ''}
                 
                 <div class="action-box">
-                    <h3 style="margin-top: 0; color: #dc2626;">Instant Actions</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the receipt above and click to action:</p>
-                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve</a>
-                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
-                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will confirm the dates and notify the guest.</p>
-                </div>
-
-                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <a href="${data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Open Full Admin Dashboard</a>
+                    <h3 style="margin-top: 0; color: #dc2626;">Action Required</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the booking details and manage it from your dashboard.</p>
+                    <a href="${dashboardUrl}" class="btn">Check on Website</a>
                 </div>
             </div>
         </div>
@@ -174,9 +164,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
 }
 
 function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
-    const token = generateActionToken(data.requestId || data.bookingId);
-    const approveUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=approve-renewal&token=${token}`;
-    const rejectUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=reject-renewal&token=${token}`;
+    const dashboardUrl = data.superadminUrl || data.adminUrl || `${baseUrl}/superadmin`;
 
     return `
     <!DOCTYPE html>
@@ -190,9 +178,7 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
             .info-box { background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981; }
             .amount { font-size: 24px; font-weight: bold; color: #047857; margin: 10px 0; }
             .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bcf0da; }
-            .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
-            .btn-approve { background-color: #059669; color: white !important; }
-            .btn-reject { background-color: #dc2626; color: white !important; }
+            .btn { display: inline-block; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; background-color: #059669; color: white !important; font-size: 16px; }
             .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
         </style>
     </head>
@@ -220,15 +206,9 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
                 ` : ''}
 
                 <div class="action-box">
-                    <h3 style="margin-top: 0; color: #059669;">Superadmin Actions</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Verify the receipt and click to activate subscription:</p>
-                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve & Extend</a>
-                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
-                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will instantly update their expiry date.</p>
-                </div>
-                
-                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <a href="${data.superadminUrl || data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Go to Superadmin Panel</a>
+                    <h3 style="margin-top: 0; color: #059669;">Action Required</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Verify the receipt and activate their subscription from the dashboard.</p>
+                    <a href="${dashboardUrl}" class="btn">Check on Website</a>
                 </div>
             </div>
         </div>

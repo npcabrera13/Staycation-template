@@ -198,6 +198,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const handleSaveSettings = async () => {
         if (onUpdateSettings && settingsForm) {
             await onUpdateSettings(settingsForm);
+            
+            // UX Fix: Also save the passcode if they changed it but forgot to click the specific save button
+            if (newPasscode !== adminPasscode && newPasscode.length === 6) {
+                await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
+                setAdminPasscode(newPasscode);
+            }
+            
             showToast("Settings saved successfully!", "success");
         }
     };

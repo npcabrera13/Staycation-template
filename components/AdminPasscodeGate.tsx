@@ -20,13 +20,20 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
     const [shake, setShake] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    // Load admin passcode from Firestore
+    // Load admin passcode from Firestore and check cookies (localStorage)
     useEffect(() => {
         const load = async () => {
             try {
                 const snap = await getDoc(doc(db, '_superadmin', 'settings'));
                 if (snap.exists() && snap.data().adminPasscode) {
-                    setAdminPasscode(snap.data().adminPasscode);
+                    const dbPasscode = snap.data().adminPasscode;
+                    setAdminPasscode(dbPasscode);
+                    
+                    // Auto-login if localstorage matches the active passcode
+                    const savedPasscode = window.localStorage.getItem('staycation_admin_passcode');
+                    if (savedPasscode === dbPasscode) {
+                        setIsAuthenticated(true);
+                    }
                 } else {
                     setAdminPasscode(''); // empty string means bypassed
                 }
@@ -80,6 +87,7 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
         if (code.length === PASSCODE_LENGTH) {
             if (code === adminPasscode) {
                 setIsAuthenticated(true);
+                window.localStorage.setItem('staycation_admin_passcode', code);
             } else {
                 setError('Incorrect passcode');
                 setShake(true);
@@ -111,6 +119,7 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
             if (pastedData.length === PASSCODE_LENGTH) {
                 if (pastedData === adminPasscode) {
                     setIsAuthenticated(true);
+                    window.localStorage.setItem('staycation_admin_passcode', pastedData);
                 } else {
                     setError('Incorrect passcode');
                     setShake(true);

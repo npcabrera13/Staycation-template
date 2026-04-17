@@ -131,7 +131,16 @@ const SuperAdmin: React.FC = () => {
             try {
                 const snap = await getDoc(doc(db, '_superadmin', 'settings'));
                 if (snap.exists()) {
-                    if (snap.data().password) setStoredPassword(snap.data().password);
+                    if (snap.data().password) {
+                        const dbPassword = snap.data().password;
+                        setStoredPassword(dbPassword);
+                        
+                        // Check local storage for auto-login
+                        const savedPassword = window.localStorage.getItem('staycation_superadmin_pw');
+                        if (savedPassword === dbPassword) {
+                            setIsAuthenticated(true);
+                        }
+                    }
                     if (snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
                     if (typeof snap.data().enableAiChat === 'boolean') setEnableAiChat(snap.data().enableAiChat);
                     if (snap.data().adminPasscode) setAdminPasscode(snap.data().adminPasscode);
@@ -237,6 +246,7 @@ const SuperAdmin: React.FC = () => {
         e.preventDefault();
         if (password === storedPassword) {
             setIsAuthenticated(true);
+            window.localStorage.setItem('staycation_superadmin_pw', password);
             setAuthError('');
         } else {
             setAuthError('Invalid password');
@@ -1002,8 +1012,15 @@ const SuperAdmin: React.FC = () => {
                             </p>
                             <div className="space-y-3">
                                 {[
-                                    { key: 'SMTP_EMAIL', desc: 'The Gmail address sending the automated emails (e.g. your agency email)' },
-                                    { key: 'SMTP_PASSWORD', desc: 'The 16-character Google App Password (NOT your regular login password)' },
+                                    { key: 'SMTP_EMAIL', desc: 'The exact Gmail address sending the automated emails (Example: visionarywebco@gmail.com)' },
+                                    { key: 'SMTP_PASSWORD', desc: (
+                                        <span>
+                                            The 16-character Google App Password (Example: kqrzoggmmufzxlpk). You must generate this from your{' '}
+                                            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline font-bold">
+                                                Google Account Security page
+                                            </a>.
+                                        </span>
+                                    ) },
                                 ].map(({ key, desc }, index) => (
                                     <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
