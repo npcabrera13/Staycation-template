@@ -53,11 +53,11 @@ const stripHtml = (html: string) => {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { 
-    isAdminLocked, 
-    isHomepageLocked, 
-    contactEmail, 
-    contactPhone, 
+  const {
+    isAdminLocked,
+    isHomepageLocked,
+    contactEmail,
+    contactPhone,
     providerName,
     expiryDays,
     expiryDate,
@@ -65,7 +65,8 @@ function AppContent() {
     setShowExpiryWarning,
     showMissingPasscodeWarning,
     setShowMissingPasscodeWarning,
-    licenseKey
+    licenseKey,
+    eagerLoadAdmin
   } = useLicense();
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [startEditing, setStartEditing] = useState(false);
@@ -145,7 +146,7 @@ function AppContent() {
           // BRANDING MIGRATION (Clean up old 'Serenity' or 'AI' defaults if still present)
           let needsUpdate = false;
           const updatedSettings = { ...fetchedSettings };
-          
+
           // 1. Fix "Why Choose Serenity?" if user has a different site name
           if (updatedSettings.about?.subtitle === 'Serenity?' && updatedSettings.siteName && updatedSettings.siteName !== 'Serenity Staycation') {
             updatedSettings.about.subtitle = `${updatedSettings.siteName}?`;
@@ -200,6 +201,19 @@ function AppContent() {
       });
     }
   }, [location.pathname]);
+
+  // Eagerly pre-fetch heavy lazy-loaded components after initial render 
+  // This gives the customer a fast initial load, but prepares the modals and admin dashboard so they open instantly
+  useEffect(() => {
+    if (eagerLoadAdmin) {
+      const timer = setTimeout(() => {
+        import('./components/AdminDashboard');
+        import('./components/BookingModal');
+        import('./components/BookingLookupModal');
+      }, 3000); // Wait 3 seconds after homepage loads before downloading admin code
+      return () => clearTimeout(timer);
+    }
+  }, [eagerLoadAdmin]);
 
   // No loading gate here — the homepage renders immediately.
   // Only the rooms section in LandingPage checks isLoading to show skeletons.
@@ -373,93 +387,93 @@ function AppContent() {
         <Route path="/admin" element={
           <AdminPasscodeGate onBack={() => navigate('/')}>
             <Suspense fallback={<PageLoadingFallback />}>
-            <div className="relative">
-              <AdminDashboard
-                bookings={bookings}
-                rooms={rooms}
-                onUpdateRoom={handleUpdateRoom}
-                onAddRoom={handleAddRoom}
-                onDeleteRoom={handleDeleteRoom}
-                onUpdateBooking={handleUpdateBooking}
-                onDeleteBooking={handleDeleteBooking}
-                onDeleteBookings={handleDeleteBookings}
-                onAddBooking={handleAddBooking}
-                onRefresh={refreshData}
-                onFetchFilteredBookings={handleFetchFilteredBookings}
-                onSeed={handleSeed}
-                settings={settings}
-                onUpdateSettings={handleUpdateSettings}
-                onExit={() => navigate('/')}
-                onEnterVisualBuilder={() => {
-                  setStartEditing(true);
-                  navigate('/');
-                }}
-                showExpiryWarning={showExpiryWarning}
-                expiryDays={expiryDays}
-                expiryDate={expiryDate}
-                contactInfo={{
-                  email: contactEmail,
-                  phone: contactPhone,
-                  providerName: providerName
-                }}
-                showMissingPasscodeWarning={showMissingPasscodeWarning}
-                setShowMissingPasscodeWarning={setShowMissingPasscodeWarning}
-                licenseKey={licenseKey}
-                setShowExpiryWarning={setShowExpiryWarning}
-              />
-              {/* Admin Lockout Overlay */}
-              {isAdminLocked && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backdropFilter: 'blur(6px)' }}>
-                  <div className="absolute inset-0 bg-black/60" />
-                  <div className="relative max-w-md w-full mx-4 text-center">
-                    <div className="relative mb-6">
-                      <div className="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center animate-pulse">
-                        <div className="w-14 h-14 bg-red-500/30 rounded-full flex items-center justify-center">
-                          <Lock className="text-red-400" size={28} />
+              <div className="relative">
+                <AdminDashboard
+                  bookings={bookings}
+                  rooms={rooms}
+                  onUpdateRoom={handleUpdateRoom}
+                  onAddRoom={handleAddRoom}
+                  onDeleteRoom={handleDeleteRoom}
+                  onUpdateBooking={handleUpdateBooking}
+                  onDeleteBooking={handleDeleteBooking}
+                  onDeleteBookings={handleDeleteBookings}
+                  onAddBooking={handleAddBooking}
+                  onRefresh={refreshData}
+                  onFetchFilteredBookings={handleFetchFilteredBookings}
+                  onSeed={handleSeed}
+                  settings={settings}
+                  onUpdateSettings={handleUpdateSettings}
+                  onExit={() => navigate('/')}
+                  onEnterVisualBuilder={() => {
+                    setStartEditing(true);
+                    navigate('/');
+                  }}
+                  showExpiryWarning={showExpiryWarning}
+                  expiryDays={expiryDays}
+                  expiryDate={expiryDate}
+                  contactInfo={{
+                    email: contactEmail,
+                    phone: contactPhone,
+                    providerName: providerName
+                  }}
+                  showMissingPasscodeWarning={showMissingPasscodeWarning}
+                  setShowMissingPasscodeWarning={setShowMissingPasscodeWarning}
+                  licenseKey={licenseKey}
+                  setShowExpiryWarning={setShowExpiryWarning}
+                />
+                {/* Admin Lockout Overlay */}
+                {isAdminLocked && (
+                  <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ backdropFilter: 'blur(6px)' }}>
+                    <div className="absolute inset-0 bg-black/60" />
+                    <div className="relative max-w-md w-full mx-4 text-center">
+                      <div className="relative mb-6">
+                        <div className="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center animate-pulse">
+                          <div className="w-14 h-14 bg-red-500/30 rounded-full flex items-center justify-center">
+                            <Lock className="text-red-400" size={28} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <AlertTriangle className="text-yellow-400" size={18} />
-                        <span className="text-yellow-400 text-xs font-semibold uppercase tracking-wider">Access Suspended</span>
+                      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <AlertTriangle className="text-yellow-400" size={18} />
+                          <span className="text-yellow-400 text-xs font-semibold uppercase tracking-wider">Access Suspended</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">Admin Panel Locked</h2>
+                        <p className="text-gray-300 text-sm mb-5 leading-relaxed">
+                          Your subscription has expired or your admin access has been suspended.
+                          Please contact {providerName || 'your service provider'} to renew.
+                        </p>
+                        <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-2">
+                          <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact Support</p>
+                          {providerName && (
+                            <div className="flex items-center justify-center gap-2 text-gray-300 text-sm">
+                              <User size={14} className="text-gray-400" />
+                              <span className="font-medium">{providerName}</span>
+                            </div>
+                          )}
+                          {contactEmail && (
+                            <a href={`mailto:${contactEmail}`} className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm">
+                              <Mail size={14} /> {contactEmail}
+                            </a>
+                          )}
+                          {contactPhone && (
+                            <a href={`tel:${contactPhone}`} className="flex items-center justify-center gap-2 text-green-400 hover:text-green-300 transition-colors font-medium text-sm">
+                              <Phone size={14} /> {contactPhone}
+                            </a>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => window.location.reload()}
+                          className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          Retry Connection
+                        </button>
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-2">Admin Panel Locked</h2>
-                      <p className="text-gray-300 text-sm mb-5 leading-relaxed">
-                        Your subscription has expired or your admin access has been suspended.
-                        Please contact {providerName || 'your service provider'} to renew.
-                      </p>
-                      <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-2">
-                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact Support</p>
-                        {providerName && (
-                          <div className="flex items-center justify-center gap-2 text-gray-300 text-sm">
-                            <User size={14} className="text-gray-400" />
-                            <span className="font-medium">{providerName}</span>
-                          </div>
-                        )}
-                        {contactEmail && (
-                          <a href={`mailto:${contactEmail}`} className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm">
-                            <Mail size={14} /> {contactEmail}
-                          </a>
-                        )}
-                        {contactPhone && (
-                          <a href={`tel:${contactPhone}`} className="flex items-center justify-center gap-2 text-green-400 hover:text-green-300 transition-colors font-medium text-sm">
-                            <Phone size={14} /> {contactPhone}
-                          </a>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => window.location.reload()}
-                        className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
-                      >
-                        Retry Connection
-                      </button>
+                      <p className="text-gray-500 text-xs mt-4">Your data is safe and will be available once renewed.</p>
                     </div>
-                    <p className="text-gray-500 text-xs mt-4">Your data is safe and will be available once renewed.</p>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             </Suspense>
           </AdminPasscodeGate>
         } />

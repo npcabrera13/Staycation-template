@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X } from 'lucide-react';
+import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -113,6 +113,9 @@ const SuperAdmin: React.FC = () => {
     // AI Chat toggle
     const [enableAiChat, setEnableAiChat] = useState(false);
 
+    // Admin Eager Load toggle
+    const [enableEagerLoad, setEnableEagerLoad] = useState(false);
+
     // Admin passcode (read-only in SuperAdmin)
     const [adminPasscode, setAdminPasscode] = useState('');
     const [showAdminPasscode, setShowAdminPasscode] = useState(false);
@@ -143,6 +146,7 @@ const SuperAdmin: React.FC = () => {
                     }
                     if (snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
                     if (typeof snap.data().enableAiChat === 'boolean') setEnableAiChat(snap.data().enableAiChat);
+                    if (typeof snap.data().eagerLoadAdmin === 'boolean') setEnableEagerLoad(snap.data().eagerLoadAdmin);
                     if (snap.data().adminPasscode) setAdminPasscode(snap.data().adminPasscode);
                 }
             } catch { }
@@ -1220,6 +1224,42 @@ const SuperAdmin: React.FC = () => {
                                     className={`w-11 h-6 rounded-full transition-colors relative ${enableAiChat ? 'bg-green-500' : 'bg-gray-600'}`}
                                 >
                                     <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableAiChat ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Eager Load Toggle */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className={`p-2 rounded-lg mr-4 ${enableEagerLoad ? 'bg-amber-500/20' : 'bg-white/10'}`}>
+                                        <Zap size={20} className={enableEagerLoad ? 'text-amber-400' : 'text-gray-400'} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center">
+                                            <h3 className="text-md font-bold text-white mr-2">Fast Admin Panel</h3>
+                                            <div className="group relative z-10 flex items-center justify-center">
+                                                <HelpCircle size={14} className="text-gray-400 cursor-help hover:text-white transition-colors" />
+                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 border border-white/10 rounded-xl text-xs text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none shadow-xl">
+                                                    Speeds up the admin panel by secretly downloading heavy required assets in the background immediately after a guest hits your website.
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-0.5">Eliminates loading delay when clicking "Admin Login".</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        const newVal = !enableEagerLoad;
+                                        setEnableEagerLoad(newVal);
+                                        try {
+                                            await setDoc(doc(db, '_superadmin', 'settings'), { eagerLoadAdmin: newVal }, { merge: true });
+                                        } catch { }
+                                    }}
+                                    className={`w-11 h-6 rounded-full transition-colors relative ${enableEagerLoad ? 'bg-green-500' : 'bg-gray-600'}`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableEagerLoad ? 'translate-x-5' : 'translate-x-0.5'}`} />
                                 </button>
                             </div>
                         </div>

@@ -24,6 +24,7 @@ interface LicenseContextType {
     showMissingPasscodeWarning: boolean;
     setShowMissingPasscodeWarning: (show: boolean) => void;
     licenseKey: string;
+    eagerLoadAdmin: boolean;
 }
 
 const LicenseContext = createContext<LicenseContextType>({
@@ -42,6 +43,7 @@ const LicenseContext = createContext<LicenseContextType>({
     showMissingPasscodeWarning: false,
     setShowMissingPasscodeWarning: () => { },
     licenseKey: '',
+    eagerLoadAdmin: false,
 });
 
 export const useLicense = () => useContext(LicenseContext);
@@ -62,6 +64,7 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     const [showExpiryWarning, setShowExpiryWarning] = useState(false);
     const [showMissingPasscodeWarning, setShowMissingPasscodeWarning] = useState(false);
     const [licenseKey, setLicenseKey] = useState('');
+    const [eagerLoadAdmin, setEagerLoadAdmin] = useState(false);
     const location = useLocation();
 
     // Skip license check on /superadmin route
@@ -97,6 +100,10 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
                     setShowMissingPasscodeWarning(true);
                 } else {
                     setShowMissingPasscodeWarning(false);
+                }
+
+                if (typeof data.eagerLoadAdmin === 'boolean') {
+                    setEagerLoadAdmin(data.eagerLoadAdmin);
                 }
             }
         } catch (err) {
@@ -216,7 +223,8 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
                 setShowExpiryWarning: () => {},
                 showMissingPasscodeWarning: false,
                 setShowMissingPasscodeWarning: () => {},
-                licenseKey: ''
+                licenseKey: '',
+                eagerLoadAdmin: false
             }}>
                 {children}
             </LicenseContext.Provider>
@@ -262,7 +270,8 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
             setShowExpiryWarning,
             showMissingPasscodeWarning,
             setShowMissingPasscodeWarning,
-            licenseKey
+            licenseKey,
+            eagerLoadAdmin
         }}>
             {children}
         </LicenseContext.Provider>

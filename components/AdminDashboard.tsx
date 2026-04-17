@@ -87,13 +87,11 @@ const getStartOfWeek = (date: Date) => {
 const HelpTooltip: React.FC<{ text: string, align?: 'center' | 'right' }> = ({ text, align = 'center' }) => (
     <div className="group relative inline-block ml-1.5 cursor-help align-middle">
         <HelpCircle size={13} className="text-gray-400 hover:text-primary transition-colors" />
-        <div className={`invisible group-hover:visible absolute z-[9999] bottom-full mb-2 w-48 p-2 bg-gray-900/95 backdrop-blur-md text-white text-[10px] leading-relaxed rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none text-center font-medium ${
-            align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
-        }`}>
+        <div className={`invisible group-hover:visible absolute z-[9999] bottom-full mb-2 w-48 p-2 bg-gray-900/95 backdrop-blur-md text-white text-[10px] leading-relaxed rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none text-center font-medium ${align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
+            }`}>
             {text}
-            <div className={`absolute top-full -mt-1 border-4 border-transparent border-t-gray-900/95 ${
-                align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-2'
-            }`}></div>
+            <div className={`absolute top-full -mt-1 border-4 border-transparent border-t-gray-900/95 ${align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-2'
+                }`}></div>
         </div>
     </div>
 );
@@ -198,13 +196,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const handleSaveSettings = async () => {
         if (onUpdateSettings && settingsForm) {
             await onUpdateSettings(settingsForm);
-            
+
             // UX Fix: Also save the passcode if they changed it but forgot to click the specific save button
             if (newPasscode !== adminPasscode && newPasscode.length === 6) {
                 await setDoc(doc(db, '_superadmin', 'settings'), { adminPasscode: newPasscode }, { merge: true });
                 setAdminPasscode(newPasscode);
             }
-            
+
             showToast("Settings saved successfully!", "success");
         }
     };
@@ -921,15 +919,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         today.setHours(0, 0, 0, 0);
                         const isPast = date < today;
                         const isToday = isSameDay(date, today);
-                        
+
                         // Prevent popup cropping on edges
                         const dayOfWeek = idx % 7;
                         const popupPositionClass = dayOfWeek === 0 ? 'left-0 origin-top-left' : dayOfWeek === 6 ? 'right-0 origin-top-right' : 'left-1/2 -translate-x-1/2 origin-top';
 
                         return (
                             <div key={idx} className={`min-h-[60px] md:min-h-[100px] p-1 md:p-2 relative group transition-colors 
-                                ${!isCurrentMonth 
-                                    ? 'bg-gray-50/50 dark:bg-gray-900/40 text-gray-300 dark:text-gray-600' 
+                                ${!isCurrentMonth
+                                    ? 'bg-gray-50/50 dark:bg-gray-900/40 text-gray-300 dark:text-gray-600'
                                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-white'} 
                                 ${isPast && isCurrentMonth ? 'bg-gray-50/80 dark:bg-gray-800/50 text-gray-400' : ''} 
                                 ${isCurrentMonth && !isPast ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}>
@@ -1001,8 +999,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     })}
                 </div>
 
-                 {/* Calendar Legend */}
-                 <div className="mt-4 flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-start md:items-center text-xs md:text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                {/* Calendar Legend */}
+                <div className="mt-4 flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-start md:items-center text-xs md:text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto flex-1">
                         <span className="font-bold uppercase tracking-wider text-gray-500 dark:text-gray-500 text-[10px] mr-1">Room Colors:</span>
                         {rooms.map((room, idx) => {
@@ -1026,7 +1024,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span>Confirmed</span>
                         </div>
                     </div>
-                 </div>
+                </div>
             </div>
         );
     }
@@ -1624,13 +1622,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {/* Require Deposit Toggle */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg gap-4">
-                                <div>
-                                    <p className="font-medium text-gray-800 dark:text-white flex items-center">
-                                        Require Deposit
-                                        <HelpTooltip text="If enabled, guests must upload a payment proof before their booking is saved" />
-                                    </p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
-                                </div>
+                            <div>
+                                <p className="font-medium text-gray-800 dark:text-white flex items-center">
+                                    Require Deposit
+                                    <HelpTooltip text="If enabled, guests must upload a payment proof before their booking is saved" />
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
+                            </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -1741,38 +1739,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <button
                                     type="button"
                                     onClick={async () => {
-                                        const updatedPolicy = settingsForm?.reservationPolicy 
+                                        const updatedPolicy = settingsForm?.reservationPolicy
                                             ? { ...settingsForm.reservationPolicy, bookingSystemType: 'strict' as const }
-                                            : { 
-                                                requireDeposit: true, 
-                                                depositType: 'percentage' as const, 
-                                                depositPercentage: 50, 
-                                                fixedDepositAmount: 1000, 
-                                                autoConfirmOnDeposit: false, 
-                                                cancellationPolicy: '', 
+                                            : {
+                                                requireDeposit: true,
+                                                depositType: 'percentage' as const,
+                                                depositPercentage: 50,
+                                                fixedDepositAmount: 1000,
+                                                autoConfirmOnDeposit: false,
+                                                cancellationPolicy: '',
                                                 paymentDeadlineHours: 24,
                                                 bookingSystemType: 'strict' as const
                                             };
                                         const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
                                         setSettingsForm(newSettings);
-                                        
+
                                         // Auto-save setting
                                         if (onUpdateSettings) {
                                             await onUpdateSettings(newSettings);
                                             showToast("Mode set to Strict (Auto-saved)", "success");
                                         }
                                     }}
-                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${
-                                        (settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
+                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
                                             ? 'border-primary bg-primary/5 ring-1 ring-primary'
                                             : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center mb-1">
-                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${
-                                            (settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
+                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
                                                 ? 'border-primary' : 'border-gray-300'
-                                        }`}>
+                                            }`}>
                                             {(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict' && (
                                                 <div className="w-2 h-2 bg-primary rounded-full" />
                                             )}
@@ -1785,15 +1781,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <button
                                     type="button"
                                     onClick={async () => {
-                                        const updatedPolicy = settingsForm?.reservationPolicy 
+                                        const updatedPolicy = settingsForm?.reservationPolicy
                                             ? { ...settingsForm.reservationPolicy, bookingSystemType: 'smart' as const }
-                                            : { 
-                                                requireDeposit: true, 
-                                                depositType: 'percentage' as const, 
-                                                depositPercentage: 50, 
-                                                fixedDepositAmount: 1000, 
-                                                autoConfirmOnDeposit: false, 
-                                                cancellationPolicy: '', 
+                                            : {
+                                                requireDeposit: true,
+                                                depositType: 'percentage' as const,
+                                                depositPercentage: 50,
+                                                fixedDepositAmount: 1000,
+                                                autoConfirmOnDeposit: false,
+                                                cancellationPolicy: '',
                                                 paymentDeadlineHours: 24,
                                                 bookingSystemType: 'smart' as const
                                             };
@@ -1806,17 +1802,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             showToast("Mode set to Smart (Auto-saved)", "success");
                                         }
                                     }}
-                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${
-                                        settingsForm.reservationPolicy?.bookingSystemType === 'smart'
+                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
                                             ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500'
                                             : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center mb-1">
-                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${
-                                            settingsForm.reservationPolicy?.bookingSystemType === 'smart'
+                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
                                                 ? 'border-amber-500' : 'border-gray-300'
-                                        }`}>
+                                            }`}>
                                             {settingsForm.reservationPolicy?.bookingSystemType === 'smart' && (
                                                 <div className="w-2 h-2 bg-amber-500 rounded-full" />
                                             )}
@@ -1887,7 +1881,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         >
                                             {adminPasscode ? 'Update Passcode' : 'Set Passcode'}
                                         </button>
-                                        
+
                                         {adminPasscode && (
                                             <button
                                                 type="button"
@@ -1946,13 +1940,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="relative" ref={notificationPanelRef}>
                             <button
                                 onClick={() => setShowNotificationPanel(prev => !prev)}
-                                className={`relative p-2 rounded-xl transition-colors group flex items-center justify-center ${
-                                    (expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0
+                                className={`relative p-2 rounded-xl transition-colors group flex items-center justify-center ${(expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0
                                         ? 'text-gray-800 dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
                                         : expiryDays !== null && expiryDays <= 7
-                                        ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30'
-                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
-                                }`}
+                                            ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30'
+                                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                 title="Notifications"
                             >
                                 <Bell size={22} className={(expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0 ? '' : ''} />
@@ -2006,28 +1999,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">License & Renewal</p>
                                                 <button
                                                     onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
-                                                    className={`group w-full relative rounded-xl p-3.5 flex items-center justify-between transition-all border shadow-sm hover:shadow-md active:scale-[0.98] ${
-                                                        expiryDays !== null && expiryDays <= 0
+                                                    className={`group w-full relative rounded-xl p-3.5 flex items-center justify-between transition-all border shadow-sm hover:shadow-md active:scale-[0.98] ${expiryDays !== null && expiryDays <= 0
                                                             ? 'bg-red-50 border-red-200 hover:bg-red-100/50 dark:bg-red-900/10 dark:border-red-500/20 dark:hover:bg-red-900/20'
                                                             : expiryDays !== null && expiryDays <= 7
-                                                            ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/50 dark:bg-amber-900/10 dark:border-amber-500/20 dark:hover:bg-amber-900/20'
-                                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
-                                                    }`}
+                                                                ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/50 dark:bg-amber-900/10 dark:border-amber-500/20 dark:hover:bg-amber-900/20'
+                                                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center gap-3 flex-1">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                                            expiryDays !== null && expiryDays <= 0 ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' :
-                                                            expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                            'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
-                                                        }`}>
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${expiryDays !== null && expiryDays <= 0 ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' :
+                                                                expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                                    'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
+                                                            }`}>
                                                             {expiryDays !== null && expiryDays <= 7 ? <AlertTriangle size={16} /> : <CheckCircle size={16} />}
                                                         </div>
                                                         <div className="text-left flex-1">
                                                             <span className="block font-bold text-sm text-gray-900 dark:text-white">
                                                                 {expiryDays === null ? 'View Details'
                                                                     : expiryDays <= 0 ? 'Subscription Expired'
-                                                                    : expiryDays <= 7 ? 'Expiring Soon'
-                                                                    : 'Active Subscription'}
+                                                                        : expiryDays <= 7 ? 'Expiring Soon'
+                                                                            : 'Active Subscription'}
                                                             </span>
                                                             <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">
                                                                 {expiryDays !== null && expiryDays > 7
@@ -2037,16 +2028,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-4">
-                                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md transition-colors ${
-                                                            expiryDays !== null && expiryDays <= 7 
-                                                                ? 'bg-amber-500 text-white' 
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md transition-colors ${expiryDays !== null && expiryDays <= 7
+                                                                ? 'bg-amber-500 text-white'
                                                                 : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
-                                                        }`}>
+                                                            }`}>
                                                             {expiryDays !== null && expiryDays <= 7 ? 'Renew Now' : 'Manage'}
                                                         </span>
-                                                        <ChevronRight size={14} className={`transition-transform group-hover:translate-x-0.5 ${
-                                                            expiryDays !== null && expiryDays <= 7 ? 'text-amber-500' : 'text-gray-400'
-                                                        }`} />
+                                                        <ChevronRight size={14} className={`transition-transform group-hover:translate-x-0.5 ${expiryDays !== null && expiryDays <= 7 ? 'text-amber-500' : 'text-gray-400'
+                                                            }`} />
                                                     </div>
                                                 </button>
                                             </div>
@@ -2076,7 +2065,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
                                                                             Overdue
                                                                         </span>
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => { handleEditBookingClick(b); setShowNotificationPanel(false); }}
                                                                             className="text-xs font-bold text-primary hover:underline"
                                                                         >
@@ -2112,7 +2101,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
                                                                             Deposit Paid
                                                                         </span>
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => { handleEditBookingClick(b); setShowNotificationPanel(false); }}
                                                                             className="text-xs font-bold text-primary hover:underline"
                                                                         >
@@ -2136,8 +2125,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             )}
                         </div>
-                        <button 
-                            onClick={toggleTheme} 
+                        <button
+                            onClick={toggleTheme}
                             className="md:hidden p-2 hover:bg-gray-700 rounded transition-all text-gray-300 hover:text-white flex items-center justify-center group"
                             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
                         >
@@ -2485,9 +2474,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} tickFormatter={(val) => `₱${val / 1000}k`} width={45} />
                                             <Tooltip
                                                 cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6' }}
-                                                contentStyle={{ 
-                                                    borderRadius: '12px', 
-                                                    border: 'none', 
+                                                contentStyle={{
+                                                    borderRadius: '12px',
+                                                    border: 'none',
                                                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                                                     backgroundColor: isDark ? '#111827' : '#FFFFFF',
                                                     color: isDark ? '#F3F4F6' : '#111827',
@@ -2918,293 +2907,293 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
 
             {/* Add/Edit Room Modal */}
-                            {(isAddingRoom || editingRoomId) && (
+            {(isAddingRoom || editingRoomId) && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-4xl relative animate-pop max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
                         <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                             <h3 className="text-lg font-bold text-gray-800 dark:text-white">
                                 {isAddingRoom ? 'Add New Room' : 'Edit Room'}
                             </h3>
-                                            <button
-                                                onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
-                                                className="text-gray-400 hover:text-gray-600 p-1"
-                                            >
-                                                <X size={20} />
-                                            </button>
-                                        </div>
+                            <button
+                                onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
+                                className="text-gray-400 hover:text-gray-600 p-1"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
 
-                                        <div className="space-y-6">
-                                            {/* Basic Details */}
-                                            <div className="space-y-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                                    <div className="lg:col-span-2">
-                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                            Room Name
-                                                            <HelpTooltip text="The display name of the unit (e.g. 'Sunset Villa')" />
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={isAddingRoom ? newRoom.name : editForm.name}
-                                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, name: e.target.value }) : setEditForm({ ...editForm, name: e.target.value })}
-                                                            placeholder="e.g. Sunset Villa"
-                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                            Overnight Price (₱)
-                                                            <HelpTooltip text="Base price for a standard one-night stay" />
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={isAddingRoom ? newRoom.price : editForm.price}
-                                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, price: Number(e.target.value) }) : setEditForm({ ...editForm, price: Number(e.target.value) })}
-                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                            Day Use Price (₱)
-                                                            <HelpTooltip text="Optional price for daytime-only stays. Leave empty or 0 if not supported." />
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={isAddingRoom ? (newRoom.dayUsePrice || '') : (editForm.dayUsePrice || '')}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value ? Number(e.target.value) : undefined;
-                                                                isAddingRoom ? setNewRoom({ ...newRoom, dayUsePrice: val }) : setEditForm({ ...editForm, dayUsePrice: val });
-                                                            }}
-                                                            placeholder="e.g. 1500"
-                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                        />
-                                                        <p className="text-[10px] text-gray-400 mt-1 italic">(Optional)</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                            Capacity
-                                                            <HelpTooltip text="Maximum number of guests allowed in this unit" />
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={isAddingRoom ? newRoom.capacity : editForm.capacity}
-                                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, capacity: Number(e.target.value) }) : setEditForm({ ...editForm, capacity: Number(e.target.value) })}
-                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                        />
-                                                    </div>
-                                                    <div className="lg:col-span-2">
-                                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                            Fixed Deposit Amount (₱)
-                                                            <HelpTooltip text="Overrides global deposit settings for this room only. Set to 0 to use global defaults." />
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value ? Number(e.target.value) : undefined;
-                                                                isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
-                                                            }}
-                                                            placeholder="e.g. 2000 (leave empty to use global setting)"
-                                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                        Description
-                                                        <HelpTooltip text="Brief highlights of the room features and view" />
-                                                    </label>
-                                                    <textarea
-                                                        value={isAddingRoom ? newRoom.description : editForm.description}
-                                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, description: e.target.value }) : setEditForm({ ...editForm, description: e.target.value })}
-                                                        rows={3}
-                                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                                        Main Image URL
-                                                        <HelpTooltip text="Direct link to the main photo of this unit" />
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={isAddingRoom ? newRoom.image : editForm.image}
-                                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, image: e.target.value }) : setEditForm({ ...editForm, image: e.target.value })}
-                                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                                {/* Image Preview */}
-                                                {(isAddingRoom ? newRoom.image : editForm.image) && (
-                                                    <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden relative">
-                                                        <img src={isAddingRoom ? newRoom.image : editForm.image} alt="Preview" className="w-full h-full object-cover" />
-                                                    </div>
-                                                )}
-                                            
-
-                                            {/* Gallery Images */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gallery Images</label>
-                                                <div className="space-y-2">
-                                                    {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
-                                                        <div key={idx} className="flex gap-2 items-center group">
-                                                            {img && (
-                                                                <div 
-                                                                    className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 cursor-zoom-in hover:border-primary transition-all relative group/thumb shadow-sm hover:shadow-md"
-                                                                    onClick={() => setZoomedImage(img)}
-                                                                    title="Click to Zoom"
-                                                                >
-                                                                    <img 
-                                                                        src={img} 
-                                                                        alt="" 
-                                                                        className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-300" 
-                                                                        onError={(e) => {
-                                                                            (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
-                                                                        }} 
-                                                                    />
-                                                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
-                                                                        <Maximize2 size={14} className="text-white" />
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            <div className="flex-1 relative">
-                                                                <input
-                                                                    type="text"
-                                                                    value={img}
-                                                                    onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
-                                                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                                                                    placeholder="Image URL"
-                                                                />
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)} 
-                                                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
-                                                                title="Remove Image"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                    <button
-                                                        onClick={() => handleAddGalleryImage(!isAddingRoom)}
-                                                        className="text-primary text-sm font-medium hover:underline flex items-center"
-                                                    >
-                                                        <Plus size={14} className="mr-1" /> Add Gallery Image
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Amenities */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amenities</label>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                                                    {PREDEFINED_AMENITIES.map(amenity => {
-                                                        const currentAmenities = isAddingRoom ? (newRoom.amenities || []) : (editForm.amenities || []);
-                                                        const isSelected = currentAmenities.some(a => a.name === amenity.name);
-                                                        return (
-                                                            <div
-                                                                key={amenity.name}
-                                                                onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
-                                                                className={`cursor-pointer flex items-center p-2 rounded-lg border text-sm transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
-                                                            >
-                                                                {renderAmenityIcon(amenity.icon)}
-                                                                <span className="ml-2">{amenity.name}</span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {/* Custom Amenity */}
-                                                <div className="flex gap-2 items-end">
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Custom amenity name"
-                                                            value={isAddingRoom ? newRoomCustomAmenity : customAmenityInput}
-                                                            onChange={(e) => isAddingRoom ? setNewRoomCustomAmenity(e.target.value) : setCustomAmenityInput(e.target.value)}
-                                                            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                                                        />
-                                                    </div>
-                                                    <div className="relative" ref={isAddingRoom ? newRoomIconPickerRef : iconPickerRef}>
-                                                        <button
-                                                            onClick={() => isAddingRoom ? setShowNewRoomIconPicker(!showNewRoomIconPicker) : setShowIconPicker(!showIconPicker)}
-                                                            className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                                                            title="Select Icon"
-                                                        >
-                                                            {renderAmenityIcon(isAddingRoom ? newRoomCustomIcon : customAmenityIcon)}
-                                                        </button>
-                                                        {(isAddingRoom ? showNewRoomIconPicker : showIconPicker) && (
-                                                            <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 pb-6 grid grid-cols-6 gap-2 z-[100] max-h-64 overflow-y-auto scrollbar-thin">
-                                                                {ICON_OPTIONS.map(icon => (
-                                                                    <button
-                                                                        key={icon}
-                                                                        onClick={() => {
-                                                                            if (isAddingRoom) {
-                                                                                setNewRoomCustomIcon(icon);
-                                                                                setShowNewRoomIconPicker(false);
-                                                                            } else {
-                                                                                setCustomAmenityIcon(icon);
-                                                                                setShowIconPicker(false);
-                                                                            }
-                                                                        }}
-                                                                        className={`p-1.5 rounded hover:bg-gray-100 ${(isAddingRoom ? newRoomCustomIcon : customAmenityIcon) === icon ? 'bg-primary/20 text-primary' : 'text-gray-500'
-                                                                            }`}
-                                                                    >
-                                                                        {renderAmenityIcon(icon)}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={isAddingRoom ? addNewRoomCustomAmenity : addEditCustomAmenity}
-                                                        className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
-                                                    >
-                                                        Add
-                                                    </button>
-                                                </div>
-
-                                                {/* Amenities List Display for Custom items or all */}
-                                                <div className="flex flex-wrap gap-2 mt-3">
-                                                    {((isAddingRoom ? newRoom.amenities : editForm.amenities) || []).filter(a => !PREDEFINED_AMENITIES.some(p => p.name === a.name)).map((amenity, idx) => (
-                                                        <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 shadow-sm">
-                                                            {renderAmenityIcon(amenity.icon)}
-                                                            <span className="ml-1.5 mr-1">{amenity.name}</span>
-                                                            <button
-                                                                onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
-                                                                className="text-gray-400 hover:text-red-500 ml-1 transition-colors"
-                                                            >
-                                                                <X size={12} />
-                                                            </button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-8 flex justify-end space-x-3 border-t border-gray-100 dark:border-gray-700 pt-6">
-                                            <button
-                                                onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
-                                                className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={isAddingRoom ? handleAddRoomSubmit : handleSaveRoom}
-                                                className="px-5 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center shadow-md"
-                                            >
-                                                <Save size={18} className="mr-2" /> {isAddingRoom ? 'Create Room' : 'Save Changes'}
-                                            </button>
-                                        </div>
+                        <div className="space-y-6">
+                            {/* Basic Details */}
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="lg:col-span-2">
+                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                            Room Name
+                                            <HelpTooltip text="The display name of the unit (e.g. 'Sunset Villa')" />
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={isAddingRoom ? newRoom.name : editForm.name}
+                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, name: e.target.value }) : setEditForm({ ...editForm, name: e.target.value })}
+                                            placeholder="e.g. Sunset Villa"
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                        />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                            Overnight Price (₱)
+                                            <HelpTooltip text="Base price for a standard one-night stay" />
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={isAddingRoom ? newRoom.price : editForm.price}
+                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, price: Number(e.target.value) }) : setEditForm({ ...editForm, price: Number(e.target.value) })}
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                            Day Use Price (₱)
+                                            <HelpTooltip text="Optional price for daytime-only stays. Leave empty or 0 if not supported." />
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={isAddingRoom ? (newRoom.dayUsePrice || '') : (editForm.dayUsePrice || '')}
+                                            onChange={(e) => {
+                                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                                isAddingRoom ? setNewRoom({ ...newRoom, dayUsePrice: val }) : setEditForm({ ...editForm, dayUsePrice: val });
+                                            }}
+                                            placeholder="e.g. 1500"
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1 italic">(Optional)</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                            Capacity
+                                            <HelpTooltip text="Maximum number of guests allowed in this unit" />
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={isAddingRoom ? newRoom.capacity : editForm.capacity}
+                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, capacity: Number(e.target.value) }) : setEditForm({ ...editForm, capacity: Number(e.target.value) })}
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div className="lg:col-span-2">
+                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                            Fixed Deposit Amount (₱)
+                                            <HelpTooltip text="Overrides global deposit settings for this room only. Set to 0 to use global defaults." />
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
+                                            onChange={(e) => {
+                                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                                isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
+                                            }}
+                                            placeholder="e.g. 2000 (leave empty to use global setting)"
+                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Description
+                                        <HelpTooltip text="Brief highlights of the room features and view" />
+                                    </label>
+                                    <textarea
+                                        value={isAddingRoom ? newRoom.description : editForm.description}
+                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, description: e.target.value }) : setEditForm({ ...editForm, description: e.target.value })}
+                                        rows={3}
+                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        Main Image URL
+                                        <HelpTooltip text="Direct link to the main photo of this unit" />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={isAddingRoom ? newRoom.image : editForm.image}
+                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, image: e.target.value }) : setEditForm({ ...editForm, image: e.target.value })}
+                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                            {/* Image Preview */}
+                            {(isAddingRoom ? newRoom.image : editForm.image) && (
+                                <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden relative">
+                                    <img src={isAddingRoom ? newRoom.image : editForm.image} alt="Preview" className="w-full h-full object-cover" />
                                 </div>
                             )}
 
-                            
+
+                            {/* Gallery Images */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gallery Images</label>
+                                <div className="space-y-2">
+                                    {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
+                                        <div key={idx} className="flex gap-2 items-center group">
+                                            {img && (
+                                                <div
+                                                    className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 cursor-zoom-in hover:border-primary transition-all relative group/thumb shadow-sm hover:shadow-md"
+                                                    onClick={() => setZoomedImage(img)}
+                                                    title="Click to Zoom"
+                                                >
+                                                    <img
+                                                        src={img}
+                                                        alt=""
+                                                        className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-300"
+                                                        onError={(e) => {
+                                                            (e.currentTarget.parentElement as HTMLElement).style.display = 'none';
+                                                        }}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <Maximize2 size={14} className="text-white" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="text"
+                                                    value={img}
+                                                    onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
+                                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                                                    placeholder="Image URL"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)}
+                                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
+                                                title="Remove Image"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={() => handleAddGalleryImage(!isAddingRoom)}
+                                        className="text-primary text-sm font-medium hover:underline flex items-center"
+                                    >
+                                        <Plus size={14} className="mr-1" /> Add Gallery Image
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Amenities */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amenities</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                                    {PREDEFINED_AMENITIES.map(amenity => {
+                                        const currentAmenities = isAddingRoom ? (newRoom.amenities || []) : (editForm.amenities || []);
+                                        const isSelected = currentAmenities.some(a => a.name === amenity.name);
+                                        return (
+                                            <div
+                                                key={amenity.name}
+                                                onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
+                                                className={`cursor-pointer flex items-center p-2 rounded-lg border text-sm transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:text-gray-300'}`}
+                                            >
+                                                {renderAmenityIcon(amenity.icon)}
+                                                <span className="ml-2">{amenity.name}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Custom Amenity */}
+                                <div className="flex gap-2 items-end">
+                                    <div className="flex-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Custom amenity name"
+                                            value={isAddingRoom ? newRoomCustomAmenity : customAmenityInput}
+                                            onChange={(e) => isAddingRoom ? setNewRoomCustomAmenity(e.target.value) : setCustomAmenityInput(e.target.value)}
+                                            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="relative" ref={isAddingRoom ? newRoomIconPickerRef : iconPickerRef}>
+                                        <button
+                                            onClick={() => isAddingRoom ? setShowNewRoomIconPicker(!showNewRoomIconPicker) : setShowIconPicker(!showIconPicker)}
+                                            className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                                            title="Select Icon"
+                                        >
+                                            {renderAmenityIcon(isAddingRoom ? newRoomCustomIcon : customAmenityIcon)}
+                                        </button>
+                                        {(isAddingRoom ? showNewRoomIconPicker : showIconPicker) && (
+                                            <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 pb-6 grid grid-cols-6 gap-2 z-[100] max-h-64 overflow-y-auto scrollbar-thin">
+                                                {ICON_OPTIONS.map(icon => (
+                                                    <button
+                                                        key={icon}
+                                                        onClick={() => {
+                                                            if (isAddingRoom) {
+                                                                setNewRoomCustomIcon(icon);
+                                                                setShowNewRoomIconPicker(false);
+                                                            } else {
+                                                                setCustomAmenityIcon(icon);
+                                                                setShowIconPicker(false);
+                                                            }
+                                                        }}
+                                                        className={`p-1.5 rounded hover:bg-gray-100 ${(isAddingRoom ? newRoomCustomIcon : customAmenityIcon) === icon ? 'bg-primary/20 text-primary' : 'text-gray-500'
+                                                            }`}
+                                                    >
+                                                        {renderAmenityIcon(icon)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={isAddingRoom ? addNewRoomCustomAmenity : addEditCustomAmenity}
+                                        className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+
+                                {/* Amenities List Display for Custom items or all */}
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {((isAddingRoom ? newRoom.amenities : editForm.amenities) || []).filter(a => !PREDEFINED_AMENITIES.some(p => p.name === a.name)).map((amenity, idx) => (
+                                        <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 shadow-sm">
+                                            {renderAmenityIcon(amenity.icon)}
+                                            <span className="ml-1.5 mr-1">{amenity.name}</span>
+                                            <button
+                                                onClick={() => isAddingRoom ? toggleNewRoomAmenity(amenity) : toggleEditAmenity(amenity)}
+                                                className="text-gray-400 hover:text-red-500 ml-1 transition-colors"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-end space-x-3 border-t border-gray-100 dark:border-gray-700 pt-6">
+                            <button
+                                onClick={() => { isAddingRoom ? setIsAddingRoom(false) : setEditingRoomId(null) }}
+                                className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={isAddingRoom ? handleAddRoomSubmit : handleSaveRoom}
+                                className="px-5 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover transition-colors flex items-center shadow-md"
+                            >
+                                <Save size={18} className="mr-2" /> {isAddingRoom ? 'Create Room' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             {/* Expiry Warning / Self-Service Renewal Modal */}
             {
                 showExpiryWarning && expiryDays !== null && (
@@ -3328,8 +3317,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <button
                                         onClick={() => setExportConfig({ ...exportConfig, format: 'doc' })}
                                         className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'doc'
-                                                ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
+                                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                                             }`}
                                     >
                                         .DOC (Text)
@@ -3337,8 +3326,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <button
                                         onClick={() => setExportConfig({ ...exportConfig, format: 'csv' })}
                                         className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'csv'
-                                                ? 'bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            ? 'bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
+                                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                                             }`}
                                     >
                                         .CSV (Excel)
@@ -3346,8 +3335,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <button
                                         onClick={() => setExportConfig({ ...exportConfig, format: 'txt' })}
                                         className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${exportConfig.format === 'txt'
-                                                ? 'bg-gray-100 border-gray-500 text-gray-700 dark:bg-gray-600 dark:border-gray-400 dark:text-gray-200'
-                                                : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            ? 'bg-gray-100 border-gray-500 text-gray-700 dark:bg-gray-600 dark:border-gray-400 dark:text-gray-200'
+                                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
                                             }`}
                                     >
                                         .TXT
