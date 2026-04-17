@@ -1,6 +1,10 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
+import { WorkerMailer } from 'worker-mailer';
+
+interface Env {
+    SMTP_EMAIL: string;
+    SMTP_PASSWORD: string;
+    VITE_FIREBASE_APP_ID?: string;
+}
 
 interface EmailRequest {
     to: string;
@@ -33,15 +37,20 @@ interface EmailRequest {
     };
 }
 
-// Secure token configuration
-const SECRET = process.env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
-
-function generateActionToken(id?: string): string {
-    return crypto
-        .createHash('sha256')
-        .update((id || 'default') + SECRET)
-        .digest('hex');
+// ── Crypto: Web Crypto API (native to Cloudflare Workers) ──────────────────
+async function generateActionToken(id?: string, secret?: string): Promise<string> {
+    const msg = (id || 'default') + (secret || 'staycation-secret-salt');
+    const msgBuffer = new TextEncoder().encode(msg);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EMAIL TEMPLATES
+// ═══════════════════════════════════════════════════════════════════════════
 
 function generateUserEmailHTML(data: EmailRequest['data']): string {
     return `
@@ -58,6 +67,7 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
             .booking-box p { margin: 8px 0; }
             .payment-box { background: #fef3c7; padding: 20px; margin: 20px 0; border-radius: 8px; }
             .footer { background: #264653; color: white; padding: 20px; text-align: center; font-size: 12px; }
+            .highlight { color: #2A9D8F; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -104,8 +114,7 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
     `;
 }
 
-function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
-    const token = generateActionToken(data.bookingId);
+function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string, token: string): string {
     const approveUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=approve&token=${token}`;
     const rejectUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=reject&token=${token}`;
 
@@ -133,7 +142,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
             </div>
             <div class="content">
                 <p>A new booking has been received:</p>
-
+                
                 <div class="info-box">
                     <p><strong>Guest:</strong> ${data.guestName}</p>
                     <p><strong>Room:</strong> ${data.roomName}</p>
@@ -151,7 +160,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
                     <img src="cid:payment-proof" class="receipt-preview" alt="Payment Receipt" />
                 </div>
                 ` : ''}
-
+                
                 <div class="action-box">
                     <h3 style="margin-top: 0; color: #dc2626;">Instant Actions</h3>
                     <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the receipt above and click to action:</p>
@@ -170,8 +179,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
     `;
 }
 
-function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): string {
-    const token = generateActionToken(data.requestId || data.bookingId);
+function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string, token: string): string {
     const approveUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=approve-renewal&token=${token}`;
     const rejectUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=reject-renewal&token=${token}`;
 
@@ -201,7 +209,7 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
             <div class="content">
                 <p>Hello Superadmin,</p>
                 <p>A client has just submitted a renewal payment proof. Please review the details below:</p>
-
+                
                 <div class="info-box">
                     <p><strong>Client / Site Name:</strong> ${data.clientName}</p>
                     <p><strong>Requested Plan:</strong> ${data.plan}</p>
@@ -223,7 +231,7 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
                     <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
                     <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will instantly update their expiry date.</p>
                 </div>
-
+                
                 <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
                     <a href="${data.superadminUrl || data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Go to Superadmin Panel</a>
                 </div>
@@ -234,65 +242,100 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
     `;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUDFLARE PAGES FUNCTION HANDLER
+// ═══════════════════════════════════════════════════════════════════════════
 
-    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
-        return res.status(500).json({ error: 'Email service not configured' });
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
+    // Check for required environment variables
+    if (!env.SMTP_EMAIL || !env.SMTP_PASSWORD) {
+        return new Response(JSON.stringify({ error: 'Email service not configured. Set SMTP_EMAIL and SMTP_PASSWORD in Cloudflare env vars.' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
     try {
-        const { to, subject, type, data } = req.body as EmailRequest;
+        const { to, subject, type, data } = await request.json() as EmailRequest;
 
+        // Validate required fields
         if (!to || !subject || !type || !data) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
-        const protocol = req.headers['x-forwarded-proto'] || 'http';
-        const host = req.headers.host || 'localhost:3000';
-        const baseUrl = `${protocol}://${host}`;
+        // Detect Base URL for action links
+        const url = new URL(request.url);
+        const baseUrl = `${url.protocol}//${url.host}`;
+        const SECRET = env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
 
+        // Generate HTML based on email type
         let html = '';
-        let attachments: any[] = [];
+        let attachments: { filename: string; content: string; mimeType?: string }[] = [];
 
         if (type === 'superadmin_renewal') {
-            html = generateRenewalEmailHTML(data, baseUrl);
+            const token = await generateActionToken(data.requestId || data.bookingId, SECRET);
+            html = generateRenewalEmailHTML(data, baseUrl, token);
+
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');
                 const extension = meta.split('/')[1].split(';')[0] || 'png';
-                attachments.push({ filename: `receipt.${extension}`, content: Buffer.from(base64, 'base64'), cid: 'payment-proof' });
+                attachments.push({
+                    filename: `receipt.${extension}`,
+                    content: base64,
+                    mimeType: `image/${extension}`
+                });
             }
         } else if (type === 'admin_notification') {
-            html = generateAdminEmailHTML(data, baseUrl);
+            const token = await generateActionToken(data.bookingId, SECRET);
+            html = generateAdminEmailHTML(data, baseUrl, token);
+
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');
                 const extension = meta.split('/')[1].split(';')[0] || 'png';
-                attachments.push({ filename: `receipt.${extension}`, content: Buffer.from(base64, 'base64'), cid: 'payment-proof' });
+                attachments.push({
+                    filename: `receipt.${extension}`,
+                    content: base64,
+                    mimeType: `image/${extension}`
+                });
             }
         } else {
             html = generateUserEmailHTML(data);
         }
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: process.env.SMTP_EMAIL, pass: process.env.SMTP_PASSWORD }
+        // Connect using worker-mailer via Cloudflare's native TCP sockets
+        const mailer = await WorkerMailer.connect({
+            credentials: {
+                username: env.SMTP_EMAIL,
+                password: env.SMTP_PASSWORD,
+            },
+            authType: 'plain',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: true,
         });
 
-        const info = await transporter.sendMail({
-            from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
-            to,
-            subject,
-            html,
-            attachments
+        // Send the email
+        await mailer.send({
+            from: { name: data.siteName || data.clientName || 'System', email: env.SMTP_EMAIL },
+            to: { email: to },
+            subject: subject,
+            html: html,
+            attachments: attachments.length > 0 ? attachments : undefined
         });
 
-        console.log('Email sent:', info.messageId);
-        return res.status(200).json({ success: true, messageId: info.messageId });
+        return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Email error:', error);
-        return res.status(500).json({ error: 'Failed to send email', details: error.message });
+        return new Response(JSON.stringify({ success: false, error: String(error) }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
-}
+};

@@ -1557,42 +1557,42 @@ const SuperAdmin: React.FC = () => {
             )}
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-white/10 z-[100] flex justify-around items-center p-2 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-white/10 z-[100] flex justify-around items-center p-2 safe-area-inset-bottom shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 <button
                     onClick={() => setActiveSection('subscription')}
-                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'subscription' ? 'text-amber-400' : 'text-gray-500'}`}
+                    className={`flex flex-col items-center justify-center w-1/4 py-1 gap-1 transition-colors ${activeSection === 'subscription' ? 'text-amber-400' : 'text-gray-500'}`}
                 >
-                    <div className={`p-1.5 rounded-lg ${activeSection === 'subscription' ? 'bg-amber-500/10' : ''}`}>
+                    <div className={`p-1 rounded-lg ${activeSection === 'subscription' ? 'bg-amber-500/10' : ''}`}>
                         <Power size={20} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-tight">Main</span>
                 </button>
                 <button
                     onClick={() => { setActiveSection('renewals'); loadRenewalRequests(); }}
-                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'renewals' ? 'text-amber-400' : 'text-gray-500'}`}
+                    className={`flex flex-col items-center justify-center w-1/4 py-1 gap-1 transition-colors ${activeSection === 'renewals' ? 'text-amber-400' : 'text-gray-500'}`}
                 >
-                    <div className={`p-1.5 rounded-lg relative ${activeSection === 'renewals' ? 'bg-amber-500/10' : ''}`}>
+                    <div className={`p-1 rounded-lg relative ${activeSection === 'renewals' ? 'bg-amber-500/10' : ''}`}>
                         <RefreshCw size={20} />
                         {renewalRequests.some(r => r.status === 'pending') && (
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-950"></span>
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-950 shadow-sm"></span>
                         )}
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-tight">Renewals</span>
                 </button>
                 <button
                     onClick={() => setActiveSection('deployment')}
-                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'deployment' ? 'text-amber-400' : 'text-gray-500'}`}
+                    className={`flex flex-col items-center justify-center w-1/4 py-1 gap-1 transition-colors ${activeSection === 'deployment' ? 'text-amber-400' : 'text-gray-500'}`}
                 >
-                    <div className={`p-1.5 rounded-lg ${activeSection === 'deployment' ? 'bg-amber-500/10' : ''}`}>
+                    <div className={`p-1 rounded-lg ${activeSection === 'deployment' ? 'bg-amber-500/10' : ''}`}>
                         <Globe size={20} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-tight">Deploy</span>
                 </button>
                 <button
                     onClick={() => setActiveSection('settings')}
-                    className={`flex flex-col items-center justify-center w-1/4 py-2 gap-1 transition-colors ${activeSection === 'settings' ? 'text-amber-400' : 'text-gray-500'}`}
+                    className={`flex flex-col items-center justify-center w-1/4 py-1 gap-1 transition-colors ${activeSection === 'settings' ? 'text-amber-400' : 'text-gray-500'}`}
                 >
-                    <div className={`p-1.5 rounded-lg ${activeSection === 'settings' ? 'bg-amber-500/10' : ''}`}>
+                    <div className={`p-1 rounded-lg ${activeSection === 'settings' ? 'bg-amber-500/10' : ''}`}>
                         <Settings size={20} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-tight">Settings</span>

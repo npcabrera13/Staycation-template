@@ -1,4 +1,4 @@
-// Email Service - Uses Nodemailer via Vercel API route
+// Email Service - Uses worker-mailer via Cloudflare Pages Function
 // Unlimited emails through SMTP
 
 import { Booking, Room, Settings } from '../types';
@@ -31,7 +31,7 @@ interface EmailData {
 }
 
 /**
- * Send email via Nodemailer API route
+ * Send email via Cloudflare Pages API route
  */
 async function sendEmail(
     to: string,
@@ -42,7 +42,7 @@ async function sendEmail(
     try {
         console.log(`📧 Sending ${type} email to:`, to);
 
-        // Uses a relative path which works on both Vercel and Netlify (via redirects or identical path structures)
+        // Uses a relative path — Cloudflare Pages maps functions/api/send-email.ts → /api/send-email automatically
         const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -148,10 +148,9 @@ export async function sendAdminNotificationEmail(
  */
 export async function sendRenewalNotificationEmail(
     request: { id: string; clientName: string; plan: string; amount: number; daysRequested: number; paymentProof: string },
-    adminUrl: string
+    adminUrl: string,
+    targetEmail: string
 ): Promise<boolean> {
-    const superadminEmail = 'visionarywebco@gmail.com'; // Hardcoded for your safety
-
     const data: EmailData = {
         clientName: request.clientName,
         plan: request.plan,
@@ -164,7 +163,7 @@ export async function sendRenewalNotificationEmail(
     };
 
     return sendEmail(
-        superadminEmail,
+        targetEmail || process.env.SMTP_EMAIL || 'visionarywebco@gmail.com', // Fallback
         `💸 Renewal Proof: ${request.clientName}`,
         'superadmin_renewal',
         data

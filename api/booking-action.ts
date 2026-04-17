@@ -4,8 +4,7 @@ import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
-// Inlined here because Vercel bundles each /api/ file independently —
-// cross-imports between serverless functions break at runtime.
+// Inlined email template (Vercel bundles each /api/ file independently)
 function generateUserEmailHTML(data: any): string {
     return `
     <!DOCTYPE html>
@@ -21,7 +20,6 @@ function generateUserEmailHTML(data: any): string {
             .booking-box p { margin: 8px 0; }
             .payment-box { background: #fef3c7; padding: 20px; margin: 20px 0; border-radius: 8px; }
             .footer { background: #264653; color: white; padding: 20px; text-align: center; font-size: 12px; }
-            .highlight { color: #2A9D8F; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -30,11 +28,9 @@ function generateUserEmailHTML(data: any): string {
                 <h1>🎉 Booking Confirmed!</h1>
                 <p style="margin: 10px 0 0;">${data.siteName}</p>
             </div>
-            
             <div class="content">
                 <p>Hi <strong>${data.guestName}</strong>,</p>
                 <p>Great news! Your reservation for <strong>${data.roomName}</strong> has been <strong style="color: #059669;">confirmed</strong>.</p>
-                
                 <div class="booking-box">
                     <h3 style="margin-top: 0; color: #264653;">📋 Reservation Details</h3>
                     <p><strong>Booking ID:</strong> ${data.bookingId}</p>
@@ -44,18 +40,14 @@ function generateUserEmailHTML(data: any): string {
                     <p><strong>Guests:</strong> ${data.guests}</p>
                     ${data.nights ? `<p><strong>Nights:</strong> ${data.nights}</p>` : ''}
                 </div>
-                
                 <div class="payment-box">
                     <h3 style="margin-top: 0;">💰 Payment Summary</h3>
                     <p><strong>Total Amount:</strong> ₱${data.totalPrice?.toLocaleString() || '0'}</p>
                 </div>
-                
                 <p>If you have any questions, contact us at <strong>${data.contactEmail || 'our email'}</strong>.</p>
-                
                 <p>We look forward to hosting you!</p>
                 <p>Warm regards,<br><strong>${data.siteName} Team</strong></p>
             </div>
-            
             <div class="footer">
                 <p>© ${data.siteName} | Thank you for choosing us!</p>
             </div>
@@ -65,7 +57,6 @@ function generateUserEmailHTML(data: any): string {
     `;
 }
 
-// Re-use Firebase config from env
 const firebaseConfig = {
     apiKey: process.env.VITE_FIREBASE_API_KEY,
     authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -75,14 +66,10 @@ const firebaseConfig = {
     appId: process.env.VITE_FIREBASE_APP_ID
 };
 
-// Use VITE_FIREBASE_APP_ID as the secret salt for tokens
 const SECRET = process.env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
 
 function validateToken(id: string, token: string): boolean {
-    const expected = crypto
-        .createHash('sha256')
-        .update(id + SECRET)
-        .digest('hex');
+    const expected = crypto.createHash('sha256').update(id + SECRET).digest('hex');
     return token === expected;
 }
 
@@ -94,13 +81,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).send('Missing parameters');
     }
 
-    // Security check
     if (!validateToken(id, token as string)) {
         return res.status(403).send('Invalid or expired link');
     }
 
     try {
-        // Initialize Firebase (if not already)
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getFirestore(app);
 
@@ -108,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let subMessage = '';
         let title = '';
 
-        // --- RENEWAL ACTIONS ---
+        // ── RENEWAL ACTIONS ──────────────────────────────────────────────────
         if (action === 'approve-renewal' || action === 'reject-renewal') {
             const requestRef = doc(db, '_superadmin', 'renewals', 'requests', id);
             const requestSnap = await getDoc(requestRef);
@@ -117,13 +102,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const requestData = requestSnap.data();
 
             if (action === 'approve-renewal') {
-                // 1. Extend Subscription
                 const subRef = doc(db, '_superadmin', 'subscription');
                 const subSnap = await getDoc(subRef);
                 const currentExpiry = subSnap.exists() && subSnap.data().expiresAt
                     ? new Date(subSnap.data().expiresAt)
                     : new Date();
-                
+
                 const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
                 const newExpiry = new Date(baseDate);
                 newExpiry.setDate(newExpiry.getDate() + (requestData.daysRequested || 30));
@@ -132,51 +116,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     expiresAt: newExpiry.toISOString().split('T')[0],
                     lastModified: new Date().toISOString()
                 });
-
-                // 2. Mark request as approved
-                await updateDoc(requestRef, {
-                    status: 'approved',
-                    approvedAt: new Date().toISOString()
-                });
+                await updateDoc(requestRef, { status: 'approved', approvedAt: new Date().toISOString() });
 
                 title = '✅ Subscription Activated!';
                 message = `Successfully extended ${requestData.clientName}'s plan by ${requestData.daysRequested} days.`;
                 subMessage = `New expiry: ${newExpiry.toLocaleDateString()}`;
             } else {
-                await updateDoc(requestRef, {
-                    status: 'rejected',
-                    rejectedAt: new Date().toISOString()
-                });
+                await updateDoc(requestRef, { status: 'rejected', rejectedAt: new Date().toISOString() });
                 title = '❌ Request Rejected';
                 message = `The renewal request for ${requestData.clientName} has been rejected.`;
             }
-        } 
-        // --- BOOKING ACTIONS ---
+        }
+        // ── BOOKING ACTIONS ──────────────────────────────────────────────────
         else {
             const bookingRef = doc(db, 'bookings', id);
             const bookingSnap = await getDoc(bookingRef);
 
             if (!bookingSnap.exists()) return res.status(404).send('Booking not found');
             const bookingData = bookingSnap.data();
-            const currentStatus = bookingData.status;
 
             if (action === 'approve') {
-                if (currentStatus === 'confirmed') {
+                if (bookingData.status === 'confirmed') {
                     title = 'Already Confirmed';
                     message = 'This booking was already confirmed previously.';
                 } else {
-                    // 1. Update Firestore
                     await updateDoc(bookingRef, { status: 'confirmed' });
 
-                    // 2. Send automatic confirmation email to guest
                     try {
-                        // Create transporter lazily (only when needed) to avoid cold-start crashes
                         const transporter = nodemailer.createTransport({
                             service: 'gmail',
-                            auth: {
-                                user: process.env.SMTP_EMAIL,
-                                pass: process.env.SMTP_PASSWORD
-                            }
+                            auth: { user: process.env.SMTP_EMAIL, pass: process.env.SMTP_PASSWORD }
                         });
 
                         const emailData = {
@@ -189,17 +158,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             totalPrice: bookingData.totalPrice,
                             bookingId: bookingData.shortId || bookingData.id,
                             siteName: bookingData.siteName || 'Serenity Staycation',
-                            contactEmail: process.env.SMTP_EMAIL || 'visionarywebco@gmail.com'
+                            contactEmail: process.env.SMTP_EMAIL || 'our email'
                         };
 
-                        const guestHtml = generateUserEmailHTML(emailData as any);
                         await transporter.sendMail({
-                            from: `"System" <visionarywebco@gmail.com>`,
+                            from: `"System" <${process.env.SMTP_EMAIL}>`,
                             to: bookingData.email,
                             subject: `🎉 Booking Confirmed - ${bookingData.roomName}`,
-                            html: guestHtml
+                            html: generateUserEmailHTML(emailData)
                         });
-                        
+
                         title = '✅ Booking Confirmed!';
                         message = `Guest ${bookingData.guestName} has been notified.`;
                     } catch (emailErr) {
@@ -208,10 +176,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         message = 'Booking was confirmed, but the guest notification email failed to send.';
                     }
 
-                    // 3. Check for Overdue
                     const checkInDate = new Date(bookingData.checkIn);
                     const today = new Date();
-                    today.setHours(0,0,0,0);
+                    today.setHours(0, 0, 0, 0);
                     if (checkInDate < today) {
                         subMessage = `⚠️ <b>HEADS UP:</b> This booking was for a past date (${checkInDate.toLocaleDateString()}). You may want to contact the guest to reschedule.`;
                     }
@@ -225,7 +192,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        // Final HTML Response
         res.setHeader('Content-Type', 'text/html');
         return res.send(`
             <!DOCTYPE html>
@@ -234,12 +200,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f3f4f6; }
-                    .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); text-align: center; max-width: 450px; width: 90%; margin: 20px; }
+                    .card { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; max-width: 450px; width: 90%; margin: 20px; }
                     h1 { color: #1f2937; margin-bottom: 0.75rem; font-size: 1.75rem; }
                     p { color: #4b5563; font-size: 1.1rem; line-height: 1.5; margin-bottom: 2rem; }
                     .warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 1rem; border-radius: 0.75rem; font-size: 0.95rem; margin-bottom: 2rem; text-align: left; }
-                    .btn { background: #2A9D8F; color: white !important; padding: 0.85rem 2rem; border-radius: 0.75rem; text-decoration: none; font-weight: bold; display: inline-block; transition: transform 0.2s; }
-                    .btn:hover { transform: scale(1.02); }
+                    .btn { background: #2A9D8F; color: white !important; padding: 0.85rem 2rem; border-radius: 0.75rem; text-decoration: none; font-weight: bold; display: inline-block; }
                 </style>
             </head>
             <body>

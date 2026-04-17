@@ -1,9 +1,17 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 
-// Firebase configuration from environment
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
+    }
+});
+
 const firebaseConfig = {
     apiKey: process.env.VITE_FIREBASE_API_KEY,
     authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -15,24 +23,14 @@ const firebaseConfig = {
 
 const SECRET = process.env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
 
-// Email transporter for guest notification
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'visionarywebco@gmail.com',
-        pass: 'xyoprqhzmjuskgsu'
-    }
-});
-
-function validateToken(id: string, token: string): boolean {
-    const expected = crypto
-        .createHash('sha256')
+function validateToken(id: string, token: string | undefined): boolean {
+    if (!token) return false;
+    const expected = crypto.createHash('sha256')
         .update(id + SECRET)
         .digest('hex');
     return token === expected;
 }
 
-// User email template (identical to send-email utility)
 function generateUserEmailHTML(data: any): string {
     return `
     <!DOCTYPE html>
@@ -42,54 +40,56 @@ function generateUserEmailHTML(data: any): string {
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
             .container { max-width: 600px; margin: 0 auto; background: #fff; }
             .header { background: linear-gradient(135deg, #2A9D8F, #264653); color: white; padding: 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 24px; }
             .content { padding: 30px; }
             .booking-box { background: #f8f9fa; border-left: 4px solid #2A9D8F; padding: 20px; margin: 20px 0; }
+            .booking-box p { margin: 8px 0; }
             .payment-box { background: #fef3c7; padding: 20px; margin: 20px 0; border-radius: 8px; }
             .footer { background: #264653; color: white; padding: 20px; text-align: center; font-size: 12px; }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="header"><h1>🎉 Booking Confirmed!</h1><p>${data.siteName}</p></div>
+            <div class="header">
+                <h1>🎉 Booking Confirmed!</h1>
+                <p style="margin: 10px 0 0;">${data.siteName}</p>
+            </div>
             <div class="content">
                 <p>Hi <strong>${data.guestName}</strong>,</p>
                 <p>Great news! Your stay at <strong>${data.roomName}</strong> has been officially confirmed.</p>
                 <div class="booking-box">
-                    <h3>📋 Reservation Details</h3>
+                    <h3 style="margin-top: 0; color: #264653;">📋 Reservation Details</h3>
                     <p><strong>Booking ID:</strong> ${data.bookingId}</p>
                     <p><strong>Check-in:</strong> ${data.checkIn}</p>
                     <p><strong>Check-out:</strong> ${data.checkOut}</p>
                 </div>
                 <div class="payment-box">
-                    <h3>💰 Payment Status</h3>
+                    <h3 style="margin-top: 0;">💰 Payment Status</h3>
                     <p><strong>Total Price:</strong> ₱${data.totalPrice?.toLocaleString()}</p>
                     <p>We've received your payment/deposit. See you soon!</p>
                 </div>
                 <p>Need help? Contact us at ${data.contactEmail}.</p>
                 <p>Warm regards,<br><strong>${data.siteName} Team</strong></p>
             </div>
-            <div class="footer"><p>© ${data.siteName} | Thank you for choosing us!</p></div>
+            <div class="footer">
+                <p>© ${data.siteName} | Thank you for choosing us!</p>
+            </div>
         </div>
     </body>
     </html>
     `;
 }
 
-export default async (req: Request) => {
-    const url = new URL(req.url);
-    const bookingId = url.searchParams.get('bookingId');
-    const requestId = url.searchParams.get('requestId');
-    const action = url.searchParams.get('action');
-    const token = url.searchParams.get('token');
-
+export const handler: Handler = async (event: HandlerEvent) => {
+    const { bookingId, requestId, action, token } = event.queryStringParameters || {};
     const id = bookingId || requestId;
 
     if (!id || !action || !token) {
-        return new Response('Missing parameters', { status: 400 });
+        return { statusCode: 400, body: 'Missing parameters' };
     }
 
     if (!validateToken(id, token)) {
-        return new Response('Invalid or expired link', { status: 403 });
+        return { statusCode: 403, body: 'Invalid or expired link' };
     }
 
     try {
@@ -105,7 +105,7 @@ export default async (req: Request) => {
             const requestRef = doc(db, '_superadmin', 'renewals', 'requests', id);
             const requestSnap = await getDoc(requestRef);
 
-            if (!requestSnap.exists()) return new Response('Renewal request not found', { status: 404 });
+            if (!requestSnap.exists()) return { statusCode: 404, body: 'Renewal request not found' };
             const requestData = requestSnap.data();
 
             if (action === 'approve-renewal') {
@@ -143,14 +143,14 @@ export default async (req: Request) => {
             const bookingRef = doc(db, 'bookings', id);
             const bookingSnap = await getDoc(bookingRef);
 
-            if (!bookingSnap.exists()) return new Response('Booking not found', { status: 404 });
+            if (!bookingSnap.exists()) return { statusCode: 404, body: 'Booking not found' };
             const bookingData = bookingSnap.data();
 
             if (action === 'approve') {
                 await updateDoc(bookingRef, { status: 'confirmed' });
                 
                 try {
-                    const guestHtml = generateUserEmailHTML({
+                    const emailData = {
                         guestName: bookingData.guestName,
                         roomName: bookingData.roomName,
                         checkIn: bookingData.checkIn,
@@ -158,14 +158,14 @@ export default async (req: Request) => {
                         bookingId: bookingData.shortId || bookingData.id,
                         totalPrice: bookingData.totalPrice,
                         siteName: bookingData.siteName || 'Serenity Staycation',
-                        contactEmail: 'visionarywebco@gmail.com'
-                    });
+                        contactEmail: process.env.SMTP_EMAIL
+                    };
 
                     await transporter.sendMail({
-                        from: `"System" <visionarywebco@gmail.com>`,
+                        from: `"System" <${process.env.SMTP_EMAIL}>`,
                         to: bookingData.email,
                         subject: `🎉 Booking Confirmed - ${bookingData.roomName}`,
-                        html: guestHtml
+                        html: generateUserEmailHTML(emailData)
                     });
                     
                     title = '✅ Booking Confirmed!';
@@ -213,9 +213,13 @@ export default async (req: Request) => {
             </html>
         `;
 
-        return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'text/html' },
+            body: html
+        };
 
     } catch (error: any) {
-        return new Response('Internal Server Error: ' + error.message, { status: 500 });
+        return { statusCode: 500, body: 'Internal Server Error: ' + error.message };
     }
 };

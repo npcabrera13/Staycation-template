@@ -150,7 +150,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                     amount: totalPrice,
                     daysRequested: totalDays,
                     paymentProof: base64Proof
-                }, adminUrl);
+                }, adminUrl, contactInfo?.email || '');
             } catch (emailErr) {
                 console.error("Failed to send superadmin notification:", emailErr);
             }

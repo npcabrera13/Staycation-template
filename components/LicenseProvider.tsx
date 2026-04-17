@@ -5,6 +5,7 @@ import { db } from '../firebaseConfig';
 import LockoutScreen from './LockoutScreen';
 import { Loader } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { SUPERADMIN_DEFAULTS } from '../constants';
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 
@@ -33,9 +34,9 @@ const LicenseContext = createContext<LicenseContextType>({
     lockMode: 'none',
     isHomepageLocked: false,
     isAdminLocked: false,
-    contactEmail: 'support@example.com',
-    contactPhone: '',
-    providerName: '',
+    contactEmail: SUPERADMIN_DEFAULTS.contactInfo.email,
+    contactPhone: SUPERADMIN_DEFAULTS.contactInfo.phone,
+    providerName: SUPERADMIN_DEFAULTS.contactInfo.providerName,
     expiryDays: null,
     expiryDate: null,
     showExpiryWarning: false,
@@ -56,9 +57,9 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     const [isChecking, setIsChecking] = useState(true);
     const [lockMode, setLockMode] = useState<LockMode>('none');
     const [isExpired, setIsExpired] = useState(false);
-    const [contactEmail, setContactEmail] = useState('support@example.com');
-    const [contactPhone, setContactPhone] = useState('');
-    const [providerName, setProviderName] = useState('');
+    const [contactEmail, setContactEmail] = useState(SUPERADMIN_DEFAULTS.contactInfo.email);
+    const [contactPhone, setContactPhone] = useState(SUPERADMIN_DEFAULTS.contactInfo.phone);
+    const [providerName, setProviderName] = useState(SUPERADMIN_DEFAULTS.contactInfo.providerName);
     const [expiryDays, setExpiryDays] = useState<number | null>(null);
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [showExpiryWarning, setShowExpiryWarning] = useState(false);

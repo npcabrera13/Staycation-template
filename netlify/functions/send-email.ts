@@ -28,7 +28,6 @@ interface EmailRequest {
         siteName?: string;
         contactEmail?: string;
         contactPhone?: string;
-        paymentDeadline?: string;
 
         // Renewal Fields
         clientName?: string;
@@ -37,7 +36,7 @@ interface EmailRequest {
         days?: number;
         requestId?: string;
         superadminUrl?: string;
-        adminUrl?: string; // Also used as fallback
+        adminUrl?: string;
         paymentProof?: string; // Base64
     };
 }
@@ -67,7 +66,6 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
             .booking-box p { margin: 8px 0; }
             .payment-box { background: #fef3c7; padding: 20px; margin: 20px 0; border-radius: 8px; }
             .footer { background: #264653; color: white; padding: 20px; text-align: center; font-size: 12px; }
-            .highlight { color: #2A9D8F; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -97,8 +95,6 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
                     ${data.depositAmount ? `<p><strong>Required Deposit:</strong> ₱${data.depositAmount?.toLocaleString()}</p>` : ''}
                     ${data.balanceAmount ? `<p><strong>Balance Due:</strong> ₱${data.balanceAmount?.toLocaleString()}</p>` : ''}
                 </div>
-                
-                ${data.paymentDeadline ? `<p style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107;">⚠️ <strong>Action Required:</strong> To secure your reservation, please settle the required deposit based on our policy. Any remaining balance will simply be collected upon your arrival at the property.</p>` : ''}
                 
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
                 <p>Need assistance? Reach out to us anytime at <strong>${data.contactEmail || 'our support email'}</strong>${data.contactPhone ? ` or dial <strong>${data.contactPhone}</strong>` : ''}. We are always happy to help!</p>
@@ -246,33 +242,25 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string): 
     `;
 }
 
-export default async (req: Request) => {
-    // Only allow POST requests
-    if (req.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json' }
-        });
+import type { Handler, HandlerEvent } from '@netlify/functions';
+
+export const handler: Handler = async (event: HandlerEvent) => {
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
-        const payload = await req.json() as EmailRequest;
+        const payload = JSON.parse(event.body || '{}') as EmailRequest;
         const { to, subject, type, data } = payload;
 
-        // Validate required fields
         if (!to || !subject || !type || !data) {
-            return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
         }
 
-        // Detect Base URL for links
-        const host = req.headers.get('host') || 'localhost:3000';
+        const host = event.headers['host'] || 'localhost:8888';
         const protocol = host.includes('localhost') ? 'http' : 'https';
         const baseUrl = `${protocol}://${host}`;
 
-        // Generate HTML based on email type
         let html = '';
         let attachments: any[] = [];
 
@@ -281,47 +269,40 @@ export default async (req: Request) => {
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');
                 const extension = meta.split('/')[1].split(';')[0] || 'png';
-                attachments.push({
-                    filename: `receipt.${extension}`,
-                    content: Buffer.from(base64, 'base64'),
-                    cid: 'payment-proof'
-                });
+                attachments.push({ filename: `receipt.${extension}`, content: Buffer.from(base64, 'base64'), cid: 'payment-proof' });
             }
         } else if (type === 'admin_notification') {
             html = generateAdminEmailHTML(data, baseUrl);
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');
                 const extension = meta.split('/')[1].split(';')[0] || 'png';
-                attachments.push({
-                    filename: `receipt.${extension}`,
-                    content: Buffer.from(base64, 'base64'),
-                    cid: 'payment-proof'
-                });
+                attachments.push({ filename: `receipt.${extension}`, content: Buffer.from(base64, 'base64'), cid: 'payment-proof' });
             }
         } else {
             html = generateUserEmailHTML(data);
         }
 
-        // Send email
         const info = await transporter.sendMail({
             from: `"${data.siteName || data.clientName || 'System'}" <${process.env.SMTP_EMAIL}>`,
-            to: to,
-            subject: subject,
-            html: html,
-            attachments: attachments
+            to,
+            subject,
+            html,
+            attachments
         });
 
         console.log('Email sent:', info.messageId);
-        return new Response(JSON.stringify({ success: true, messageId: info.messageId }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: true, messageId: info.messageId })
+        };
 
     } catch (error: any) {
         console.error('Email error:', error);
-        return new Response(JSON.stringify({ error: 'Failed to send email', details: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return {
+            statusCode: 500,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Failed to send email', details: error.message })
+        };
     }
 };
