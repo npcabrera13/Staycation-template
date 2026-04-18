@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle } from 'lucide-react';
+import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle, Sparkles } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -244,6 +244,71 @@ const SuperAdmin: React.FC = () => {
             alert('Error rejecting: ' + e.message);
         }
         setProcessingId(null);
+    };
+    
+    // Deployment Helpers
+    const copyAllEnv = () => {
+        const keys = [
+            'VITE_FIREBASE_API_KEY',
+            'VITE_FIREBASE_AUTH_DOMAIN',
+            'VITE_FIREBASE_PROJECT_ID',
+            'VITE_FIREBASE_STORAGE_BUCKET',
+            'VITE_FIREBASE_MESSAGING_SENDER_ID',
+            'VITE_FIREBASE_APP_ID',
+            'VITE_GEMINI_API_KEY',
+            'VITE_FAVICON_URL',
+            'VITE_OG_URL',
+            'VITE_OG_TITLE',
+            'VITE_OG_DESCRIPTION',
+            'VITE_OG_IMAGE',
+            'SMTP_EMAIL',
+            'SMTP_PASSWORD'
+        ];
+        const text = keys.map(k => `${k}=`).join('\n');
+        navigator.clipboard.writeText(text);
+        
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setCopyToast('');
+        requestAnimationFrame(() => {
+            setCopyToast('All 14 Keys');
+            toastTimer.current = setTimeout(() => setCopyToast(''), 2000);
+        });
+    };
+
+    const copyAiPrompt = () => {
+        const keys = [
+            'VITE_FIREBASE_API_KEY',
+            'VITE_FIREBASE_AUTH_DOMAIN',
+            'VITE_FIREBASE_PROJECT_ID',
+            'VITE_FIREBASE_STORAGE_BUCKET',
+            'VITE_FIREBASE_MESSAGING_SENDER_ID',
+            'VITE_FIREBASE_APP_ID',
+            'VITE_GEMINI_API_KEY',
+            'VITE_FAVICON_URL',
+            'VITE_OG_URL',
+            'VITE_OG_TITLE',
+            'VITE_OG_DESCRIPTION',
+            'VITE_OG_IMAGE',
+            'SMTP_EMAIL',
+            'SMTP_PASSWORD'
+        ];
+        const prompt = `I'm deploying my React Staycation website. I have a list of environment variable keys and I need you to help me format them properly for a .env file. 
+
+I will provide you with the raw configuration values (like the Firebase config object or Gmail SMTP details). Please match the values to these exact keys and provide me with a clean, bulk-pasteable .env content.
+
+Here are the keys I need you to fill:
+${keys.map(k => `${k}=`).join('\n')}
+
+Please output only the filled .env content without any extra explanation so I can copy-paste it directly into Vercel/Netlify.`;
+        
+        navigator.clipboard.writeText(prompt);
+        
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setCopyToast('');
+        requestAnimationFrame(() => {
+            setCopyToast('AI Prompt');
+            toastTimer.current = setTimeout(() => setCopyToast(''), 2000);
+        });
     };
 
     const handleLogin = (e: React.FormEvent) => {
@@ -867,6 +932,22 @@ const SuperAdmin: React.FC = () => {
                             <p className="text-amber-200/80 text-sm">
                                 To deploy a new client's code branch to Vercel or Netlify, you must configure the following exact Environment Variables in their dashboard before hitting Deploy.
                             </p>
+                        </div>
+
+                        {/* One-Click Deployment Helpers */}
+                        <div className="flex flex-col sm:flex-row gap-3 mb-2">
+                            <button 
+                                onClick={copyAllEnv}
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all active:scale-95 text-blue-400 text-sm font-bold"
+                            >
+                                <Copy size={16} /> Copy .env Template
+                            </button>
+                            <button 
+                                onClick={copyAiPrompt}
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition-all active:scale-95 text-purple-400 text-sm font-bold"
+                            >
+                                <Sparkles size={16} /> Copy AI Prompt
+                            </button>
                         </div>
 
                         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6">

@@ -2060,9 +2060,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         {overdueBookings.map(b => {
                                                             const room = rooms.find(r => r.id === b.roomId);
                                                             return (
-                                                                <div key={b.id} className="p-3 rounded-xl border bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-500/20">
+                                                                <div key={b.id} className="p-3 rounded-xl border bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-500/20">
                                                                     <div className="flex justify-between items-start mb-1">
-                                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                                                                             Overdue
                                                                         </span>
                                                                         <button

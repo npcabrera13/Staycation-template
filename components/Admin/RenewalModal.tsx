@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2, Copy, Download, Check } from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, Upload, Loader, Phone, Mail, CreditCard, RefreshCw, ZoomIn, ChevronLeft, Trash2, Copy, Download, Check, MoreVertical, Edit3 } from 'lucide-react';
 import { collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Settings, Room, Booking } from '../../types';
@@ -24,7 +24,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
     onClose,
 }) => {
     const [step, setStep] = useState<'info' | 'payment' | 'success'>('info');
-    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [actionRequestId, setActionRequestId] = useState<string | null>(null);
     const [selectedPlan, setSelectedPlan] = useState(0); // index into PLAN_OPTIONS
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
@@ -113,9 +113,20 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
         try {
             await deleteDoc(doc(db, '_superadmin', 'renewals', 'requests', id));
             setRecentRequests(prev => prev.filter(req => req.id !== id));
-            setDeleteConfirmId(null);
+            setActionRequestId(null);
         } catch(err) {
             console.error("Failed to delete request:", err);
+        }
+    };
+
+    const handleEditRequest = async (id: string) => {
+        try {
+            await deleteDoc(doc(db, '_superadmin', 'renewals', 'requests', id));
+            setRecentRequests(prev => prev.filter(req => req.id !== id));
+            setActionRequestId(null);
+            setStep('payment');
+        } catch(err) {
+            console.error("Failed to edit request:", err);
         }
     };
 
@@ -346,16 +357,9 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                                                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                                             ₱{req.amount}
                                                             {req.status === 'pending' && (
-                                                                deleteConfirmId === req.id ? (
-                                                                    <div className="flex items-center gap-1 animate-fade-in bg-white dark:bg-gray-800 px-1 py-0.5 rounded shadow-sm border border-gray-200 dark:border-gray-700 absolute right-3">
-                                                                        <button onClick={() => handleDeleteRequest(req.id)} className="text-[10px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 px-2 py-1 rounded">Confirm</button>
-                                                                        <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">Cancel</button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <button onClick={() => setDeleteConfirmId(req.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/40 relative z-10" title="Delete Request">
-                                                                        <Trash2 size={13} />
-                                                                    </button>
-                                                                )
+                                                                <button onClick={() => setActionRequestId(req.id)} className="text-gray-400 hover:text-primary transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative z-10 ml-1" title="Manage Request">
+                                                                    <MoreVertical size={16} />
+                                                                </button>
                                                             )}
                                                         </span>
                                                     </div>
@@ -578,6 +582,41 @@ const RenewalModal: React.FC<RenewalModalProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* ─── Action Settings Overlay ─── */}
+            {actionRequestId && (
+                <div className="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setActionRequestId(null)}>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-xs w-full p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <div className="text-center mb-5">
+                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <AlertTriangle size={24} className="text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Manage Request</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">What would you like to do with this transaction?</p>
+                        </div>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => handleEditRequest(actionRequestId)}
+                                className="w-full py-3 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 dark:text-blue-400 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors border border-blue-200 dark:border-blue-800/30"
+                            >
+                                <Edit3 size={16} /> Edit Request
+                            </button>
+                            <button
+                                onClick={() => handleDeleteRequest(actionRequestId)}
+                                className="w-full py-3 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 dark:text-red-400 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors border border-red-200 dark:border-red-800/30"
+                            >
+                                <Trash2 size={16} /> Delete Request
+                            </button>
+                            <button
+                                onClick={() => setActionRequestId(null)}
+                                className="w-full py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-bold rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ─── Fullscreen Image Zoom Overlay ─── */}
             {zoomedImage && (
