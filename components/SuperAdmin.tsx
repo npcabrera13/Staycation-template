@@ -406,7 +406,7 @@ const SuperAdmin: React.FC = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => { setIsAuthenticated(false); setPassword(''); }}
+                        onClick={() => { setIsAuthenticated(false); setPassword(''); window.localStorage.removeItem('staycation_superadmin_pw'); }}
                         className="flex items-center px-3 py-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm"
                     >
                         <LogOut size={16} className="mr-1" /> Logout
