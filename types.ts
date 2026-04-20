@@ -14,6 +14,7 @@ export interface Room {
     amenities: Amenity[];
     dayUsePrice?: number;
     depositAmount?: number; // Optional per-room fixed deposit amount (overrides global settings)
+    dayUseDepositAmount?: number; // Optional per-room fixed deposit for day-use
 }
 
 export interface Booking {
