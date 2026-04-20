@@ -1300,6 +1300,7 @@ Please output only the filled .env content without any extra explanation so I ca
                                         setEnableAiChat(newVal);
                                         try {
                                             await setDoc(doc(db, '_superadmin', 'settings'), { enableAiChat: newVal }, { merge: true });
+                                            copyWithToast(newVal ? 'AI Chat enabled!' : 'AI Chat disabled!');
                                         } catch { }
                                     }}
                                     className={`w-11 h-6 rounded-full transition-colors relative ${enableAiChat ? 'bg-green-500' : 'bg-gray-600'}`}
@@ -1336,6 +1337,7 @@ Please output only the filled .env content without any extra explanation so I ca
                                         setEnableEagerLoad(newVal);
                                         try {
                                             await setDoc(doc(db, '_superadmin', 'settings'), { eagerLoadAdmin: newVal }, { merge: true });
+                                            copyWithToast(newVal ? 'Fast Admin Panel enabled!' : 'Fast Admin Panel disabled!');
                                         } catch { }
                                     }}
                                     className={`w-11 h-6 rounded-full transition-colors relative ${enableEagerLoad ? 'bg-green-500' : 'bg-gray-600'}`}
