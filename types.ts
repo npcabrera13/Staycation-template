@@ -13,8 +13,8 @@ export interface Room {
     images: string[];
     amenities: Amenity[];
     dayUsePrice?: number;
-    depositAmount?: number; // Optional per-room fixed deposit amount (overrides global settings)
-    dayUseDepositAmount?: number; // Optional per-room fixed deposit for day-use
+    overnightDepositAmount?: number; // Auto-calculated from global %, can be manually overridden
+    dayUseDepositAmount?: number;   // Auto-calculated from global %, can be manually overridden
 }
 
 export interface Booking {
@@ -146,10 +146,7 @@ export interface Settings {
     };
     // Reservation & Deposit Settings
     reservationPolicy?: {
-        requireDeposit: boolean;
-        depositType: 'percentage' | 'fixed';
-        depositPercentage: number;  // 0-100
-        fixedDepositAmount: number;
+        depositPercentage: number;  // 0-100 — global default; rooms auto-calculate from this
         autoConfirmOnDeposit: boolean;
         cancellationPolicy: string;
         paymentDeadlineHours: number;

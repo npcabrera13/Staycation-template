@@ -126,6 +126,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'settings'>(
         () => (location.state?.activeTab as any) || 'calendar'
     );
+    const [draftDepositPct, setDraftDepositPct] = useState<number | null>(null);
+    const [isGlobalDepositExpanded, setIsGlobalDepositExpanded] = useState(false);
 
     const navigateToTab = (tab: 'overview' | 'calendar' | 'rooms' | 'settings', targetId?: string) => {
         setActiveTab(tab);
@@ -1613,116 +1615,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
                             </div>
                         </div>
-                    </div>                    {/* Reservation & Deposit Settings */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                            <CreditCard className="mr-2 text-primary" size={20} />
-                            Reservation & Deposit Settings
-                        </h3>
-
-                        {/* Require Deposit Toggle */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg gap-4">
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-white flex items-center">
-                                    Require Deposit
-                                    <HelpTooltip text="If enabled, guests must upload a payment proof before their booking is saved" />
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Guests must pay a deposit to confirm their booking</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={settingsForm.reservationPolicy?.requireDeposit ?? true}
-                                    onChange={(e) => setSettingsForm({
-                                        ...settingsForm,
-                                        reservationPolicy: {
-                                            ...settingsForm.reservationPolicy,
-                                            requireDeposit: e.target.checked
-                                        }
-                                    })}
-                                />
-                                <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                            </label>
-                        </div>
-
-                        {settingsForm.reservationPolicy?.requireDeposit && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                                        Deposit Type
-                                        <HelpTooltip text="Choose between a percentage of the total price or a fixed amount per booking" />
-                                    </label>
-                                    <div className="flex gap-4">
-                                        <label className="flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="depositType"
-                                                value="percentage"
-                                                checked={settingsForm.reservationPolicy?.depositType === 'percentage'}
-                                                onChange={() => setSettingsForm({
-                                                    ...settingsForm,
-                                                    reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'percentage' }
-                                                })}
-                                                className="mr-2 text-primary"
-                                            />
-                                            <span className="text-gray-700 dark:text-gray-300">Percentage</span>
-                                        </label>
-                                        <label className="flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="depositType"
-                                                value="fixed"
-                                                checked={settingsForm.reservationPolicy?.depositType === 'fixed'}
-                                                onChange={() => setSettingsForm({
-                                                    ...settingsForm,
-                                                    reservationPolicy: { ...settingsForm.reservationPolicy!, depositType: 'fixed' }
-                                                })}
-                                                className="mr-2 text-primary"
-                                            />
-                                            <span className="text-gray-700 dark:text-gray-300">Fixed Amount</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {settingsForm.reservationPolicy?.depositType === 'percentage' ? (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                                            Deposit Percentage: <span className="text-primary font-bold ml-1">{settingsForm.reservationPolicy?.depositPercentage ?? 50}%</span>
-                                            <HelpTooltip text="Slide to adjust the percentage of total price required for deposit" />
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min="10"
-                                            max="100"
-                                            step="5"
-                                            value={settingsForm.reservationPolicy?.depositPercentage ?? 50}
-                                            onChange={(e) => setSettingsForm({
-                                                ...settingsForm,
-                                                reservationPolicy: { ...settingsForm.reservationPolicy!, depositPercentage: parseInt(e.target.value) }
-                                            })}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-                                            Fixed Deposit Amount (₱)
-                                            <HelpTooltip text="The exact amount in Pesos required for every reservation" />
-                                        </label>
-                                        <input
-                                            type="number"
-                                            className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                            value={settingsForm.reservationPolicy?.fixedDepositAmount ?? 1000}
-                                            onChange={(e) => setSettingsForm({
-                                                ...settingsForm,
-                                                reservationPolicy: { ...settingsForm.reservationPolicy!, fixedDepositAmount: parseInt(e.target.value) || 0 }
-                                            })}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </div>
 
                     {/* Booking Control Mode */}
@@ -1761,13 +1653,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         }
                                     }}
                                     className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
-                                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                        : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="flex items-center mb-1">
                                         <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
-                                                ? 'border-primary' : 'border-gray-300'
+                                            ? 'border-primary' : 'border-gray-300'
                                             }`}>
                                             {(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict' && (
                                                 <div className="w-2 h-2 bg-primary rounded-full" />
@@ -1803,13 +1695,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         }
                                     }}
                                     className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
-                                            ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500'
-                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500'
+                                        : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="flex items-center mb-1">
                                         <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
-                                                ? 'border-amber-500' : 'border-gray-300'
+                                            ? 'border-amber-500' : 'border-gray-300'
                                             }`}>
                                             {settingsForm.reservationPolicy?.bookingSystemType === 'smart' && (
                                                 <div className="w-2 h-2 bg-amber-500 rounded-full" />
@@ -1941,10 +1833,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                                 onClick={() => setShowNotificationPanel(prev => !prev)}
                                 className={`relative p-2 rounded-xl transition-colors group flex items-center justify-center ${(expiryDays !== null && expiryDays <= 0) || overdueBookings.length > 0
-                                        ? 'text-gray-800 dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
-                                        : expiryDays !== null && expiryDays <= 7
-                                            ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30'
-                                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
+                                    ? 'text-gray-800 dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                    : expiryDays !== null && expiryDays <= 7
+                                        ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/30'
+                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'
                                     }`}
                                 title="Notifications"
                             >
@@ -2000,16 +1892,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                 <button
                                                     onClick={() => { setShowExpiryWarning(true); setShowNotificationPanel(false); }}
                                                     className={`group w-full relative rounded-xl p-3.5 flex items-center justify-between transition-all border shadow-sm hover:shadow-md active:scale-[0.98] ${expiryDays !== null && expiryDays <= 0
-                                                            ? 'bg-red-50 border-red-200 hover:bg-red-100/50 dark:bg-red-900/10 dark:border-red-500/20 dark:hover:bg-red-900/20'
-                                                            : expiryDays !== null && expiryDays <= 7
-                                                                ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/50 dark:bg-amber-900/10 dark:border-amber-500/20 dark:hover:bg-amber-900/20'
-                                                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                                        ? 'bg-red-50 border-red-200 hover:bg-red-100/50 dark:bg-red-900/10 dark:border-red-500/20 dark:hover:bg-red-900/20'
+                                                        : expiryDays !== null && expiryDays <= 7
+                                                            ? 'bg-amber-50 border-amber-200 hover:bg-amber-100/50 dark:bg-amber-900/10 dark:border-amber-500/20 dark:hover:bg-amber-900/20'
+                                                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-3 flex-1">
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${expiryDays !== null && expiryDays <= 0 ? 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400' :
-                                                                expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                                    'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
+                                                            expiryDays !== null && expiryDays <= 7 ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                                'bg-green-100 text-green-500 dark:bg-green-900/30 dark:text-green-400'
                                                             }`}>
                                                             {expiryDays !== null && expiryDays <= 7 ? <AlertTriangle size={16} /> : <CheckCircle size={16} />}
                                                         </div>
@@ -2029,8 +1921,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     </div>
                                                     <div className="flex items-center gap-2 pl-4">
                                                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md transition-colors ${expiryDays !== null && expiryDays <= 7
-                                                                ? 'bg-amber-500 text-white'
-                                                                : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
+                                                            ? 'bg-amber-500 text-white'
+                                                            : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
                                                             }`}>
                                                             {expiryDays !== null && expiryDays <= 7 ? 'Renew Now' : 'Manage'}
                                                         </span>
@@ -2792,61 +2684,147 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 )}
                             </div>
 
+                            {/* ─── Global Deposit Settings (Collapsible Banner) ─── */}
+                            {(() => {
+                                const currentGlobalDeposit = settingsForm?.reservationPolicy?.depositPercentage ?? 50;
+                                const displayDeposit = draftDepositPct !== null ? draftDepositPct : currentGlobalDeposit;
+                                const hasDraftDeposit = draftDepositPct !== null && draftDepositPct !== currentGlobalDeposit;
+
+                                return (
+                                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg overflow-hidden transition-all shadow-sm">
+                                        {/* Collapsed State / Toggle Header */}
+                                        <button
+                                            onClick={() => setIsGlobalDepositExpanded(!isGlobalDepositExpanded)}
+                                            className="w-full flex items-center justify-between px-4 py-2.5 sm:py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                                        >
+                                            <div className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200 text-left">
+                                                <span>🌐 Global Deposit Rule: <span className="text-primary font-bold">{currentGlobalDeposit}%</span> <span className="text-gray-400 dark:text-gray-500 font-normal ml-1 hidden sm:inline">— tap to edit</span></span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                <span className="sm:hidden">tap to edit</span>
+                                                <ChevronDown size={16} className={`transition-transform duration-300 ${isGlobalDepositExpanded ? 'rotate-180' : ''}`} />
+                                            </div>
+                                        </button>
+
+                                        {/* Expanded State (Slider + Save button) */}
+                                        {isGlobalDepositExpanded && (
+                                            <div className="p-4 border-t border-primary/10 dark:border-primary/20 bg-white/50 dark:bg-gray-800/50 animate-fade-in">
+                                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                    <div className="flex items-center gap-3 w-full flex-1">
+                                                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap">0%</span>
+                                                        <input
+                                                            type="range"
+                                                            min={0}
+                                                            max={100}
+                                                            step={5}
+                                                            value={displayDeposit}
+                                                            onChange={(e) => setDraftDepositPct(Number(e.target.value))}
+                                                            className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-primary bg-primary/20 dark:bg-primary/30"
+                                                        />
+                                                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap">100%</span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                                                        <div className="text-xl font-black text-primary tabular-nums shrink-0 w-12 text-center sm:text-right">
+                                                            {displayDeposit}%
+                                                        </div>
+                                                        <button
+                                                            disabled={!hasDraftDeposit}
+                                                            onClick={async () => {
+                                                                if (!hasDraftDeposit) return;
+                                                                const updatedPolicy = {
+                                                                    ...(settingsForm?.reservationPolicy ?? {
+                                                                        autoConfirmOnDeposit: false,
+                                                                        cancellationPolicy: '',
+                                                                        paymentDeadlineHours: 24,
+                                                                        bookingSystemType: 'strict' as const,
+                                                                    }),
+                                                                    depositPercentage: draftDepositPct,
+                                                                };
+                                                                const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
+                                                                setSettingsForm(newSettings);
+                                                                if (onUpdateSettings) {
+                                                                    await onUpdateSettings(newSettings);
+                                                                }
+                                                                setDraftDepositPct(null);
+                                                                setIsGlobalDepositExpanded(false); // auto collapse
+                                                                showToast('Global deposit updated', 'success');
+                                                            }}
+                                                            className={`px-5 py-2 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${hasDraftDeposit
+                                                                    ? 'bg-primary text-white hover:bg-primary-hover active:scale-95'
+                                                                    : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
+                                                                }`}
+                                                        >
+                                                            <Save size={16} /> Save Rule
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
                             {/* Room List */}
-                            <div className="grid grid-cols-1 gap-6">
+                            <div className="grid grid-cols-1 gap-4 sm:gap-6">
                                 {rooms.map(room => (
-                                    <div key={room.id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}`}>
-                                        <div className="flex flex-col md:flex-row">
+                                    <div key={room.id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all overflow-hidden ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}`}>
+                                        <div className="flex flex-row h-32 sm:h-auto">
                                             {/* Image Thumb */}
-                                            <div className="w-full md:w-64 h-56 md:h-auto relative bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
+                                            <div className="w-28 sm:w-48 md:w-64 h-full relative bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                                                 <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
-                                                <div className="absolute top-3 right-3 bg-white dark:bg-black px-3 py-1.5 rounded-lg text-xs font-black shadow-md">
+                                                <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/95 dark:bg-black/80 backdrop-blur-sm px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-black shadow-md border border-white/20">
                                                     <span className="text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
                                                 </div>
                                             </div>
 
                                             {/* Content */}
-                                            <div className="p-6 flex-1 flex flex-col justify-between">
+                                            <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
                                                 <div>
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <h3 className="text-xl font-bold text-gray-800 dark:text-white">{room.name}</h3>
-                                                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                                                <Users size={14} className="mr-1" /> Capacity: {room.capacity} Guests
+                                                    <div className="flex justify-between items-start mb-1 sm:mb-2">
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-sm sm:text-xl font-bold text-gray-800 dark:text-white truncate">{room.name}</h3>
+                                                            <div className="flex items-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
+                                                                <Users size={12} className="mr-1 sm:hidden" />
+                                                                <Users size={14} className="mr-1 hidden sm:block" />
+                                                                Capacity: {room.capacity} Guests
                                                             </div>
                                                         </div>
                                                         {editingRoomId !== room.id && (
-                                                            <div className="flex space-x-2">
+                                                            <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
                                                                 <button
                                                                     onClick={() => handleEditRoomClick(room)}
-                                                                    className="p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors border border-transparent dark:border-indigo-500/20"
+                                                                    className="p-1.5 sm:p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors border border-transparent dark:border-indigo-500/20"
                                                                     title="Edit"
                                                                 >
-                                                                    <Edit size={18} />
+                                                                    <Edit size={14} className="sm:hidden" />
+                                                                    <Edit size={18} className="hidden sm:block" />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteRoomClick(room.id)}
-                                                                    className="p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors border border-transparent dark:border-red-500/20"
+                                                                    className="p-1.5 sm:p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors border border-transparent dark:border-red-500/20"
                                                                     title="Delete"
                                                                 >
-                                                                    <Trash2 size={18} />
+                                                                    <Trash2 size={14} className="sm:hidden" />
+                                                                    <Trash2 size={18} className="hidden sm:block" />
                                                                 </button>
                                                             </div>
                                                         )}
                                                     </div>
 
-                                                    <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-4">{room.description}</p>
+                                                    <p className="hidden sm:-webkit-box text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-3 lg:mb-4">{room.description}</p>
 
-                                                    <div className="flex flex-wrap gap-2">
+                                                    <div className="flex flex-wrap gap-1 sm:gap-2 mt-auto">
                                                         {room.amenities.slice(0, 5).map((am, idx) => (
-                                                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 dark:bg-gray-600 text-gray-600 dark:text-gray-200 border border-gray-100 dark:border-gray-500">
-                                                                {renderAmenityIcon(am.icon)}
-                                                                <span className="ml-1.5">{am.name}</span>
+                                                            <span key={idx} className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs bg-gray-50 dark:bg-gray-600 text-gray-600 dark:text-gray-200 border border-gray-100 dark:border-gray-500">
+                                                                <span className="sm:hidden">{renderAmenityIcon(am.icon)}</span>
+                                                                <span className="hidden sm:inline">{renderAmenityIcon(am.icon)}</span>
+                                                                <span className="hidden sm:inline ml-1.5">{am.name}</span>
                                                             </span>
                                                         ))}
                                                         {room.amenities.length > 5 && (
-                                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-50 dark:bg-gray-600 text-gray-400 dark:text-gray-300">
-                                                                +{room.amenities.length - 5} more
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs bg-gray-50 dark:bg-gray-600 text-gray-400 dark:text-gray-300">
+                                                                +{room.amenities.length - 5} <span className="hidden sm:inline ml-1">more</span>
                                                             </span>
                                                         )}
                                                     </div>
@@ -2970,7 +2948,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                                             Capacity
@@ -2983,21 +2961,138 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                         />
                                     </div>
-                                    <div className="lg:col-span-2">
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                            Fixed Deposit Amount (₱)
-                                            <HelpTooltip text="Overrides global deposit settings for this room only. Set to 0 to use global defaults." />
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={isAddingRoom ? (newRoom.depositAmount || '') : (editForm.depositAmount || '')}
-                                            onChange={(e) => {
-                                                const val = e.target.value ? Number(e.target.value) : undefined;
-                                                isAddingRoom ? setNewRoom({ ...newRoom, depositAmount: val }) : setEditForm({ ...editForm, depositAmount: val });
-                                            }}
-                                            placeholder="e.g. 2000 (leave empty to use global setting)"
-                                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                        />
+
+                                    {/* Deposit Section — per room */}
+                                    <div className="col-span-1 md:col-span-2">
+                                        {(() => {
+                                            const currentForm = isAddingRoom ? newRoom : editForm;
+                                            const globalPct = settingsForm?.reservationPolicy?.depositPercentage ?? 50;
+                                            const overnightPrice = currentForm.price || 0;
+                                            const dayUsePrice = currentForm.dayUsePrice || 0;
+
+                                            // Auto-calculated amounts
+                                            const autoOvernight = overnightPrice > 0 ? Math.round(overnightPrice * globalPct / 100) : null;
+                                            const autoDayUse = dayUsePrice > 0 ? Math.round(dayUsePrice * globalPct / 100) : null;
+
+                                            // Current stored override values
+                                            const overnightDeposit = currentForm.overnightDepositAmount;
+                                            const dayUseDeposit = currentForm.dayUseDepositAmount;
+
+                                            // Is this field manually overridden?
+                                            const isOvernightOverride = overnightDeposit !== undefined && autoOvernight !== null && overnightDeposit !== autoOvernight;
+                                            const isDayUseOverride = dayUseDeposit !== undefined && autoDayUse !== null && dayUseDeposit !== autoDayUse;
+
+                                            // Display values (stored override or auto-calculated)
+                                            const displayOvernight = overnightDeposit !== undefined ? overnightDeposit : (autoOvernight ?? 0);
+                                            const displayDayUse = dayUseDeposit !== undefined ? dayUseDeposit : (autoDayUse ?? 0);
+
+                                            const setField = (patch: { overnightDepositAmount?: number; dayUseDepositAmount?: number }) => {
+                                                isAddingRoom
+                                                    ? setNewRoom({ ...newRoom, ...patch })
+                                                    : setEditForm({ ...editForm, ...patch });
+                                            };
+
+                                            const noPriceYet = overnightPrice === 0;
+
+                                            return (
+                                                <div className="rounded-xl border-2 border-primary/20 dark:border-primary/30 overflow-hidden">
+                                                    {/* Header */}
+                                                    <div className="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-primary/10 border-b border-primary/10 dark:border-primary/20">
+                                                        <div className="flex items-center gap-2">
+                                                            <CreditCard size={15} className="text-primary" />
+                                                            <span className="text-sm font-bold text-gray-800 dark:text-white">Deposit Amounts</span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600">
+                                                            Global: <span className="font-bold text-primary">{globalPct}%</span>
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Body */}
+                                                    <div className="p-4 bg-white dark:bg-gray-800">
+                                                        {noPriceYet ? (
+                                                            <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-2">
+                                                                Enter the overnight price above to auto-calculate deposits
+                                                            </p>
+                                                        ) : (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                                                                {/* Overnight Deposit */}
+                                                                <div>
+                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                        <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Overnight Deposit</label>
+                                                                        {isOvernightOverride
+                                                                            ? <span className="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">⚡ Custom</span>
+                                                                            : <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-semibold">✓ Auto</span>
+                                                                        }
+                                                                    </div>
+                                                                    <div className="relative">
+                                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm pointer-events-none">₱</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={displayOvernight}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value === '' ? undefined : Number(e.target.value);
+                                                                                setField({ overnightDepositAmount: val });
+                                                                            }}
+                                                                            className={`w-full pl-8 pr-3 py-2.5 border-2 rounded-lg font-semibold text-gray-800 dark:text-white transition-colors ${isOvernightOverride
+                                                                                    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
+                                                                                    : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                                                                }`}
+                                                                        />
+                                                                    </div>
+                                                                    <p className="text-[10px] text-gray-400 mt-1.5 min-h-[14px]">
+                                                                        {isOvernightOverride
+                                                                            ? <span>Custom &mdash; <button type="button" onClick={() => setField({ overnightDepositAmount: undefined })} className="text-primary underline hover:no-underline">Reset to ₱{autoOvernight?.toLocaleString()} ({globalPct}%)</button></span>
+                                                                            : <span>Auto: {globalPct}% of ₱{overnightPrice.toLocaleString()}</span>
+                                                                        }
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Day Use Deposit */}
+                                                                {dayUsePrice > 0 ? (
+                                                                    <div>
+                                                                        <div className="flex items-center justify-between mb-1.5">
+                                                                            <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Day Use Deposit</label>
+                                                                            {isDayUseOverride
+                                                                                ? <span className="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">⚡ Custom</span>
+                                                                                : <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-semibold">✓ Auto</span>
+                                                                            }
+                                                                        </div>
+                                                                        <div className="relative">
+                                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm pointer-events-none">₱</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                min="0"
+                                                                                value={displayDayUse}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value === '' ? undefined : Number(e.target.value);
+                                                                                    setField({ dayUseDepositAmount: val });
+                                                                                }}
+                                                                                className={`w-full pl-8 pr-3 py-2.5 border-2 rounded-lg font-semibold text-gray-800 dark:text-white transition-colors ${isDayUseOverride
+                                                                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
+                                                                                        : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                                                                    }`}
+                                                                            />
+                                                                        </div>
+                                                                        <p className="text-[10px] text-gray-400 mt-1.5 min-h-[14px]">
+                                                                            {isDayUseOverride
+                                                                                ? <span>Custom &mdash; <button type="button" onClick={() => setField({ dayUseDepositAmount: undefined })} className="text-primary underline hover:no-underline">Reset to ₱{autoDayUse?.toLocaleString()} ({globalPct}%)</button></span>
+                                                                                : <span>Auto: {globalPct}% of ₱{dayUsePrice.toLocaleString()}</span>
+                                                                            }
+                                                                        </p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600 p-4">
+                                                                        <p className="text-xs text-gray-400 text-center">Set a day use price<br />above to see its deposit</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 

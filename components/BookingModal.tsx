@@ -4,7 +4,7 @@ import {
     X, Wifi, Wind, Coffee, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
     ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users, Printer, Download, Star,
-    Info, Grid, Image as ImageIcon, Loader, Clock, Copy
+    Info, Grid, Image as ImageIcon, Loader, Clock, Copy, AlertTriangle
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
@@ -218,7 +218,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         ctx.font = 'bold 15px sans-serif';
         ctx.fillText(createdBooking.checkIn, cardX + 25, infoY + 25);
         ctx.fillText(createdBooking.checkOut, cardX + cardWidth / 2 + 10, infoY + 25);
-        
+
         ctx.fillStyle = colors.text;
         ctx.font = '11px sans-serif';
         ctx.fillText(`@ ${createdBooking.estimatedArrival}`, cardX + 25, infoY + 45);
@@ -300,10 +300,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     };
 
     const nights = (selectedStart && selectedEnd) ? differenceInDays(selectedEnd, selectedStart) : 0;
-    
+
     let billableNights = nights;
     let totalPrice = 0;
-    
+
     if (nights === 0 && selectedStart && selectedEnd) {
         // Automatically a Day Use stay if start and end are the same day
         const baseDayPrice = room.dayUsePrice || room.price;
@@ -317,15 +317,24 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
     // Calculate deposit for display (same logic as in confirmPayment)
     let displayDeposit = 0;
-    if (room.depositAmount && room.depositAmount > 0) {
-        displayDeposit = room.depositAmount;
-    } else if (settings?.reservationPolicy?.requireDeposit) {
-        if (settings.reservationPolicy.depositType === 'percentage') {
-            displayDeposit = Math.round(totalPrice * (settings.reservationPolicy.depositPercentage / 100));
-        } else if (settings.reservationPolicy.depositType === 'fixed') {
-            displayDeposit = settings.reservationPolicy.fixedDepositAmount || 0;
+    const globalPercent = settings?.reservationPolicy?.depositPercentage ?? 50;
+
+    if (billableNights === 0) {
+        // Day Use
+        if (room.dayUseDepositAmount !== undefined) {
+            displayDeposit = room.dayUseDepositAmount;
+        } else {
+            displayDeposit = Math.round(totalPrice * (globalPercent / 100));
+        }
+    } else {
+        // Overnight Use (apply per-night rate)
+        if (room.overnightDepositAmount !== undefined) {
+            displayDeposit = room.overnightDepositAmount * billableNights;
+        } else {
+            displayDeposit = Math.round(totalPrice * (globalPercent / 100));
         }
     }
+
     displayDeposit = Math.min(displayDeposit, totalPrice);
     const displayBalance = totalPrice - displayDeposit;
 
@@ -394,18 +403,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         };
 
         // Calculate deposit amount
-        // Priority: 1) Room-specific depositAmount, 2) Global settings, 3) No deposit
         let calculatedDeposit = 0;
+        const globalPercent = settings?.reservationPolicy?.depositPercentage ?? 50;
 
-        if (room.depositAmount && room.depositAmount > 0) {
-            // Use room-specific fixed deposit amount
-            calculatedDeposit = room.depositAmount;
-        } else if (settings?.reservationPolicy?.requireDeposit) {
-            // Use global deposit settings
-            if (settings.reservationPolicy.depositType === 'percentage') {
-                calculatedDeposit = Math.round(totalPrice * (settings.reservationPolicy.depositPercentage / 100));
-            } else if (settings.reservationPolicy.depositType === 'fixed') {
-                calculatedDeposit = settings.reservationPolicy.fixedDepositAmount || 0;
+        if (billableNights === 0) {
+            // Day Use
+            if (room.dayUseDepositAmount !== undefined) {
+                calculatedDeposit = room.dayUseDepositAmount;
+            } else {
+                calculatedDeposit = Math.round(totalPrice * (globalPercent / 100));
+            }
+        } else {
+            // Overnight Use (apply per-night rate)
+            if (room.overnightDepositAmount !== undefined) {
+                calculatedDeposit = room.overnightDepositAmount * billableNights;
+            } else {
+                calculatedDeposit = Math.round(totalPrice * (globalPercent / 100));
             }
         }
 
@@ -440,7 +453,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                 depositPaid: false,
                 paymentType: calculatedDeposit > 0 ? paymentChoice : undefined
             };
-            
+
             setNewBookingId(id);
             setCreatedBooking(newBooking); // Store locally for final submission
             setIsProcessing(false);
@@ -483,7 +496,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
             // 3. Save to database for the first time
             await onBook(fullBooking);
             setCreatedBooking(fullBooking); // Update with final proof and amounts
-            
+
             // 4. Send email notifications
             if (settings) {
                 if (settings.notifications?.sendAdminAlert && settings.notifications?.adminEmail) {
@@ -851,49 +864,64 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                             <span className="font-semibold">₱{totalPrice.toLocaleString()}</span>
                                                         </div>
 
-                                                        {/* Payment Choice Toggle */}
-                                                        <div className="bg-white dark:bg-gray-800 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-b border-blue-200/50">
-                                                            <p className="text-xs text-gray-500 mb-2 font-medium">Choose Payment Option:</p>
-                                                            <div className="flex flex-col gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setPaymentChoice('deposit')}
-                                                                    className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'deposit'
-                                                                        ? 'border-green-500 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
-                                                                        : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
-                                                                        }`}
-                                                                >
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span>💰 Pay Deposit Only</span>
-                                                                        <span className="text-lg">₱{displayDeposit.toLocaleString()}</span>
+                                                        {/* Force Full Payment if Deposit equals or exceeds Total Price */}
+                                                        {displayDeposit >= totalPrice ? (
+                                                            <div className="bg-amber-50 dark:bg-amber-900/40 -mx-4 md:-mx-6 px-4 md:px-6 py-4 border-b border-blue-200/50">
+                                                                <div className="flex items-start gap-3">
+                                                                    <AlertTriangle className="text-amber-500 mt-1 shrink-0" size={20} />
+                                                                    <div>
+                                                                        <h5 className="font-bold text-amber-800 dark:text-amber-400 mb-1">Full Payment Required</h5>
+                                                                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                                            Because your booking total (₱{totalPrice.toLocaleString()}) is less than or equal to the minimum required deposit, full payment is required to complete this reservation.
+                                                                        </p>
                                                                     </div>
-                                                                    <p className="text-xs font-normal mt-1 opacity-70">Pay remaining ₱{displayBalance.toLocaleString()} on arrival</p>
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setPaymentChoice('full')}
-                                                                    className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'full'
-                                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
-                                                                        : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
-                                                                        }`}
-                                                                >
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span>✅ Pay Full Amount</span>
-                                                                        <span className="text-lg">₱{totalPrice.toLocaleString()}</span>
-                                                                    </div>
-                                                                    <p className="text-xs font-normal mt-1 opacity-70">No balance due on arrival</p>
-                                                                </button>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        ) : (
+                                                            /* Payment Choice Toggle */
+                                                            <div className="bg-white dark:bg-gray-800 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-b border-blue-200/50">
+                                                                <p className="text-xs text-gray-500 mb-2 font-medium">Choose Payment Option:</p>
+                                                                <div className="flex flex-col gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPaymentChoice('deposit')}
+                                                                        className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'deposit'
+                                                                            ? 'border-green-500 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                                                                            : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
+                                                                            }`}
+                                                                    >
+                                                                        <div className="flex justify-between items-center">
+                                                                            <span>💰 Pay Deposit Only</span>
+                                                                            <span className="text-lg">₱{displayDeposit.toLocaleString()}</span>
+                                                                        </div>
+                                                                        <p className="text-xs font-normal mt-1 opacity-70">Pay remaining ₱{displayBalance.toLocaleString()} on arrival</p>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPaymentChoice('full')}
+                                                                        className={`py-3 px-4 rounded-lg text-left font-bold transition-all border-2 ${paymentChoice === 'full'
+                                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                                                            : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 hover:border-gray-300 dark:hover:border-gray-500'
+                                                                            }`}
+                                                                    >
+                                                                        <div className="flex justify-between items-center">
+                                                                            <span>✅ Pay Full Amount</span>
+                                                                            <span className="text-lg">₱{totalPrice.toLocaleString()}</span>
+                                                                        </div>
+                                                                        <p className="text-xs font-normal mt-1 opacity-70">No balance due on arrival</p>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
 
                                                         {/* Payment Prompt Message */}
-                                                        <div className={`py-3 -mx-4 md:-mx-6 px-4 md:px-6 text-center ${paymentChoice === 'full' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
-                                                            <p className={`text-lg font-bold ${paymentChoice === 'full' ? 'text-blue-800 dark:text-blue-300' : 'text-green-800 dark:text-green-300'}`}>
-                                                                {paymentChoice === 'full'
+                                                        <div className={`py-3 -mx-4 md:-mx-6 px-4 md:px-6 text-center ${(paymentChoice === 'full' || displayDeposit >= totalPrice) ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
+                                                            <p className={`text-lg font-bold ${(paymentChoice === 'full' || displayDeposit >= totalPrice) ? 'text-blue-800 dark:text-blue-300' : 'text-green-800 dark:text-green-300'}`}>
+                                                                {(paymentChoice === 'full' || displayDeposit >= totalPrice)
                                                                     ? `💳 Please send ₱${totalPrice.toLocaleString()}`
                                                                     : `💰 Please send ₱${displayDeposit.toLocaleString()} deposit`}
                                                             </p>
-                                                            {paymentChoice === 'deposit' && (
+                                                            {(paymentChoice === 'deposit' && displayDeposit < totalPrice) && (
                                                                 <p className="text-sm text-green-700 dark:text-green-400 mt-1">
                                                                     Balance of ₱{displayBalance.toLocaleString()} due upon arrival
                                                                 </p>
@@ -928,7 +956,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                         <Maximize2 className="text-white" size={24} />
                                                                     </div>
                                                                 </div>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleDownloadQr(settings.paymentMethods!.gcash!.qrImage!, 'gcash-qr.png')}
                                                                     className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 py-1.5 rounded-lg transition-colors"
                                                                 >
@@ -944,7 +972,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                             {settings.paymentMethods.gcash.accountNumber && (
                                                                 <div className="flex items-center justify-center gap-2 mt-1">
                                                                     <p className="text-xs text-blue-600 dark:text-blue-500 font-mono bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{settings.paymentMethods.gcash.accountNumber}</p>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleCopy(settings.paymentMethods!.gcash!.accountNumber!)}
                                                                         className="text-blue-500 hover:text-blue-700 transition-colors bg-white hover:bg-blue-50 rounded p-1 shadow-sm border border-blue-100"
                                                                         title="Copy Account Number"
@@ -964,10 +992,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                         <Maximize2 className="text-white" size={24} />
                                                                     </div>
                                                                 </div>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleDownloadQr(settings.paymentMethods!.bankTransfer!.qrImage!, 'bank-qr.png')}
                                                                     className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 hover:bg-green-200 py-1.5 rounded-lg transition-colors"
-                                                                    >
+                                                                >
                                                                     <Download size={12} /> Download QR
                                                                 </button>
                                                             </div>
@@ -980,7 +1008,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                             {settings.paymentMethods.bankTransfer.accountNumber && (
                                                                 <div className="flex items-center justify-center gap-2 mt-1">
                                                                     <p className="text-xs text-green-700 dark:text-green-500 font-mono bg-green-50 dark:bg-green-900/40 px-2 py-0.5 rounded">{settings.paymentMethods.bankTransfer.accountNumber}</p>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleCopy(settings.paymentMethods!.bankTransfer!.accountNumber!)}
                                                                         className="text-green-600 hover:text-green-700 transition-colors bg-white hover:bg-green-50 rounded p-1 shadow-sm border border-green-100"
                                                                         title="Copy Account Number"
@@ -996,49 +1024,61 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                 <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-4">Payment methods not configured. Please contact us directly.</p>
                                             )}
                                         </div>
-                                            <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 pt-6 border-t border-gray-100 dark:border-gray-700">
-                                        <button
-                                            onClick={() => setStep(1)}
-                                            className="w-full sm:w-auto px-8 py-3 rounded-full font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-100 dark:border-gray-700"
-                                        >
-                                            Back
-                                        </button>
-                                        <div className="flex-[2] flex flex-col gap-3">
-                                            {/* Final Proof Upload at the end of Step 2 */}
-                                            <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="block text-[10px] font-black uppercase text-primary">Upload Payment Screenshot</label>
-                                                    {paymentProofFile && (
-                                                        <button 
-                                                            onClick={() => setPaymentProofFile(null)}
-                                                            className="text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors flex items-center"
-                                                        >
-                                                            <X size={10} className="mr-1" /> Remove
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {previewUrl ? (
-                                                    <div className="relative group rounded-lg overflow-hidden border border-primary/20 bg-white">
-                                                        <div 
-                                                            className="cursor-zoom-in group-relative"
-                                                            onClick={() => setZoomedQr(previewUrl)}
-                                                        >
-                                                            <img src={previewUrl} alt="Payment Proof Preview" className="w-full h-32 object-cover" />
-                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                                                <Maximize2 className="text-white" size={20} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="absolute bottom-2 right-2 flex gap-2">
-                                                            <label 
-                                                                htmlFor="payment-upload" 
-                                                                className="cursor-pointer bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/30 hover:bg-black/80 transition-all shadow-lg"
+                                        <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                                            <button
+                                                onClick={() => setStep(1)}
+                                                className="w-full sm:w-auto px-8 py-3 rounded-full font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-100 dark:border-gray-700"
+                                            >
+                                                Back
+                                            </button>
+                                            <div className="flex-[2] flex flex-col gap-3">
+                                                {/* Final Proof Upload at the end of Step 2 */}
+                                                <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <label className="block text-[10px] font-black uppercase text-primary">Upload Payment Screenshot</label>
+                                                        {paymentProofFile && (
+                                                            <button
+                                                                onClick={() => setPaymentProofFile(null)}
+                                                                className="text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors flex items-center"
                                                             >
-                                                                Change Image
-                                                            </label>
+                                                                <X size={10} className="mr-1" /> Remove
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {previewUrl ? (
+                                                        <div className="relative group rounded-lg overflow-hidden border border-primary/20 bg-white">
+                                                            <div
+                                                                className="cursor-zoom-in group-relative"
+                                                                onClick={() => setZoomedQr(previewUrl)}
+                                                            >
+                                                                <img src={previewUrl} alt="Payment Proof Preview" className="w-full h-32 object-cover" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                                    <Maximize2 className="text-white" size={20} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="absolute bottom-2 right-2 flex gap-2">
+                                                                <label
+                                                                    htmlFor="payment-upload"
+                                                                    className="cursor-pointer bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/30 hover:bg-black/80 transition-all shadow-lg"
+                                                                >
+                                                                    Change Image
+                                                                </label>
+                                                            </div>
+                                                            <input
+                                                                id="payment-upload"
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={(e) => {
+                                                                    if (e.target.files && e.target.files[0]) {
+                                                                        setPaymentProofFile(e.target.files[0]);
+                                                                    }
+                                                                }}
+                                                                className="hidden"
+                                                            />
                                                         </div>
+                                                    ) : (
                                                         <input
-                                                            id="payment-upload"
                                                             type="file"
                                                             accept="image/*"
                                                             onChange={(e) => {
@@ -1046,37 +1086,25 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     setPaymentProofFile(e.target.files[0]);
                                                                 }
                                                             }}
-                                                            className="hidden"
+                                                            className="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white hover:file:bg-primary/80 transition-all cursor-pointer"
                                                         />
-                                                    </div>
-                                                ) : (
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) => {
-                                                            if (e.target.files && e.target.files[0]) {
-                                                                setPaymentProofFile(e.target.files[0]);
-                                                            }
-                                                        }}
-                                                        className="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-primary file:text-white hover:file:bg-primary/80 transition-all cursor-pointer"
-                                                    />
-                                                )}
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={handleCompleteBooking}
+                                                    disabled={isProcessing || !paymentProofFile}
+                                                    className="w-full bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center disabled:opacity-50 disabled:scale-100"
+                                                >
+                                                    {isProcessing ? (
+                                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    ) : 'Submit Proof & Book Now'}
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={handleCompleteBooking}
-                                                disabled={isProcessing || !paymentProofFile}
-                                                className="w-full bg-green-600 text-white py-3 rounded-full font-bold hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex justify-center items-center disabled:opacity-50 disabled:scale-100"
-                                            >
-                                                {isProcessing ? (
-                                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                ) : 'Submit Proof & Book Now'}
-                                            </button>
                                         </div>
                                     </div>
-                     </div>
                                 </div>
                             )}
 
@@ -1112,7 +1140,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                     >
                                                         "Find My Booking"
                                                     </button>
-                                                {' '}in the menu.</p>
+                                                    {' '}in the menu.</p>
                                             </div>
                                         </div>
 
@@ -1159,7 +1187,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     <Maximize2 className="text-white" size={20} />
                                                                 </div>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleDownloadQr(settings.paymentMethods!.gcash!.qrImage!, 'gcash-qr.png')}
                                                                 className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 py-1.5 rounded-lg transition-colors border border-blue-200"
                                                             >
@@ -1175,7 +1203,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                         {settings.paymentMethods.gcash.accountNumber && (
                                                             <div className="flex items-center justify-center gap-1 mt-1">
                                                                 <p className="text-[10px] text-blue-600 dark:text-blue-500 font-mono bg-blue-50/50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">{settings.paymentMethods.gcash.accountNumber}</p>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleCopy(settings.paymentMethods!.gcash!.accountNumber!)}
                                                                     className="text-blue-500 hover:text-blue-700 transition-colors p-1"
                                                                     title="Copy Account Number"
@@ -1195,7 +1223,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                                     <Maximize2 className="text-white" size={20} />
                                                                 </div>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleDownloadQr(settings.paymentMethods!.bankTransfer!.qrImage!, 'bank-qr.png')}
                                                                 className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 hover:bg-green-200 py-1.5 rounded-lg transition-colors border border-green-200"
                                                             >
@@ -1209,7 +1237,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                                                         {settings.paymentMethods.bankTransfer.accountNumber && (
                                                             <div className="flex items-center justify-center gap-1 mt-1">
                                                                 <p className="text-[10px] text-green-700 dark:text-green-500 font-mono bg-green-50/50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">{settings.paymentMethods.bankTransfer.accountNumber}</p>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleCopy(settings.paymentMethods!.bankTransfer!.accountNumber!)}
                                                                     className="text-green-600 hover:text-green-700 transition-colors p-1"
                                                                     title="Copy Account Number"

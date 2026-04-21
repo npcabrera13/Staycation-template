@@ -37,14 +37,6 @@ interface EmailRequest {
     };
 }
 
-// ── Crypto: Web Crypto API (native to Cloudflare Workers) ──────────────────
-async function generateActionToken(id?: string, secret?: string): Promise<string> {
-    const msg = (id || 'default') + (secret || 'staycation-secret-salt');
-    const msgBuffer = new TextEncoder().encode(msg);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 
 
@@ -114,10 +106,7 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
     `;
 }
 
-function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string, token: string): string {
-    const approveUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=approve&token=${token}`;
-    const rejectUrl = `${baseUrl}/api/booking-action?bookingId=${data.bookingId}&action=reject&token=${token}`;
-
+function generateAdminEmailHTML(data: EmailRequest['data']): string {
     return `
     <!DOCTYPE html>
     <html>
@@ -162,15 +151,9 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string, tok
                 ` : ''}
                 
                 <div class="action-box">
-                    <h3 style="margin-top: 0; color: #dc2626;">Instant Actions</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the receipt above and click to action:</p>
-                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve</a>
-                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
-                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will confirm the dates and notify the guest.</p>
-                </div>
-
-                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <a href="${data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Open Full Admin Dashboard</a>
+                    <h3 style="margin-top: 0; color: #dc2626;">Review Booking</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Review the details and receipt above, then manage the booking in your admin panel:</p>
+                    <a href="${data.adminUrl || '#'}" class="btn" style="background-color: #059669; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold;">🔐 Open Admin Dashboard</a>
                 </div>
             </div>
         </div>
@@ -179,10 +162,7 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string, tok
     `;
 }
 
-function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string, token: string): string {
-    const approveUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=approve-renewal&token=${token}`;
-    const rejectUrl = `${baseUrl}/api/booking-action?requestId=${data.requestId}&action=reject-renewal&token=${token}`;
-
+function generateRenewalEmailHTML(data: EmailRequest['data']): string {
     return `
     <!DOCTYPE html>
     <html>
@@ -225,15 +205,9 @@ function generateRenewalEmailHTML(data: EmailRequest['data'], baseUrl: string, t
                 ` : ''}
 
                 <div class="action-box">
-                    <h3 style="margin-top: 0; color: #059669;">Superadmin Actions</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Verify the receipt and click to activate subscription:</p>
-                    <a href="${approveUrl}" class="btn btn-approve">✅ Approve & Extend</a>
-                    <a href="${rejectUrl}" class="btn btn-reject">❌ Reject</a>
-                    <p style="font-size: 11px; color: #999; margin-top: 15px;">Choosing "Approve" will instantly update their expiry date.</p>
-                </div>
-                
-                <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <a href="${data.superadminUrl || data.adminUrl || '#'}" style="color: #666; text-decoration: underline; font-size: 13px;">Go to Superadmin Panel</a>
+                    <h3 style="margin-top: 0; color: #059669;">Review Renewal</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Verify the receipt above and manage this renewal request securely in the Superadmin panel:</p>
+                    <a href="${data.superadminUrl || data.adminUrl || '#'}" class="btn" style="background-color: #059669; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold;">🔐 Open Superadmin Panel</a>
                 </div>
             </div>
         </div>
@@ -266,18 +240,13 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
             });
         }
 
-        // Detect Base URL for action links
-        const url = new URL(request.url);
-        const baseUrl = `${url.protocol}//${url.host}`;
-        const SECRET = env.VITE_FIREBASE_APP_ID || 'staycation-secret-salt';
 
         // Generate HTML based on email type
         let html = '';
         let attachments: { filename: string; content: string; mimeType?: string }[] = [];
 
         if (type === 'superadmin_renewal') {
-            const token = await generateActionToken(data.requestId || data.bookingId, SECRET);
-            html = generateRenewalEmailHTML(data, baseUrl, token);
+            html = generateRenewalEmailHTML(data);
 
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');
@@ -289,8 +258,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
                 });
             }
         } else if (type === 'admin_notification') {
-            const token = await generateActionToken(data.bookingId, SECRET);
-            html = generateAdminEmailHTML(data, baseUrl, token);
+            html = generateAdminEmailHTML(data);
 
             if (data.paymentProof && data.paymentProof.startsWith('data:image')) {
                 const [meta, base64] = data.paymentProof.split(',');

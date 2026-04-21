@@ -101,10 +101,7 @@ export const DEFAULT_SETTINGS: Settings = {
         }
     },
     reservationPolicy: {
-        requireDeposit: true,
-        depositType: 'percentage',
         depositPercentage: 50,
-        fixedDepositAmount: 1000,
         autoConfirmOnDeposit: true,
         cancellationPolicy: "Deposits are non-refundable. Please refer to our booking rules. Full refund available for cancellations made 7 days or more before check-in.",
         paymentDeadlineHours: 24
