@@ -2698,7 +2698,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             className="w-full flex items-center justify-between px-4 py-2.5 sm:py-3 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
                                         >
                                             <div className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200 text-left">
-                                                <span>🌐 Global Deposit Rule: <span className="text-primary font-bold">{currentGlobalDeposit}%</span> <span className="text-gray-400 dark:text-gray-500 font-normal ml-1 hidden sm:inline">— tap to edit</span></span>
+                                                <span className="flex items-center">
+                                                    🌐 Global Deposit Rule: <span className="text-primary font-bold ml-1">{currentGlobalDeposit}%</span> 
+                                                    <HelpTooltip text="This sets the default deposit percentage for all rooms. You can still override this on individual rooms." />
+                                                    <span className="text-gray-400 dark:text-gray-500 font-normal ml-1 hidden sm:inline">— tap to edit</span>
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                                                 <span className="sm:hidden">tap to edit</span>

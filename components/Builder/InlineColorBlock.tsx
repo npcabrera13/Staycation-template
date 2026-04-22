@@ -81,11 +81,11 @@ const InlineColorBlock: React.FC<InlineColorBlockProps> = ({
 
             {isFocused && (
                 <div
-                    className={`absolute ${popupPosition === 'above' ? 'bottom-full mb-4' : 'top-full mt-4'} left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-[9999] animate-fade-in-up md:w-max min-w-[280px]`}
+                    className={`absolute ${popupPosition === 'above' ? 'bottom-full mb-4' : 'top-full mt-4'} -right-4 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-[9999] animate-fade-in-up w-max min-w-[280px]`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Triangle pointer */}
-                    <div className={`absolute ${popupPosition === 'above' ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'} left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-gray-100 transform rotate-45 shadow-sm`}></div>
+                    <div className={`absolute ${popupPosition === 'above' ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'} right-6 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-3 h-3 bg-white border-gray-100 transform rotate-45 shadow-sm`}></div>
 
                     <div className="flex flex-col gap-3">
                         <div>

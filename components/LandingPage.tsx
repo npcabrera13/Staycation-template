@@ -1509,24 +1509,48 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             <MapPin className="w-5 h-5 md:w-6 md:h-6" /> Edit Google Map 
                                         </h3>
                                         <div className="w-full max-w-2xl bg-white/10 p-4 md:p-6 rounded-2xl border border-white/20 backdrop-blur-md">
-                                            <label className="block text-xs md:text-sm font-medium text-gray-200 mb-1.5 md:mb-2">Google Maps Embed URL (src link)</label>
+                                            <label className="block text-xs md:text-sm font-bold text-gray-100 mb-1.5 md:mb-2">Google Maps Location</label>
                                             <input 
                                                 type="text" 
                                                 className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-black mb-3 md:mb-4 focus:ring-2 focus:ring-primary outline-none transition-all"
-                                                placeholder="https://www.google.com/maps/embed?..."
+                                                placeholder="Paste Share Link, embed URL, or type place name"
                                                 value={workingSettings.map?.embedUrl || ''}
-                                                onChange={(e) => handleSettingChange('map', 'embedUrl', e.target.value)}
+                                                onChange={(e) => {
+                                                    let val = e.target.value;
+                                                    if (val.includes('<iframe') && val.includes('src="')) {
+                                                        const match = val.match(/src="([^"]+)"/);
+                                                        if (match) val = match[1];
+                                                    } else if (val.includes('maps.app.goo.gl') || val.includes('goo.gl/maps')) {
+                                                        handleSettingChange('map', 'embedUrl', 'Loading map from link...');
+                                                        fetch(`/api/resolve-map?url=${encodeURIComponent(val)}`)
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if(data.success && data.embedUrl) handleSettingChange('map', 'embedUrl', data.embedUrl);
+                                                                else handleSettingChange('map', 'embedUrl', val);
+                                                            }).catch(() => handleSettingChange('map', 'embedUrl', val));
+                                                        return;
+                                                    }
+                                                    handleSettingChange('map', 'embedUrl', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    let val = e.target.value;
+                                                    if (val && !val.startsWith('http') && !val.includes('Loading')) {
+                                                        const embed = `https://maps.google.com/maps?q=${encodeURIComponent(val)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                                                        handleSettingChange('map', 'embedUrl', embed);
+                                                    }
+                                                }}
                                             />
                                             <div className="bg-black/30 p-3 md:p-4 rounded-xl flex gap-2.5 md:gap-3 text-[11px] md:text-sm text-gray-300">
-                                                <Info className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
+                                                <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
                                                 <div className="flex-1 overflow-hidden">
-                                                    <p className="mb-2 leading-relaxed">
-                                                        Go to Google Maps → Share → Embed a map → Copy HTML. <br className="hidden md:block"/>
-                                                        Extract only the URL inside the <code className="text-primary bg-primary/10 px-1 rounded mx-0.5">src="..."</code>.
+                                                    <p className="mb-2 leading-relaxed text-gray-200">
+                                                        <strong>Smart Input:</strong> You can configure your map in 3 ways:
                                                     </p>
-                                                    <div className="bg-black/40 p-2.5 md:p-3 rounded-lg text-[10px] font-mono mb-2 overflow-x-auto whitespace-nowrap border border-white/10 scrollbar-hide">
-                                                        <span className="text-gray-500">&lt;iframe src="</span><span className="text-green-400">https://www.google.com/maps/embed?pb=...</span><span className="text-gray-500">" ...&gt;</span>
-                                                    </div>
+                                                    <ul className="list-disc pl-4 space-y-1 text-gray-400 mb-3">
+                                                        <li><strong>Share Link:</strong> Copy the <code className="text-primary px-1">maps.app.goo.gl</code> link from your phone and paste it here.</li>
+                                                        <li><strong>Place Name:</strong> Just type your resort's name and tap outside the box.</li>
+                                                        <li><strong>Embed Code:</strong> Paste the full <code className="text-primary px-1">&lt;iframe&gt;</code> HTML code.</li>
+                                                    </ul>
                                                     <a 
                                                         href="https://www.google.com/maps" 
                                                         target="_blank" 
