@@ -119,8 +119,6 @@ function generateAdminEmailHTML(data: EmailRequest['data']): string {
             .info-box { background: #f3f4f6; padding: 15px; margin: 10px 0; border-radius: 8px; }
             .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #fff1f2; border-radius: 12px; border: 1px solid #fecaca; }
             .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
-            .btn-approve { background-color: #059669; color: white !important; }
-            .btn-reject { background-color: #dc2626; color: white !important; }
             .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
         </style>
     </head>
@@ -176,8 +174,6 @@ function generateRenewalEmailHTML(data: EmailRequest['data']): string {
             .amount { font-size: 24px; font-weight: bold; color: #047857; margin: 10px 0; }
             .action-box { margin-top: 30px; text-align: center; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bcf0da; }
             .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 5px; min-width: 140px; }
-            .btn-approve { background-color: #059669; color: white !important; }
-            .btn-reject { background-color: #dc2626; color: white !important; }
             .receipt-preview { margin-top: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 100%; }
         </style>
     </head>
