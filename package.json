@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
@@ -21,6 +22,7 @@
     "worker-mailer": "^1.2.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.33.1",
     "@netlify/functions": "^5.2.0",
     "@types/node": "^22.14.0",
     "@types/nodemailer": "^7.0.4",
@@ -30,6 +32,7 @@
     "postcss": "^8.5.9",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "wrangler": "^4.84.1"
   }
 }
