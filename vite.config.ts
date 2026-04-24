@@ -3,6 +3,8 @@ import fs from 'fs';
 import { defineConfig, loadEnv, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 // Dev-only plugin to save Firebase config from the Admin Panel
 function firebaseConfigPlugin(): Plugin {
   const configPath = () => path.resolve(__dirname, 'public/firebase-config.js');
@@ -84,7 +86,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
     },
-    plugins: [react(), firebaseConfigPlugin()],
+    plugins: [react(), firebaseConfigPlugin(), cloudflare()],
     define: {
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY)
     },
