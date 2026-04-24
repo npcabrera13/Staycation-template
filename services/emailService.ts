@@ -8,6 +8,9 @@ interface EmailData {
     roomName?: string;
     checkIn?: string;
     checkOut?: string;
+    estimatedArrival?: string;
+    estimatedDeparture?: string;
+    bookedAt?: string;
     guests?: number;
     nights?: number;
     totalPrice?: number;
@@ -81,6 +84,9 @@ export async function sendUserConfirmationEmail(
         roomName: room.name,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
+        estimatedArrival: booking.estimatedArrival,
+        estimatedDeparture: booking.estimatedDeparture,
+        bookedAt: booking.bookedAt,
         guests: booking.guests,
         nights: booking.nights,
         totalPrice: booking.totalPrice,
@@ -125,6 +131,9 @@ export async function sendAdminNotificationEmail(
         roomName: room.name,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
+        estimatedArrival: booking.estimatedArrival,
+        estimatedDeparture: booking.estimatedDeparture,
+        bookedAt: booking.bookedAt,
         guests: booking.guests,
         nights: booking.nights,
         totalPrice: booking.totalPrice,

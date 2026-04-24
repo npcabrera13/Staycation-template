@@ -11,6 +11,9 @@ interface EmailRequest {
         roomName?: string;
         checkIn?: string;
         checkOut?: string;
+        estimatedArrival?: string;
+        estimatedDeparture?: string;
+        bookedAt?: string;
         guests?: number;
         nights?: number;
         totalPrice?: number;
@@ -75,10 +78,11 @@ function generateUserEmailHTML(data: EmailRequest['data']): string {
                     <h3 style="margin-top: 0; color: #264653;">📋 Reservation Details</h3>
                     <p><strong>Booking ID:</strong> ${data.bookingId}</p>
                     <p><strong>Room:</strong> ${data.roomName}</p>
-                    <p><strong>Check-in:</strong> ${data.checkIn}</p>
-                    <p><strong>Check-out:</strong> ${data.checkOut}</p>
+                    <p><strong>Check-in:</strong> ${data.checkIn} ${data.estimatedArrival ? `at ${data.estimatedArrival}` : ''}</p>
+                    <p><strong>Check-out:</strong> ${data.checkOut} ${data.estimatedDeparture ? `at ${data.estimatedDeparture}` : ''}</p>
                     <p><strong>Guests:</strong> ${data.guests}</p>
                     ${data.nights ? `<p><strong>Nights:</strong> ${data.nights}</p>` : ''}
+                    ${data.bookedAt ? `<p><strong>Requested On:</strong> ${data.bookedAt}</p>` : ''}
                 </div>
                 
                 <div class="payment-box">
@@ -131,9 +135,10 @@ function generateAdminEmailHTML(data: EmailRequest['data'], baseUrl: string): st
                 <div class="info-box">
                     <p><strong>Guest:</strong> ${data.guestName}</p>
                     <p><strong>Room:</strong> ${data.roomName}</p>
-                    <p><strong>Check-in:</strong> ${data.checkIn}</p>
-                    <p><strong>Check-out:</strong> ${data.checkOut}</p>
+                    <p><strong>Check-in:</strong> ${data.checkIn} ${data.estimatedArrival ? `(@ ${data.estimatedArrival})` : ''}</p>
+                    <p><strong>Check-out:</strong> ${data.checkOut} ${data.estimatedDeparture ? `(@ ${data.estimatedDeparture})` : ''}</p>
                     <p><strong>Guests:</strong> ${data.guests}</p>
+                    ${data.bookedAt ? `<p><strong>Submitted:</strong> ${data.bookedAt}</p>` : ''}
                     <p><strong>Total:</strong> ₱${data.totalPrice?.toLocaleString() || '0'}</p>
                     ${data.depositAmount ? `<p><strong>Deposit:</strong> ₱${data.depositAmount?.toLocaleString()}</p>` : ''}
                     <p><strong>Booking ID:</strong> ${data.bookingId}</p>
