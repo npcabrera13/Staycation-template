@@ -174,15 +174,7 @@ export async function sendRenewalNotificationEmail(
  * Calculate deposit amount
  */
 export function calculateDeposit(totalPrice: number, settings: Settings): number {
-    if (!settings.reservationPolicy?.requireDeposit) {
-        return 0;
-    }
-
-    if (settings.reservationPolicy.depositType === 'fixed') {
-        return Math.min(settings.reservationPolicy.fixedDepositAmount || 0, totalPrice);
-    }
-
-    const percentage = settings.reservationPolicy.depositPercentage || 50;
+    const percentage = settings.reservationPolicy?.depositPercentage ?? 50;
     return Math.round(totalPrice * (percentage / 100));
 }
 
