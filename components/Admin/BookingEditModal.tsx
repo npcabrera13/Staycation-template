@@ -131,7 +131,14 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, bo
 
                         {/* Guest Details */}
                         <div className="space-y-4">
-                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">Guest Information</label>
+                            <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Guest Information</label>
+                                {!isNew && formData.bookedAt && (
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                                        Booked on {new Date(formData.bookedAt).toLocaleDateString()}
+                                    </span>
+                                )}
+                            </div>
 
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
