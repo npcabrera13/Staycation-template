@@ -282,7 +282,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
             },
             authType: 'plain',
             host: 'smtp.gmail.com',
-            port: 587,
+            port: 465,
             secure: true,
         });
 

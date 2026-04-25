@@ -120,12 +120,25 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
             if (!updated.map) updated.map = { embedUrl: '' };
             updated.map.embedUrl = mapEmbedUrl.trim();
 
+            // Sync Email to Admin Notifications
+            if (!updated.notifications) {
+                updated.notifications = {
+                    adminEmail: email.trim(),
+                    sendUserConfirmation: true,
+                    sendAdminAlert: true,
+                    sendCheckInReminder: true,
+                };
+            } else {
+                updated.notifications.adminEmail = email.trim();
+            }
+
             // Enable Admin Onboarding (Rocket Icon) in the dashboard
             updated.setupComplete = true;
 
             // Save Settings
             await onUpdateSettings(updated);
             localStorage.setItem('justFinishedWizard', 'true');
+            window.dispatchEvent(new Event('wizardCompleted'));
 
             // 2. Room Photos tutorial: In the Admin Panel, we tell them to head there.
             // Simplified: Removing Room naming from wizard to speed up onboarding.

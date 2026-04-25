@@ -32,6 +32,10 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     if (localStorage.getItem('justFinishedWizard') === 'true') {
       setShowAdminGuide(true);
     }
+
+    const handleWizardCompleted = () => setShowAdminGuide(true);
+    window.addEventListener('wizardCompleted', handleWizardCompleted);
+    return () => window.removeEventListener('wizardCompleted', handleWizardCompleted);
   }, []);
 
   useEffect(() => {

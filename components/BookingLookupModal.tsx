@@ -92,7 +92,12 @@ const BookingLookupModal: React.FC<BookingLookupModalProps> = ({ isOpen, onClose
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-bold text-gray-800">{room?.name || 'Unknown Room'}</h4>
-                      <span className="text-xs text-gray-500">ID: {booking.id.slice(0, 8)}...</span>
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <span className="text-xs text-gray-500">ID: {booking.id.slice(0, 8)}...</span>
+                        {booking.bookedAt && (
+                          <span className="text-[11px] text-gray-400 font-medium">Booked on {new Date(booking.bookedAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
                     </div>
                     <div className={`flex items-center px-2 py-1 rounded-full text-xs font-bold border ${getStatusColor(booking.status)}`}>
                       {getStatusIcon(booking.status)}
