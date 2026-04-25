@@ -1726,7 +1726,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Email Passcode Section */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div id="admin-passcode-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <Shield className="mr-2 text-primary" size={20} /> Security & Notifications
                         </h3>
@@ -3325,12 +3325,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <button
                                     onClick={() => {
                                         setShowMissingPasscodeWarning(false);
-                                        setActiveTab('settings');
-                                        // Give it a tiny delay to switch to settings tab before scrolling
-                                        setTimeout(() => {
-                                            const passcodeSection = document.getElementById('admin-passcode-section');
-                                            if (passcodeSection) passcodeSection.scrollIntoView({ behavior: 'smooth' });
-                                        }, 100);
+                                        navigateToTab('settings', 'admin-passcode-section');
                                     }}
                                     className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shadow-md flex items-center justify-center gap-2"
                                 >

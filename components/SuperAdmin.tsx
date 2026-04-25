@@ -121,6 +121,76 @@ const SuperAdmin: React.FC = () => {
     const [showAdminPasscode, setShowAdminPasscode] = useState(false);
     const [showResetPasscodeConfirm, setShowResetPasscodeConfirm] = useState(false);
 
+    // Infrastructure & Hosting state
+    interface InfraField { key: string; value: string; show?: boolean; }
+    const DEFAULT_INFRA = {
+        firebase: '',
+        cloudflare: '',
+        github: '',
+        smtpEmail: '',
+        smtpPassword: '',
+        customFields: [] as InfraField[],
+    };
+    const [infra, setInfra] = useState(DEFAULT_INFRA);
+    const [infraSaving, setInfraSaving] = useState(false);
+    const [infraStatus, setInfraStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+    const [showSmtpPw, setShowSmtpPw] = useState(false);
+    const [showInfraCustomPw, setShowInfraCustomPw] = useState<Record<number, boolean>>({});
+    const [newCustomKey, setNewCustomKey] = useState('');
+    const [newCustomValue, setNewCustomValue] = useState('');
+
+    // Load infrastructure from Firestore when authenticated
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const loadInfra = async () => {
+            try {
+                const snap = await getDoc(doc(db, '_superadmin', 'infrastructure'));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    setInfra({
+                        firebase: d.firebase || '',
+                        cloudflare: d.cloudflare || '',
+                        github: d.github || '',
+                        smtpEmail: d.smtpEmail || '',
+                        smtpPassword: d.smtpPassword || '',
+                        customFields: d.customFields || [],
+                    });
+                }
+            } catch { }
+        };
+        loadInfra();
+    }, [isAuthenticated]);
+
+    const saveInfra = async () => {
+        setInfraSaving(true);
+        try {
+            await setDoc(doc(db, '_superadmin', 'infrastructure'), infra, { merge: true });
+            setInfraStatus('saved');
+            setTimeout(() => setInfraStatus('idle'), 3000);
+        } catch {
+            setInfraStatus('error');
+            setTimeout(() => setInfraStatus('idle'), 3000);
+        }
+        setInfraSaving(false);
+    };
+
+    const addCustomInfraField = () => {
+        if (!newCustomKey.trim()) return;
+        setInfra(prev => ({
+            ...prev,
+            customFields: [...prev.customFields, { key: newCustomKey.trim(), value: newCustomValue.trim() }],
+        }));
+        setNewCustomKey('');
+        setNewCustomValue('');
+    };
+
+    const removeCustomInfraField = (index: number) => {
+        setInfra(prev => ({
+            ...prev,
+            customFields: prev.customFields.filter((_, i) => i !== index),
+        }));
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             loadSubscription();
@@ -1118,6 +1188,179 @@ Please output only the filled .env content without any extra explanation so I ca
                                         <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* ===== INFRASTRUCTURE & HOSTING PANEL ===== */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+                            <div className="flex items-center justify-between mb-1">
+                                <h4 className="text-md font-bold text-white flex items-center">
+                                    <Database size={18} className="mr-2 text-cyan-400" /> Infrastructure & Hosting
+                                </h4>
+                                {infraStatus === 'saved' && (
+                                    <span className="text-xs text-green-400 flex items-center"><CheckCircle size={12} className="mr-1" />Saved!</span>
+                                )}
+                                {infraStatus === 'error' && (
+                                    <span className="text-xs text-red-400 flex items-center"><AlertCircle size={12} className="mr-1" />Error saving</span>
+                                )}
+                            </div>
+                            <p className="text-gray-500 text-xs mb-5">Store this client's deployment credentials here for your own reference. Only you can see this.</p>
+
+                            <div className="space-y-4">
+                                {/* Firebase */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-cyan-300 mb-1 flex items-center gap-1">
+                                        <Database size={13} /> Firebase Account Used
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={infra.firebase}
+                                        onChange={(e) => setInfra(p => ({ ...p, firebase: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-mono"
+                                        placeholder="e.g. my-project-12345"
+                                    />
+                                </div>
+
+                                {/* Cloudflare */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-orange-300 mb-1 flex items-center gap-1">
+                                        <Globe size={13} /> Cloudflare Account / URL
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={infra.cloudflare}
+                                        onChange={(e) => setInfra(p => ({ ...p, cloudflare: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-mono"
+                                        placeholder="e.g. https://my-project.pages.dev or Zone ID"
+                                    />
+                                </div>
+
+                                {/* GitHub */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-purple-300 mb-1 flex items-center gap-1">
+                                        <ExternalLink size={13} /> GitHub Repo Link
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={infra.github}
+                                        onChange={(e) => setInfra(p => ({ ...p, github: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
+                                        placeholder="e.g. https://github.com/you/client-repo"
+                                    />
+                                </div>
+
+                                {/* SMTP Email */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-red-300 mb-1 flex items-center gap-1">
+                                            <Mail size={13} /> Sending Email Account
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={infra.smtpEmail}
+                                            onChange={(e) => setInfra(p => ({ ...p, smtpEmail: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm font-mono"
+                                            placeholder="e.g. visionarywebco@gmail.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-red-300 mb-1 flex items-center gap-1">
+                                            <Key size={13} /> App Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showSmtpPw ? 'text' : 'password'}
+                                                value={infra.smtpPassword}
+                                                onChange={(e) => setInfra(p => ({ ...p, smtpPassword: e.target.value }))}
+                                                className="w-full px-3 py-2 pr-9 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm font-mono"
+                                                placeholder="App password"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowSmtpPw(v => !v)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                {showSmtpPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Custom Fields */}
+                                {infra.customFields.length > 0 && (
+                                    <div className="space-y-2 pt-2 border-t border-white/10">
+                                        <p className="text-xs font-semibold text-gray-400 mb-2">Custom Fields</p>
+                                        {infra.customFields.map((field, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <span className="text-xs font-mono text-amber-300 bg-amber-500/10 px-2 py-1.5 rounded-lg border border-amber-500/20 min-w-[100px] truncate">{field.key}</span>
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type={showInfraCustomPw[idx] ? 'text' : 'password'}
+                                                        value={field.value}
+                                                        onChange={(e) => {
+                                                            const updated = [...infra.customFields];
+                                                            updated[idx] = { ...updated[idx], value: e.target.value };
+                                                            setInfra(p => ({ ...p, customFields: updated }));
+                                                        }}
+                                                        className="w-full px-3 py-1.5 pr-9 bg-white/10 border border-white/20 rounded-lg text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowInfraCustomPw(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                                    >
+                                                        {showInfraCustomPw[idx] ? <EyeOff size={13} /> : <Eye size={13} />}
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeCustomInfraField(idx)}
+                                                    className="p-1.5 text-gray-500 hover:text-red-400 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors border border-white/10 flex-shrink-0"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add Custom Field Row */}
+                                <div className="pt-2 border-t border-white/10">
+                                    <p className="text-xs text-gray-500 mb-2">Add a custom field (e.g. Domain, API key, notes…)</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newCustomKey}
+                                            onChange={(e) => setNewCustomKey(e.target.value)}
+                                            className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-mono"
+                                            placeholder="Field name (e.g. Domain)"
+                                            onKeyDown={(e) => { if (e.key === 'Enter') addCustomInfraField(); }}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={newCustomValue}
+                                            onChange={(e) => setNewCustomValue(e.target.value)}
+                                            className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-mono"
+                                            placeholder="Value"
+                                            onKeyDown={(e) => { if (e.key === 'Enter') addCustomInfraField(); }}
+                                        />
+                                        <button
+                                            onClick={addCustomInfraField}
+                                            disabled={!newCustomKey.trim()}
+                                            className="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold rounded-xl transition-colors border border-amber-500/30 text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                                        >
+                                            <Plus size={15} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Save Button */}
+                                <button
+                                    onClick={saveInfra}
+                                    disabled={infraSaving}
+                                    className="w-full py-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold rounded-xl transition-colors border border-cyan-500/30 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
+                                >
+                                    {infraSaving ? <><Loader size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Infrastructure Info</>}
+                                </button>
                             </div>
                         </div>
                     </div>
