@@ -25,6 +25,7 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
+import MockExplorer from './components/MockExplorer';
 
 // Simple loading bar — only shown as Suspense fallback for Admin/SuperAdmin routes
 const PageLoadingFallback = () => (
@@ -571,6 +572,7 @@ function AppContent() {
           </>
         } />
         <Route path="/superadmin" element={<Suspense fallback={<PageLoadingFallback />}><SuperAdmin /></Suspense>} />
+        <Route path="/backend/sysadmin/core/debug/logs/explorer" element={<MockExplorer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
