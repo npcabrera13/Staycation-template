@@ -494,7 +494,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
         <>
             {/* Content Wrapper that shifts when Builder is open - DESKTOP ONLY */}
             <div
-                className={`transition-all duration-300 ease-in-out ${isEditing && !isBuilderMinimized ? 'md:ml-[320px] md:w-[calc(100%-320px)] w-full' : 'w-full'}`}
+                className={`transition-all duration-300 ease-in-out overflow-x-hidden ${isEditing && !isBuilderMinimized ? 'md:ml-[320px] md:w-[calc(100%-320px)] w-full' : 'w-full'}`}
             >
                 <Navbar
                     isAdmin={isAdmin}
