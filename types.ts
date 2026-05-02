@@ -15,6 +15,7 @@ export interface Room {
     dayUsePrice?: number;
     overnightDepositAmount?: number; // Auto-calculated from global %, can be manually overridden
     dayUseDepositAmount?: number;   // Auto-calculated from global %, can be manually overridden
+    order?: number; // Sorting order
 }
 
 export interface Booking {
@@ -62,6 +63,8 @@ export interface Settings {
         overlayOpacity: number;
         imagePosition: string;
         imageFocusPoint?: 'top' | 'center' | 'bottom';
+        imagePositions?: string[];
+        imageScales?: number[];
         mobileImage?: string;
         textShadow?: 'none' | 'sm' | 'lg';
     };
@@ -164,6 +167,10 @@ export interface Settings {
         buttonColor?: string;
         buttonTextColor?: string;
         buttonFontFamily?: string;
+    };
+    cloudinary?: {
+        cloudName?: string;
+        uploadPreset?: string;
     };
     setupComplete?: boolean; // Tracks if the admin has completed initial setup
 }

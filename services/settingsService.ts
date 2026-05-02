@@ -106,11 +106,16 @@ export const DEFAULT_SETTINGS: Settings = {
         paymentDeadlineHours: 24
     },
     notifications: {
-        adminEmail: "",
+        adminEmail: 'admin@staycation.com',
         sendUserConfirmation: true,
         sendAdminAlert: true,
-        sendCheckInReminder: true
+        sendCheckInReminder: false
     },
+    cloudinary: {
+        cloudName: '',
+        uploadPreset: ''
+    },
+    setupComplete: false,
     searchBar: {
         buttonText: "Check Availability",
         buttonColor: "", // Uses accent by default, but allows override
@@ -141,6 +146,7 @@ export const settingsService = {
                 paymentMethods: { ...DEFAULT_SETTINGS.paymentMethods, ...saved.paymentMethods },
                 reservationPolicy: { ...DEFAULT_SETTINGS.reservationPolicy, ...saved.reservationPolicy },
                 notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
+                cloudinary: { ...DEFAULT_SETTINGS.cloudinary, ...saved.cloudinary },
             } as Settings;
         } else {
             // Return defaults if not found

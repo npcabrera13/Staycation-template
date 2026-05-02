@@ -4,6 +4,7 @@ import { Menu, X, Anchor, Search, Moon, Sun, Check, ImageIcon } from 'lucide-rea
 import { Settings } from '../types';
 import InlineText from './Builder/InlineText';
 import { useTheme } from '../contexts/ThemeContext';
+import { ImageUploadButton } from './UI/ImageUploadButton';
 
 interface NavbarProps {
   onAdminAccess: () => void;
@@ -224,21 +225,16 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
               <ImageIcon className="text-primary" size={24} /> Edit Logo URL
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Paste a direct link to your image (like Imgur) to feature it as your logo instead of the default icon.
+              Upload a new image to use as your site's logo. It will appear in the navigation bar and footer.
             </p>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  value={logoUrlInput}
-                  onChange={(e) => setLogoUrlInput(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow"
-                  placeholder="https://i.imgur.com/example.png"
-                  autoFocus
+              <div className="flex flex-col gap-2">
+                <ImageUploadButton
+                  onUploadSuccess={(url) => setLogoUrlInput(url)}
+                  onUploadError={(err) => console.error(err)}
+                  className="w-full py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover flex items-center justify-center gap-2 transition-all shadow-md"
+                  buttonText="Upload New Logo"
                 />
               </div>
 

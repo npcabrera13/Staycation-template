@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle, Sparkles } from 'lucide-react';
+import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -121,12 +121,18 @@ const SuperAdmin: React.FC = () => {
     const [showAdminPasscode, setShowAdminPasscode] = useState(false);
     const [showResetPasscodeConfirm, setShowResetPasscodeConfirm] = useState(false);
 
+    // ImgBB Setup (Public Settings)
+    const [imgbbApiKey, setImgbbApiKey] = useState('');
+    const [imgbbStatus, setImgbbStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
     // Infrastructure & Hosting state
     interface InfraField { key: string; value: string; show?: boolean; }
     const DEFAULT_INFRA = {
         firebase: '',
         cloudflare: '',
         github: '',
+        imgbbAccount: '',
+        imgbbApiKey: '',
         smtpEmail: '',
         smtpPassword: '',
         customFields: [] as InfraField[],
@@ -135,6 +141,7 @@ const SuperAdmin: React.FC = () => {
     const [infraSaving, setInfraSaving] = useState(false);
     const [infraStatus, setInfraStatus] = useState<'idle' | 'saved' | 'error'>('idle');
     const [showSmtpPw, setShowSmtpPw] = useState(false);
+    const [showImgbbPw, setShowImgbbPw] = useState(false);
     const [showInfraCustomPw, setShowInfraCustomPw] = useState<Record<number, boolean>>({});
     const [newCustomKey, setNewCustomKey] = useState('');
     const [newCustomValue, setNewCustomValue] = useState('');
@@ -151,6 +158,8 @@ const SuperAdmin: React.FC = () => {
                         firebase: d.firebase || '',
                         cloudflare: d.cloudflare || '',
                         github: d.github || '',
+                        imgbbAccount: d.imgbbAccount || '',
+                        imgbbApiKey: d.imgbbApiKey || '',
                         smtpEmail: d.smtpEmail || '',
                         smtpPassword: d.smtpPassword || '',
                         customFields: d.customFields || [],
@@ -218,6 +227,13 @@ const SuperAdmin: React.FC = () => {
                     if (typeof snap.data().enableAiChat === 'boolean') setEnableAiChat(snap.data().enableAiChat);
                     if (typeof snap.data().eagerLoadAdmin === 'boolean') setEnableEagerLoad(snap.data().eagerLoadAdmin);
                     if (snap.data().adminPasscode) setAdminPasscode(snap.data().adminPasscode);
+                }
+            } catch { }
+            
+            try {
+                const publicSnap = await getDoc(doc(db, 'settings', 'general'));
+                if (publicSnap.exists() && publicSnap.data().imgbb) {
+                    setImgbbApiKey(publicSnap.data().imgbb.apiKey || '');
                 }
             } catch { }
         };
@@ -331,6 +347,7 @@ const SuperAdmin: React.FC = () => {
             'VITE_OG_TITLE',
             'VITE_OG_DESCRIPTION',
             'VITE_OG_IMAGE',
+            'VITE_IMGBB_API_KEY',
             'SMTP_EMAIL',
             'SMTP_PASSWORD'
         ];
@@ -340,7 +357,7 @@ const SuperAdmin: React.FC = () => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setCopyToast('');
         requestAnimationFrame(() => {
-            setCopyToast('All 14 Keys');
+            setCopyToast('All 15 Keys');
             toastTimer.current = setTimeout(() => setCopyToast(''), 2000);
         });
     };
@@ -359,6 +376,7 @@ const SuperAdmin: React.FC = () => {
             'VITE_OG_TITLE',
             'VITE_OG_DESCRIPTION',
             'VITE_OG_IMAGE',
+            'VITE_IMGBB_API_KEY',
             'SMTP_EMAIL',
             'SMTP_PASSWORD'
         ];
@@ -1160,6 +1178,39 @@ Please output only the filled .env content without any extra explanation so I ca
 
                         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
                             <h4 className="text-md font-bold text-white mb-4 flex items-center">
+                                <ImageIcon size={18} className="mr-2 text-green-400" /> Image Hosting Config (1)
+                            </h4>
+                            <p className="text-gray-400 text-xs mb-4">
+                                Required for the Website Builder's image uploading to work via ImgBB.
+                            </p>
+                            <div className="space-y-3">
+                                {[
+                                    { key: 'VITE_IMGBB_API_KEY', desc: (
+                                        <span>
+                                            The API key from{' '}
+                                            <a href="https://api.imgbb.com" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline font-bold">
+                                                api.imgbb.com
+                                            </a>
+                                            . Used to upload images directly from the builder.
+                                        </span>
+                                    ) },
+                                ].map(({ key, desc }, index) => (
+                                    <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
+                                        <div className="flex items-center w-full md:w-auto overflow-hidden">
+                                            <span className="text-green-500/50 font-bold mr-2 text-xs">{index + 12}.</span>
+                                            <span className="font-mono text-xs text-green-300 truncate mr-2">{key}</span>
+                                            <button onClick={() => copyWithToast(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
+                                                <Copy size={14} />
+                                            </button>
+                                        </div>
+                                        <span className="text-xs text-gray-400 md:text-right md:max-w-[55%] leading-relaxed">{desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 mt-6">
+                            <h4 className="text-md font-bold text-white mb-4 flex items-center">
                                 <Mail size={18} className="mr-2 text-red-400" /> Email System Config (2)
                             </h4>
                             <p className="text-gray-400 text-xs mb-4">
@@ -1179,7 +1230,7 @@ Please output only the filled .env content without any extra explanation so I ca
                                 ].map(({ key, desc }, index) => (
                                     <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
-                                            <span className="text-red-500/50 font-bold mr-2 text-xs">{index + 12}.</span>
+                                            <span className="text-red-500/50 font-bold mr-2 text-xs">{index + 13}.</span>
                                             <span className="font-mono text-xs text-red-300 truncate mr-2">{key}</span>
                                             <button onClick={() => copyWithToast(key)} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" title="Copy">
                                                 <Copy size={14} />
@@ -1247,6 +1298,43 @@ Please output only the filled .env content without any extra explanation so I ca
                                         className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono"
                                         placeholder="e.g. https://github.com/you/client-repo"
                                     />
+                                </div>
+
+                                {/* ImgBB Account & API */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-emerald-300 mb-1 flex items-center gap-1">
+                                            <ImageIcon size={13} /> ImgBB Account Used
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={infra.imgbbAccount}
+                                            onChange={(e) => setInfra(p => ({ ...p, imgbbAccount: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-mono"
+                                            placeholder="e.g. imgbb_user@gmail.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-emerald-300 mb-1 flex items-center gap-1">
+                                            <Key size={13} /> ImgBB API Key
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showImgbbPw ? 'text' : 'password'}
+                                                value={infra.imgbbApiKey}
+                                                onChange={(e) => setInfra(p => ({ ...p, imgbbApiKey: e.target.value }))}
+                                                className="w-full px-3 py-2 pr-9 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-mono"
+                                                placeholder="API Key"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowImgbbPw(v => !v)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                {showImgbbPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* SMTP Email */}
@@ -1691,6 +1779,50 @@ Please output only the filled .env content without any extra explanation so I ca
                                 className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center"
                             >
                                 {renewalPriceStatus === 'saving' ? <><Loader size={16} className="mr-2 animate-spin" /> Saving...</> : <><Save size={16} className="mr-2" /> Save Pricing</>}
+                            </button>
+                        </div>
+
+                        {/* ImgBB Integration */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <h3 className="text-md font-bold text-white mb-4 flex items-center">
+                                <Monitor size={18} className="mr-2 text-amber-400" />
+                                ImgBB Integration
+                            </h3>
+                            <p className="text-gray-400 text-xs mb-4">
+                                Configure your ImgBB API key to handle image uploads across the platform.
+                            </p>
+                            <div className="space-y-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">API Key</label>
+                                    <input
+                                        type="text"
+                                        value={imgbbApiKey}
+                                        onChange={(e) => setImgbbApiKey(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-mono"
+                                        placeholder="e.g. 1a2b3c4d5e6f7g8h9i0j..."
+                                    />
+                                </div>
+                            </div>
+                            {imgbbStatus === 'saved' && (
+                                <p className="text-green-400 text-xs mb-3 flex items-center gap-1"><CheckCircle size={12} /> ImgBB settings saved!</p>
+                            )}
+                            <button
+                                onClick={async () => {
+                                    setImgbbStatus('saving');
+                                    try {
+                                        await setDoc(doc(db, 'settings', 'general'), {
+                                            imgbb: {
+                                                apiKey: imgbbApiKey
+                                            }
+                                        }, { merge: true });
+                                        setImgbbStatus('saved');
+                                        setTimeout(() => setImgbbStatus('idle'), 3000);
+                                    } catch { }
+                                }}
+                                disabled={imgbbStatus === 'saving'}
+                                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center"
+                            >
+                                {imgbbStatus === 'saving' ? <><Loader size={16} className="mr-2 animate-spin" /> Saving...</> : <><Save size={16} className="mr-2" /> Save ImgBB Config</>}
                             </button>
                         </div>
 

@@ -18,11 +18,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import StatsSummaryModal from './Admin/StatsSummaryModal';
 import BookingEditModal from './Admin/BookingEditModal';
 import { sendUserConfirmationEmail } from '../services/emailService';
+import { roomService } from '../services/roomService';
 import AdminOnboarding from './Admin/AdminOnboarding';
 import RenewalModal from './Admin/RenewalModal';
-
-
-interface AdminDashboardProps {
+import { ImageUploadButton } from './UI/ImageUploadButton';interface AdminDashboardProps {
     bookings: Booking[];
     rooms: Room[];
     onUpdateRoom?: (room: Room) => void;
@@ -230,6 +229,54 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         depositAmount: undefined
     });
     const [newRoomCustomAmenity, setNewRoomCustomAmenity] = useState('');
+
+    // Drag-and-drop reorder state
+    const [draggedRoomId, setDraggedRoomId] = useState<string | null>(null);
+    const [dragOverRoomId, setDragOverRoomId] = useState<string | null>(null);
+    const [localRoomOrder, setLocalRoomOrder] = useState<Room[] | null>(null);
+
+    // Sorted rooms — use local order during drag, fall back to `order` field, then insertion order
+    const sortedRooms = (localRoomOrder ?? [...rooms].sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+
+    const handleDragStart = (roomId: string) => {
+        setDraggedRoomId(roomId);
+        // Snapshot current order into local state so we can re-order it
+        setLocalRoomOrder([...rooms].sort((a, b) => (a.order ?? 999) - (b.order ?? 999)));
+    };
+
+    const handleDragOver = (e: React.DragEvent, roomId: string) => {
+        e.preventDefault();
+        if (roomId !== draggedRoomId) setDragOverRoomId(roomId);
+    };
+
+    const handleDrop = async (targetRoomId: string) => {
+        if (!draggedRoomId || draggedRoomId === targetRoomId) {
+            setDraggedRoomId(null);
+            setDragOverRoomId(null);
+            return;
+        }
+        const current = localRoomOrder ?? sortedRooms;
+        const fromIdx = current.findIndex(r => r.id === draggedRoomId);
+        const toIdx = current.findIndex(r => r.id === targetRoomId);
+        const reordered = [...current];
+        const [moved] = reordered.splice(fromIdx, 1);
+        reordered.splice(toIdx, 0, moved);
+        setLocalRoomOrder(reordered);
+        setDraggedRoomId(null);
+        setDragOverRoomId(null);
+        // Persist to Firestore
+        try {
+            await roomService.reorderRooms(reordered);
+            showToast('Room order saved!', 'success');
+        } catch {
+            showToast('Failed to save room order', 'error');
+        }
+    };
+
+    const handleDragEnd = () => {
+        setDraggedRoomId(null);
+        setDragOverRoomId(null);
+    };
     const [newRoomCustomIcon, setNewRoomCustomIcon] = useState('sparkles');
     const [showNewRoomIconPicker, setShowNewRoomIconPicker] = useState(false);
 
@@ -1803,6 +1850,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
 
+
                     {/* Save Changes Button */}
                     <div className="pt-4">
                         <button
@@ -2771,14 +2819,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             {/* Room List */}
                             <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                                {rooms.map(room => (
-                                    <div key={room.id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all overflow-hidden ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}`}>
+                                {sortedRooms.map(room => (
+                                    <div
+                                        key={room.id}
+                                        draggable
+                                        onDragStart={() => handleDragStart(room.id)}
+                                        onDragOver={(e) => handleDragOver(e, room.id)}
+                                        onDrop={() => handleDrop(room.id)}
+                                        onDragEnd={handleDragEnd}
+                                        className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all overflow-hidden select-none
+                                            ${draggedRoomId === room.id ? 'opacity-40 scale-[0.98] border-primary ring-2 ring-primary/30' : ''}
+                                            ${dragOverRoomId === room.id && draggedRoomId !== room.id ? 'border-primary border-2 ring-2 ring-primary/30 shadow-lg' : ''}
+                                            ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}
+                                            ${draggedRoomId ? 'cursor-grabbing' : 'cursor-grab'}
+                                        `}
+                                    >
                                         <div className="flex flex-row h-32 sm:h-auto">
-                                            {/* Image Thumb */}
+                                            {/* Drag handle + Image Thumb */}
                                             <div className="w-28 sm:w-48 md:w-64 h-full relative bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                                {draggedRoomId && draggedRoomId !== room.id && (
+                                                    <div className="absolute inset-0 z-10 bg-primary/10 flex items-center justify-center">
+                                                        <div className="w-full border-t-2 border-dashed border-primary opacity-60" />
+                                                    </div>
+                                                )}
                                                 <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
                                                 <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/95 dark:bg-black/80 backdrop-blur-sm px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-black shadow-md border border-white/20">
                                                     <span className="text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
+                                                </div>
+                                                {/* Drag handle indicator */}
+                                                <div className="absolute bottom-1 left-1 bg-black/40 backdrop-blur-sm rounded px-1 py-0.5 flex gap-0.5">
+                                                    {[...Array(3)].map((_, i) => (
+                                                        <div key={i} className="flex flex-col gap-0.5">
+                                                            <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
+                                                            <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
 
@@ -2928,8 +3003,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         </label>
                                         <input
                                             type="number"
-                                            value={isAddingRoom ? newRoom.price : editForm.price}
-                                            onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, price: Number(e.target.value) }) : setEditForm({ ...editForm, price: Number(e.target.value) })}
+                                            value={isAddingRoom ? (newRoom.price || '') : (editForm.price || '')}
+                                            onChange={(e) => {
+                                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                                isAddingRoom ? setNewRoom({ ...newRoom, price: val }) : setEditForm({ ...editForm, price: val });
+                                            }}
                                             className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                                         />
                                     </div>
@@ -3115,23 +3193,54 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                        Main Image URL
-                                        <HelpTooltip text="Direct link to the main photo of this unit" />
+                                        Main Image
+                                        <HelpTooltip text="Upload the main photo of this unit" />
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={isAddingRoom ? newRoom.image : editForm.image}
-                                        onChange={(e) => isAddingRoom ? setNewRoom({ ...newRoom, image: e.target.value }) : setEditForm({ ...editForm, image: e.target.value })}
-                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                    />
+                                    
+                                    <div className="relative w-full h-40 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden group">
+                                        {(isAddingRoom ? newRoom.image : editForm.image) ? (
+                                            <>
+                                                <img 
+                                                    src={isAddingRoom ? newRoom.image : editForm.image} 
+                                                    alt="Preview" 
+                                                    className="w-full h-full object-cover cursor-zoom-in" 
+                                                    onClick={() => setZoomedImage(isAddingRoom ? newRoom.image : editForm.image)}
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 pointer-events-none">
+                                                    <Maximize2 size={24} className="text-white" />
+                                                    <span className="text-white font-medium text-sm">Click to view full image</span>
+                                                </div>
+                                                <div className="absolute top-2 right-2 flex gap-2">
+                                                    <button 
+                                                        onClick={() => setZoomedImage(isAddingRoom ? newRoom.image : editForm.image)}
+                                                        className="p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-lg backdrop-blur-sm transition-colors"
+                                                        title="Enlarge Image"
+                                                    >
+                                                        <Maximize2 size={16} />
+                                                    </button>
+                                                    <ImageUploadButton
+                                                        onUploadSuccess={(url) => isAddingRoom ? setNewRoom({ ...newRoom, image: url }) : setEditForm({ ...editForm, image: url })}
+                                                        onUploadError={(error) => showToast(error, "error")}
+                                                        className="px-3 py-1.5 bg-white/90 text-gray-800 rounded-lg shadow-sm hover:bg-white font-bold text-xs flex items-center gap-1 backdrop-blur-sm transition-all"
+                                                        buttonText="Replace"
+                                                    />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                                <ImageIcon size={32} className="text-gray-400 mb-2" />
+                                                <p className="text-gray-500 text-sm mb-3">No main image uploaded</p>
+                                                <ImageUploadButton
+                                                    onUploadSuccess={(url) => isAddingRoom ? setNewRoom({ ...newRoom, image: url }) : setEditForm({ ...editForm, image: url })}
+                                                    onUploadError={(error) => showToast(error, "error")}
+                                                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover font-bold text-sm shadow-sm transition-colors"
+                                                    buttonText="Upload Image"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            {/* Image Preview */}
-                            {(isAddingRoom ? newRoom.image : editForm.image) && (
-                                <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden relative">
-                                    <img src={isAddingRoom ? newRoom.image : editForm.image} alt="Preview" className="w-full h-full object-cover" />
-                                </div>
-                            )}
 
 
                             {/* Gallery Images */}
@@ -3140,7 +3249,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <div className="space-y-2">
                                     {((isAddingRoom ? newRoom.images : editForm.images) || []).map((img, idx) => (
                                         <div key={idx} className="flex gap-2 items-center group">
-                                            {img && (
+                                            {img ? (
                                                 <div
                                                     className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 cursor-zoom-in hover:border-primary transition-all relative group/thumb shadow-sm hover:shadow-md"
                                                     onClick={() => setZoomedImage(img)}
@@ -3158,16 +3267,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         <Maximize2 size={14} className="text-white" />
                                                     </div>
                                                 </div>
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex-shrink-0 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                                    <ImageIcon size={16} className="text-gray-400" />
+                                                </div>
                                             )}
-                                            <div className="flex-1 relative">
-                                                <input
-                                                    type="text"
-                                                    value={img}
-                                                    onChange={(e) => handleGalleryImageChange(idx, e.target.value, !isAddingRoom)}
-                                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                                                    placeholder="Image URL"
-                                                />
-                                            </div>
+                                            {img ? (
+                                                <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 flex items-center justify-between">
+                                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                                                        <CheckCircle size={16} className="text-emerald-500" /> Uploaded Image
+                                                    </span>
+                                                    <ImageUploadButton
+                                                        onUploadSuccess={(url) => handleGalleryImageChange(idx, url, !isAddingRoom)}
+                                                        onUploadError={(error) => showToast(error, "error")}
+                                                        className="px-3 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-xs font-bold"
+                                                        buttonText="Replace"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex-1">
+                                                    <ImageUploadButton
+                                                        onUploadSuccess={(url) => handleGalleryImageChange(idx, url, !isAddingRoom)}
+                                                        onUploadError={(error) => showToast(error, "error")}
+                                                        className="w-full py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 border-dashed rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                                                        buttonText="Upload Image"
+                                                    />
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => handleRemoveGalleryImage(idx, !isAddingRoom)}
                                                 className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"

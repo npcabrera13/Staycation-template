@@ -3,12 +3,13 @@ import { useNotification } from '../contexts/NotificationContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import RoomCard from './RoomCard';
-import AIChat from './AIChat';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import SearchBar from './SearchBar';
+import { ImageUploadButton } from './UI/ImageUploadButton';
+import MediaPicker from './UI/MediaPicker';
 import { Room, Booking, Settings } from '../types';
 import { 
     ChevronLeft, ChevronRight, MapPin, AlertCircle, Loader, Phone, Mail, 
@@ -75,22 +76,6 @@ const LAYOUT_CONFIGS = {
     }
 };
 
-// Wrapper that only shows AI chat when enabled in SuperAdmin settings
-// Deferred by 3s to avoid competing with critical page-load Firebase calls
-const AiChatWrapper: React.FC = () => {
-    const [enabled, setEnabled] = useState(false);
-    useEffect(() => {
-        const timer = setTimeout(async () => {
-            try {
-                const snap = await getDoc(doc(db, '_superadmin', 'settings'));
-                if (snap.exists() && snap.data().enableAiChat === true) setEnabled(true);
-            } catch { }
-        }, 3000); // Defer 3 seconds after page load
-        return () => clearTimeout(timer);
-    }, []);
-    if (!enabled) return null;
-    return <AIChat />;
-};
 import { DEFAULT_SETTINGS } from '../services/settingsService';
 
 const ICON_OPTIONS = [
@@ -231,6 +216,18 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [tempGalleryScales, setTempGalleryScales] = useState<number[]>([]);
     const [tempLayoutType, setTempLayoutType] = useState<string>('mosaic');
     const [tempInheritGallery, setTempInheritGallery] = useState<boolean>(true);
+    const [showMediaPickerIdx, setShowMediaPickerIdx] = useState<number | null>(null);
+
+    // All unique images across the app for the media picker
+    const allAppImages = useMemo(() => {
+        const imgs: string[] = [
+            ...(rooms.flatMap(r => [r.image, ...(r.images || [])])),
+            ...(workingSettings.hero?.images || [workingSettings.hero?.image || '']),
+            workingSettings.logo || '',
+            ...tempGalleryImages,
+        ];
+        return Array.from(new Set(imgs.filter(Boolean)));
+    }, [rooms, workingSettings, tempGalleryImages]);
 
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
     const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
@@ -534,13 +531,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 // No valid images - show default
                                 return (
                                     <div className="absolute inset-0">
-                                        <InlineImage
+                                        <GalleryFrame
                                             src={DEFAULT_SETTINGS.hero.image}
                                             alt="Hero Background"
                                             isEditing={isEditing}
-                                            onChange={(val) => handleSettingChange('hero', 'image', val)}
-                                            className="w-full h-full object-cover"
-                                            style={{ objectPosition: focusPosition }}
+                                            className="w-full h-full"
+                                            objectPosition={focusPosition}
+                                            disableDecorations={true}
                                         />
                                     </div>
                                 );
@@ -548,6 +545,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                             if (validImages.length === 1) {
                                 // Single image - no carousel
+                                const pos = workingSettings.hero?.imagePositions?.[0] || focusPosition;
+                                const scale = workingSettings.hero?.imageScales?.[0] || 1;
                                 return (
                                     <div className="absolute inset-0">
                                         {/* Mobile hero image (if set) */}
@@ -561,16 +560,24 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 style={{ objectPosition: focusPosition }}
                                             />
                                         )}
-                                        <InlineImage
+                                        <GalleryFrame
                                             src={validImages[0]}
                                             alt="Hero Background"
                                             isEditing={isEditing}
-                                            onChange={(val) => {
-                                                handleSettingChange('hero', 'image', val);
-                                                handleSettingChange('hero', 'images', [val]);
+                                            className={`w-full h-full ${mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            objectPosition={pos}
+                                            scale={scale}
+                                            disableDecorations={true}
+                                            onPositionChange={(newPos) => {
+                                                const newPositions = [...(workingSettings.hero?.imagePositions || [])];
+                                                newPositions[0] = newPos;
+                                                handleSettingChange('hero', 'imagePositions', newPositions);
                                             }}
-                                            className={`w-full h-full object-cover ${mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
-                                            style={{ objectPosition: focusPosition }}
+                                            onScaleChange={(newScale) => {
+                                                const newScales = [...(workingSettings.hero?.imageScales || [])];
+                                                newScales[0] = newScale;
+                                                handleSettingChange('hero', 'imageScales', newScales);
+                                            }}
                                         />
                                     </div>
                                 );
@@ -579,6 +586,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             // Multiple images - carousel with crossfade
                             return validImages.map((img, index) => {
                                 const isActive = index === (activeHeroSlide ?? 0);
+                                const pos = workingSettings.hero?.imagePositions?.[index] || focusPosition;
+                                const scale = workingSettings.hero?.imageScales?.[index] || 1;
                                 return (
                                     <div
                                         key={index}
@@ -595,17 +604,26 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                 style={{ objectPosition: focusPosition }}
                                             />
                                         )}
-                                        <InlineImage
+                                        <GalleryFrame
                                             src={img}
                                             alt={`Hero Background ${index + 1}`}
                                             isEditing={isEditing}
-                                            onChange={(val) => {
-                                                const newImages = [...validImages];
-                                                newImages[index] = val;
-                                                handleSettingChange('hero', 'images', newImages);
+                                            className={`w-full h-full ${index === 0 && mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            objectPosition={pos}
+                                            scale={scale}
+                                            disableDecorations={true}
+                                            onPositionChange={(newPos) => {
+                                                const newPositions = [...(workingSettings.hero?.imagePositions || [])];
+                                                while (newPositions.length <= index) newPositions.push(focusPosition);
+                                                newPositions[index] = newPos;
+                                                handleSettingChange('hero', 'imagePositions', newPositions);
                                             }}
-                                            className={`w-full h-full object-cover ${index === 0 && mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
-                                            style={{ objectPosition: focusPosition }}
+                                            onScaleChange={(newScale) => {
+                                                const newScales = [...(workingSettings.hero?.imageScales || [])];
+                                                while (newScales.length <= index) newScales.push(1);
+                                                newScales[index] = newScale;
+                                                handleSettingChange('hero', 'imageScales', newScales);
+                                            }}
                                         />
                                     </div>
                                 );
@@ -613,7 +631,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         })()}
 
                         <div
-                            className="absolute inset-0 bg-black transition-opacity duration-300 z-20"
+                            className="absolute inset-0 bg-black transition-opacity duration-300 z-20 pointer-events-none"
                             style={{ opacity: (workingSettings.hero?.overlayOpacity ?? 50) / 100 }}
                         ></div>
                     </div>
@@ -624,9 +642,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </div>
                     )}
 
-                    <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-30 pt-20">
+                    <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-30 pt-20 pointer-events-none">
                         <RevealOnScroll>
-                            <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-accent text-sm tracking-widest uppercase font-bold mb-6">
+                            <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-amber-400 text-sm tracking-widest uppercase font-bold mb-6 pointer-events-auto">
                                 <InlineText
                                     value={workingSettings.hero?.tagline ?? (settings?.siteName || "Welcome to Paradise")}
                                     placeholder="Enter short tagline"
@@ -637,7 +655,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={200}>
-                            <h1 className={`text-5xl md:text-7xl lg:text-8xl font-serif font-bold mb-6 tracking-tight leading-tight transition-all duration-300 ${workingSettings.hero?.textShadow === 'lg' ? 'drop-shadow-[0_5px_5px_rgba(0,0,0,1)]' :
+                            <h1 className={`text-5xl md:text-7xl lg:text-8xl font-serif font-bold mb-6 tracking-tight leading-tight transition-all duration-300 pointer-events-auto ${workingSettings.hero?.textShadow === 'lg' ? 'drop-shadow-[0_5px_5px_rgba(0,0,0,1)]' :
                                 workingSettings.hero?.textShadow === 'sm' ? 'drop-shadow-md' : ''
                                 }`}>
                                 <InlineText
@@ -650,7 +668,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={400}>
-                            <p className={`text-lg md:text-2xl mb-10 max-w-2xl mx-auto text-gray-100 font-light leading-relaxed break-words transition-all duration-300 ${workingSettings.hero?.textShadow === 'lg' ? 'drop-shadow-[0_3px_3px_rgba(0,0,0,1)] font-medium' :
+                            <p className={`text-lg md:text-2xl mb-10 max-w-2xl mx-auto text-gray-100 font-light leading-relaxed break-words transition-all duration-300 pointer-events-auto ${workingSettings.hero?.textShadow === 'lg' ? 'drop-shadow-[0_3px_3px_rgba(0,0,0,1)] font-medium' :
                                 workingSettings.hero?.textShadow === 'sm' ? 'drop-shadow' : ''
                                 }`}>
                                 <InlineText
@@ -664,8 +682,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={600}>
-                            <InlineButton
-                                text={workingSettings.hero?.ctaText || "Explore Rooms"}
+                            <div className="pointer-events-auto">
+                                <InlineButton
+                                    text={workingSettings.hero?.ctaText || "Explore Rooms"}
                                 onTextChange={(val) => handleSettingChange('hero', 'ctaText', val)}
                                 color={workingSettings.hero?.buttonColor || workingSettings.theme.primaryColor}
                                 onColorChange={(newColor) => handleSettingChange('hero', 'buttonColor', newColor)}
@@ -680,6 +699,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     }
                                 }}
                             />
+                            </div>
                         </RevealOnScroll>
                     </div>
                 </div>
@@ -1171,7 +1191,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             {/* Manage Gallery Overlay - ONLY in Edit Mode */}
                                             {isEditing && (
                                                 <button 
-                                                    className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center z-10"
+                                                    className="absolute bottom-4 right-4 z-[50]"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setTempInheritGallery(isInheriting);
@@ -1182,7 +1202,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                         setShowGalleryManager(true);
                                                     }}
                                                 >
-                                                    <div className="bg-primary px-6 py-3 rounded-xl shadow-xl flex items-center text-white font-bold transform translate-y-4 hover:translate-y-0 transition-all">
+                                                    <div className="bg-primary px-4 py-2 md:px-6 md:py-3 rounded-xl shadow-xl flex items-center text-white font-bold hover:bg-primary-hover hover:scale-105 transition-all cursor-pointer">
                                                         <ImageIcon size={20} className="mr-2" /> Manage Gallery & Layout
                                                     </div>
                                                 </button>
@@ -1372,49 +1392,42 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                                     newPosArr[idx] = newPos;
                                                                     setTempGalleryPositions(newPosArr);
                                                                 }}
+                                                                onScaleChange={(newScale) => {
+                                                                    const newScales = [...tempGalleryScales];
+                                                                    while (newScales.length <= idx) newScales.push(1);
+                                                                    newScales[idx] = newScale;
+                                                                    setTempGalleryScales(newScales);
+                                                                }}
                                                             />
                                                         </div>
 
                                                         <div className="flex-1 space-y-4">
                                                             {!tempInheritGallery && (
-                                                                <div>
-                                                                    <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block">Image URL</label>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={imgUrl} 
-                                                                        onChange={(e) => {
-                                                                            const newImgs = [...tempGalleryImages];
-                                                                            newImgs[idx] = e.target.value;
-                                                                            setTempGalleryImages(newImgs);
-                                                                        }}
-                                                                        placeholder="https://..."
-                                                                        className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition-all dark:text-white"
-                                                                    />
+                                                                <div className="space-y-2">
+                                                                    <div className="flex gap-2">
+                                                                        <ImageUploadButton
+                                                                            onUploadSuccess={(url) => {
+                                                                                const newImgs = [...tempGalleryImages];
+                                                                                newImgs[idx] = url;
+                                                                                setTempGalleryImages(newImgs);
+                                                                            }}
+                                                                            onUploadError={(err) => console.error(err)}
+                                                                            className="flex-1 py-2 px-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 flex items-center justify-center gap-1.5 transition-colors"
+                                                                            buttonText="Upload New"
+                                                                        />
+                                                                        <button
+                                                                            onClick={() => setShowMediaPickerIdx(idx)}
+                                                                            className="flex-1 py-2 px-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-colors"
+                                                                        >
+                                                                            📷 From Gallery
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             )}
 
-                                                            <div>
-                                                                <div className="flex justify-between items-center mb-1">
-                                                                    <label className="text-[10px] font-black uppercase text-gray-400">Zoom Level</label>
-                                                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">{Math.round(scale * 100)}%</span>
-                                                                </div>
-                                                                <input 
-                                                                    type="range" 
-                                                                    min="1" max="3" step="0.1"
-                                                                    value={scale}
-                                                                    onChange={(e) => {
-                                                                        const newScales = [...tempGalleryScales];
-                                                                        while (newScales.length <= idx) newScales.push(1);
-                                                                        newScales[idx] = parseFloat(e.target.value);
-                                                                        setTempGalleryScales(newScales);
-                                                                    }}
-                                                                    className="w-full h-1 bg-gray-100 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                                />
-                                                            </div>
-                                                            
                                                             <div className="flex items-center gap-3 text-gray-400 italic text-[10px]">
                                                                 <Move size={12} />
-                                                                Tip: Drag the image on the left to center it
+                                                                Drag to reposition · Scroll/Pinch to zoom
                                                             </div>
                                                         </div>
 
@@ -1475,6 +1488,25 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Media Picker — triggered by "From Gallery" in gallery manager */}
+                    {showMediaPickerIdx !== null && (
+                        <MediaPicker
+                            images={allAppImages}
+                            onSelect={(url) => {
+                                const newImgs = [...tempGalleryImages];
+                                newImgs[showMediaPickerIdx] = url;
+                                setTempGalleryImages(newImgs);
+                            }}
+                            onClose={() => setShowMediaPickerIdx(null)}
+                            onUploadSuccess={(url) => {
+                                const newImgs = [...tempGalleryImages];
+                                newImgs[showMediaPickerIdx] = url;
+                                setTempGalleryImages(newImgs);
+                            }}
+                            onUploadError={(err) => console.error(err)}
+                        />
                     )}
                 </section>
 
@@ -1587,7 +1619,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onSettingChange={handleSettingChange}
                     onAdminEnter={onAdminEnter}
                 />
-                <AiChatWrapper />
             </div>
 
             {isEditing && (

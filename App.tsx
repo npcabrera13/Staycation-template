@@ -222,6 +222,11 @@ function AppContent() {
     try {
       await roomService.update(updatedRoom.id, updatedRoom);
       setRooms(prev => prev.map(r => r.id === updatedRoom.id ? updatedRoom : r));
+      
+      // Invalidate cache so refresh pulls the latest
+      sessionStorage.removeItem('staycation_init_cache');
+      sessionStorage.removeItem('staycation_init_cache_ts');
+      
       showToast("Room updated successfully", "success");
     } catch (e) {
       console.error(e);
@@ -308,6 +313,10 @@ function AppContent() {
     try {
       await settingsService.updateSettings(newSettings);
       setSettings(newSettings);
+
+      // Invalidate cache so refresh pulls the latest
+      sessionStorage.removeItem('staycation_init_cache');
+      sessionStorage.removeItem('staycation_init_cache_ts');
 
       // Apply theme immediately
       document.title = stripHtml(newSettings.siteName) || "Staycation";

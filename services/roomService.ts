@@ -1,5 +1,5 @@
 import { db } from "../firebaseConfig";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc, writeBatch } from "firebase/firestore";
 import { Room } from "../types";
 
 const COLLECTION_NAME = "rooms";
@@ -36,5 +36,15 @@ export const roomService = {
         console.log(`roomService: Deleting room with ID: "${id}"`);
         await deleteDoc(doc(db, COLLECTION_NAME, id));
         console.log(`roomService: Deleted room "${id}"`);
-    }
+    },
+
+    // Batch-save the `order` field for all rooms after a drag-and-drop reorder
+    async reorderRooms(orderedRooms: Room[]): Promise<void> {
+        const batch = writeBatch(db);
+        orderedRooms.forEach((room, index) => {
+            const docRef = doc(db, COLLECTION_NAME, room.id);
+            batch.update(docRef, { order: index });
+        });
+        await batch.commit();
+    },
 };

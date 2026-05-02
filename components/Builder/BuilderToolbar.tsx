@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints, SlidersHorizontal } from 'lucide-react';
 import { Settings } from '../../types';
 import InfoTooltip from '../UI/InfoTooltip';
+import { ImageUploadButton } from '../UI/ImageUploadButton';
 
 interface BuilderToolbarProps {
     isEditing: boolean;
@@ -221,31 +222,66 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     <div className="space-y-3">
                         <label className="block text-xs font-bold text-gray-500">Background Images (Slider)</label>
                         {(settings?.hero.images || [settings?.hero.image || '']).map((img, index) => (
-                            <div key={index} className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={img}
-                                    onChange={(e) => {
-                                        const newImages = [...(settings?.hero.images || [settings?.hero.image || ''])];
-                                        newImages[index] = e.target.value;
-                                        onUpdateSettings?.('hero', 'images', newImages);
-                                        // Update primary image if it's the first one
-                                        if (index === 0) onUpdateSettings?.('hero', 'image', e.target.value);
-                                    }}
-                                    className="flex-1 text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                                    placeholder="Image URL..."
-                                />
-                                <button
-                                    onClick={() => {
-                                        const newImages = (settings?.hero.images || [settings?.hero.image || '']).filter((_, i) => i !== index);
-                                        onUpdateSettings?.('hero', 'images', newImages);
-                                        if (index === 0 && newImages.length > 0) onUpdateSettings?.('hero', 'image', newImages[0]);
-                                    }}
-                                    className="text-red-400 hover:text-red-600 p-1"
-                                    title="Remove Image"
-                                >
-                                    <X size={14} />
-                                </button>
+                            <div key={index} className="mb-2 relative group/slot">
+                                {img ? (
+                                    // Filled slot: preview card
+                                    <div className="relative h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/slot:opacity-100 transition-opacity" />
+                                        <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/slot:opacity-100 transition-opacity">
+                                            <ImageUploadButton
+                                                onUploadSuccess={(url) => {
+                                                    const newImages = [...(settings?.hero.images || [settings?.hero.image || ''])];
+                                                    newImages[index] = url;
+                                                    onUpdateSettings?.('hero', 'images', newImages);
+                                                    if (index === 0) onUpdateSettings?.('hero', 'image', url);
+                                                }}
+                                                onUploadError={(err) => console.error(err)}
+                                                className="px-2 py-1 bg-white/90 text-gray-800 rounded-lg text-[10px] font-bold hover:bg-white shadow-sm"
+                                                buttonText="Replace"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const newImages = (settings?.hero.images || [settings?.hero.image || '']).filter((_, i) => i !== index);
+                                                    onUpdateSettings?.('hero', 'images', newImages);
+                                                    if (index === 0 && newImages.length > 0) onUpdateSettings?.('hero', 'image', newImages[0]);
+                                                }}
+                                                className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm"
+                                                title="Remove"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                        <div className="absolute bottom-1.5 left-2 text-[9px] text-white/80 font-medium">
+                                            Slide {index + 1}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Empty slot: upload button
+                                    <div className="flex gap-1">
+                                        <ImageUploadButton
+                                            onUploadSuccess={(url) => {
+                                                const newImages = [...(settings?.hero.images || [settings?.hero.image || ''])];
+                                                newImages[index] = url;
+                                                onUpdateSettings?.('hero', 'images', newImages);
+                                                if (index === 0) onUpdateSettings?.('hero', 'image', url);
+                                            }}
+                                            onUploadError={(err) => console.error(err)}
+                                            className="flex-1 py-2 text-xs text-primary border border-primary border-dashed rounded-lg hover:bg-primary/5 flex items-center justify-center gap-1 font-bold"
+                                            buttonText="Upload Slide Image"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const newImages = (settings?.hero.images || [settings?.hero.image || '']).filter((_, i) => i !== index);
+                                                onUpdateSettings?.('hero', 'images', newImages);
+                                            }}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Remove slot"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                         <button
@@ -265,17 +301,31 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             📱 Mobile Hero Image (Optional)
                             <InfoTooltip text="Upload a portrait-oriented image optimized for phones. If empty, the desktop image will be used." />
                         </label>
-                        <input
-                            type="text"
-                            value={settings?.hero.mobileImage || ''}
-                            onChange={(e) => onUpdateSettings?.('hero', 'mobileImage', e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-300 rounded bg-white text-gray-700"
-                            placeholder="Portrait image URL for mobile..."
-                        />
-                        {settings?.hero.mobileImage && settings.hero.mobileImage.trim() !== '' && (
-                            <div className="mt-2 h-20 w-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mx-auto">
+                        {settings?.hero.mobileImage && settings.hero.mobileImage.trim() !== '' ? (
+                            <div className="relative h-20 w-16 mx-auto rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm group/mob">
                                 <img src={settings.hero.mobileImage} alt="Mobile preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/mob:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                                    <ImageUploadButton
+                                        onUploadSuccess={(url) => onUpdateSettings?.('hero', 'mobileImage', url)}
+                                        onUploadError={(err) => console.error(err)}
+                                        className="bg-white text-gray-800 rounded px-2 py-0.5 text-[9px] font-bold shadow"
+                                        buttonText="Replace"
+                                    />
+                                    <button
+                                        onClick={() => onUpdateSettings?.('hero', 'mobileImage', '')}
+                                        className="bg-red-500 text-white rounded px-2 py-0.5 text-[9px] font-bold shadow"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
+                        ) : (
+                            <ImageUploadButton
+                                onUploadSuccess={(url) => onUpdateSettings?.('hero', 'mobileImage', url)}
+                                onUploadError={(err) => console.error(err)}
+                                className="w-full py-2 text-xs text-primary border border-primary border-dashed rounded-lg hover:bg-primary/5 flex items-center justify-center gap-1 font-bold"
+                                buttonText="Upload Mobile Image"
+                            />
                         )}
                     </div>
 

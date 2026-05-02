@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, Link as LinkIcon, Plus, X } from 'lucide-react';
+import { Upload, Link as LinkIcon, Plus, X, Image as ImageIcon } from 'lucide-react';
+import { ImageUploadButton } from '../UI/ImageUploadButton';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface InlineImageProps {
     src: string;
@@ -29,6 +31,7 @@ const InlineImage: React.FC<InlineImageProps> = ({
     const [urlInput, setUrlInput] = useState('');
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlAction, setUrlAction] = useState<'change' | 'add'>('change');
+    const { showToast } = useNotification();
 
     const handleClick = (e: React.MouseEvent) => {
         if (!isEditing) return;
@@ -116,31 +119,50 @@ const InlineImage: React.FC<InlineImageProps> = ({
 
                         {!showUrlInput ? (
                             <div className="space-y-3">
-                                <button
-                                    onClick={handleSelectChange}
-                                    className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all text-left group"
-                                >
-                                    <div className="bg-blue-100 p-2.5 rounded-lg group-hover:bg-blue-200 transition-colors">
-                                        <LinkIcon size={20} className="text-blue-600" />
+                                <div className="p-3 bg-gray-50 rounded-xl mb-2">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Change Image</p>
+                                    <div className="flex gap-2">
+                                        <ImageUploadButton 
+                                            onUploadSuccess={(url) => {
+                                                onChange(url);
+                                                setShowModal(false);
+                                            }}
+                                            onUploadError={(err) => showToast(err, "error")}
+                                            className="flex-1 flex items-center justify-center gap-2 p-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl transition-all"
+                                            buttonText="Upload Photo"
+                                        />
+                                        <button
+                                            onClick={handleSelectChange}
+                                            className="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 rounded-xl transition-all"
+                                        >
+                                            <LinkIcon size={16} />
+                                            <span className="text-sm font-semibold">Paste Link</span>
+                                        </button>
                                     </div>
-                                    <div>
-                                        <p className="font-semibold text-gray-800">Change Current Image</p>
-                                        <p className="text-xs text-gray-500">Replace this image via URL</p>
-                                    </div>
-                                </button>
+                                </div>
+
                                 {onAdd && (
-                                    <button
-                                        onClick={handleSelectAdd}
-                                        className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all text-left group"
-                                    >
-                                        <div className="bg-green-100 p-2.5 rounded-lg group-hover:bg-green-200 transition-colors">
-                                            <Plus size={20} className="text-green-600" />
+                                    <div className="p-3 bg-gray-50 rounded-xl">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Add New to Gallery</p>
+                                        <div className="flex gap-2">
+                                            <ImageUploadButton 
+                                                onUploadSuccess={(url) => {
+                                                    if (onAdd) onAdd(url);
+                                                    setShowModal(false);
+                                                }}
+                                                onUploadError={(err) => showToast(err, "error")}
+                                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 rounded-xl transition-all"
+                                                buttonText="Upload & Add"
+                                            />
+                                            <button
+                                                onClick={handleSelectAdd}
+                                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 rounded-xl transition-all"
+                                            >
+                                                <Plus size={16} />
+                                                <span className="text-sm font-semibold">Paste Link</span>
+                                            </button>
                                         </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-800">Add New Image</p>
-                                            <p className="text-xs text-gray-500">Append a new image to the gallery</p>
-                                        </div>
-                                    </button>
+                                    </div>
                                 )}
                             </div>
                         ) : (
