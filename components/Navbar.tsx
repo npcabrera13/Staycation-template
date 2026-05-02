@@ -112,7 +112,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     <nav className={navClasses}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center cursor-pointer select-none group relative py-1 px-2 rounded-xl transition-all" onClick={handleLogoClick}>
+          <div className="flex items-center cursor-pointer select-none group relative py-1 px-2 rounded-xl transition-all min-w-0 mr-2" onClick={handleLogoClick}>
             {/* Admin Entry Guide Tooltip */}
             {showAdminGuide && (
               <>
@@ -141,15 +141,15 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
               )}
             </div>
 
-            <span className="font-serif text-xl font-bold tracking-wider text-primary dark:text-white">
+            <span className="font-serif text-xl font-bold tracking-wider text-primary dark:text-white truncate min-w-0 block">
             <InlineText
               value={settings?.siteName || ''}
               onChange={(val) => onUpdateSettings && onUpdateSettings('siteName' as any, '', val)}
               isEditing={isEditing}
-              className="text-xl font-bold font-serif tracking-wider text-primary dark:text-white"
+              className="text-xl font-bold font-serif tracking-wider text-primary dark:text-white truncate w-full"
               placeholder="Site Name"
             />
-          </span>
+            </span>
           </div>
 
           {/* Desktop Menu (Visible on Large Screens Only) */}
