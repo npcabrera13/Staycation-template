@@ -9,7 +9,7 @@ import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Moon, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2, Info
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2, Info, MapPin
 } from 'lucide-react';
 
 import { useLocation } from 'react-router-dom';
@@ -21,7 +21,7 @@ import { sendUserConfirmationEmail } from '../services/emailService';
 import { roomService } from '../services/roomService';
 import AdminOnboarding from './Admin/AdminOnboarding';
 import RenewalModal from './Admin/RenewalModal';
-import { ImageUploadButton } from './UI/ImageUploadButton';interface AdminDashboardProps {
+import { ImageUploadButton } from './UI/ImageUploadButton'; interface AdminDashboardProps {
     bookings: Booking[];
     rooms: Room[];
     onUpdateRoom?: (room: Room) => void;
@@ -1412,27 +1412,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
 
-                    {/* Map Configuration */}
-                    <div id="settings-map" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
-                            <Globe size={20} className="mr-2 text-primary" /> Map Configuration
-                        </h3>
+                    {/* Map Fallback Settings */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-4 border-b dark:border-gray-700 pb-2">
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                <MapPin size={20} className="mr-2 text-primary" /> Map Configuration
+                            </h3>
+                            <button
+                                onClick={() => onUpdateSettings(settingsForm)}
+                                className="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                            >
+                                Save Map
+                            </button>
+                        </div>
                         <div className="space-y-4">
+                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-3 rounded-lg flex gap-3">
+                                <div className="text-amber-500 shrink-0">
+                                    <HelpCircle size={18} />
+                                </div>
+                                <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                                    <strong>Pro Tip:</strong> Use the <strong>Visual Builder</strong> on the Home Page to search for your location using our new Map Picker. It will automatically generate the correct URL and update your footer address for you.
+                                </p>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Google Maps Embed URL
-                                    <HelpTooltip text="The 'src' value from the Google Maps 'Share > Embed a map' HTML code" />
+                                    Map Embed URL
+                                    <HelpTooltip text="The src URL from the Google Maps iframe code." />
                                 </label>
                                 <input
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono"
                                     value={settingsForm.map?.embedUrl || ''}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, map: { ...settingsForm.map, embedUrl: e.target.value } })}
+                                    onChange={(e) => setSettingsForm({ 
+                                        ...settingsForm, 
+                                        map: { ...settingsForm.map, embedUrl: e.target.value } 
+                                    })}
                                     placeholder="https://www.google.com/maps/embed?..."
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Paste the 'src' attribute from the Google Maps Embed code.</p>
+                                <p className="mt-1 text-[10px] text-gray-400">Manual fallback for expert users. Paste the full 'src' attribute from your Google Maps embed code.</p>
                             </div>
                         </div>
                     </div>
+
 
                     {/* Payment Methods */}
                     <div id="settings-payment" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -1523,22 +1543,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Paste image URL here"
-                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                            value={settingsForm.paymentMethods?.gcash?.qrImage ?? ''}
-                                            onChange={(e) => setSettingsForm({
-                                                ...settingsForm,
-                                                paymentMethods: {
-                                                    ...settingsForm.paymentMethods,
-                                                    gcash: { ...settingsForm.paymentMethods?.gcash, qrImage: e.target.value }
-                                                }
-                                            })}
-                                        />
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">QR Code Image</label>
+                                        <div className="flex items-center gap-3">
+                                            <ImageUploadButton 
+                                                onUploadSuccess={(url) => setSettingsForm({
+                                                    ...settingsForm,
+                                                    paymentMethods: {
+                                                        ...settingsForm.paymentMethods,
+                                                        gcash: { ...settingsForm.paymentMethods?.gcash, qrImage: url }
+                                                    }
+                                                })}
+                                                onUploadError={(err) => alert(err)}
+                                                className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all border border-primary/20"
+                                                buttonText="Upload QR Code"
+                                            />
+                                            {settingsForm.paymentMethods?.gcash?.qrImage && (
+                                                <button 
+                                                    onClick={() => setSettingsForm({
+                                                        ...settingsForm,
+                                                        paymentMethods: {
+                                                            ...settingsForm.paymentMethods,
+                                                            gcash: { ...settingsForm.paymentMethods?.gcash, qrImage: '' }
+                                                        }
+                                                    })}
+                                                    className="p-2 text-red-500 hover:bg-red-50/10 rounded-lg transition-colors"
+                                                    title="Remove QR Code"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                         {settingsForm.paymentMethods?.gcash?.qrImage && (
-                                            <img src={settingsForm.paymentMethods.gcash.qrImage} alt="E-Wallet QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
+                                            <div className="mt-3 relative group w-32 h-32">
+                                                <img 
+                                                    src={settingsForm.paymentMethods.gcash.qrImage} 
+                                                    alt="E-Wallet QR" 
+                                                    className="w-full h-full object-contain border dark:border-gray-600 rounded-lg bg-white" 
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                    <a href={settingsForm.paymentMethods.gcash.qrImage} target="_blank" rel="noreferrer" className="p-2 bg-white rounded-full text-gray-900 shadow-lg">
+                                                        <Maximize2 size={16} />
+                                                    </a>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -1641,22 +1688,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">QR Code Image URL</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Paste image URL here"
-                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                                            value={settingsForm.paymentMethods?.bankTransfer?.qrImage ?? ''}
-                                            onChange={(e) => setSettingsForm({
-                                                ...settingsForm,
-                                                paymentMethods: {
-                                                    ...settingsForm.paymentMethods,
-                                                    bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, qrImage: e.target.value }
-                                                }
-                                            })}
-                                        />
+                                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">QR Code Image</label>
+                                        <div className="flex items-center gap-3">
+                                            <ImageUploadButton 
+                                                onUploadSuccess={(url) => setSettingsForm({
+                                                    ...settingsForm,
+                                                    paymentMethods: {
+                                                        ...settingsForm.paymentMethods,
+                                                        bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, qrImage: url }
+                                                    }
+                                                })}
+                                                onUploadError={(err) => alert(err)}
+                                                className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all border border-primary/20"
+                                                buttonText="Upload QR Code"
+                                            />
+                                            {settingsForm.paymentMethods?.bankTransfer?.qrImage && (
+                                                <button 
+                                                    onClick={() => setSettingsForm({
+                                                        ...settingsForm,
+                                                        paymentMethods: {
+                                                            ...settingsForm.paymentMethods,
+                                                            bankTransfer: { ...settingsForm.paymentMethods?.bankTransfer, qrImage: '' }
+                                                        }
+                                                    })}
+                                                    className="p-2 text-red-500 hover:bg-red-50/10 rounded-lg transition-colors"
+                                                    title="Remove QR Code"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                         {settingsForm.paymentMethods?.bankTransfer?.qrImage && (
-                                            <img src={settingsForm.paymentMethods.bankTransfer.qrImage} alt="Bank QR" className="mt-3 w-32 h-32 object-contain border dark:border-gray-600 rounded-lg bg-white" />
+                                            <div className="mt-3 relative group w-32 h-32">
+                                                <img 
+                                                    src={settingsForm.paymentMethods.bankTransfer.qrImage} 
+                                                    alt="Bank Transfer QR" 
+                                                    className="w-full h-full object-contain border dark:border-gray-600 rounded-lg bg-white" 
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                    <a href={settingsForm.paymentMethods.bankTransfer.qrImage} target="_blank" rel="noreferrer" className="p-2 bg-white rounded-full text-gray-900 shadow-lg">
+                                                        <Maximize2 size={16} />
+                                                    </a>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -2747,7 +2821,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         >
                                             <div className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200 text-left">
                                                 <span className="flex items-center">
-                                                    🌐 Global Deposit Rule: <span className="text-primary font-bold ml-1">{currentGlobalDeposit}%</span> 
+                                                    🌐 Global Deposit Rule: <span className="text-primary font-bold ml-1">{currentGlobalDeposit}%</span>
                                                     <HelpTooltip text="This sets the default deposit percentage for all rooms. You can still override this on individual rooms." />
                                                     <span className="text-gray-400 dark:text-gray-500 font-normal ml-1 hidden sm:inline">— tap to edit</span>
                                                 </span>
@@ -2803,8 +2877,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                 showToast('Global deposit updated', 'success');
                                                             }}
                                                             className={`px-5 py-2 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${hasDraftDeposit
-                                                                    ? 'bg-primary text-white hover:bg-primary-hover active:scale-95'
-                                                                    : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
+                                                                ? 'bg-primary text-white hover:bg-primary-hover active:scale-95'
+                                                                : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed'
                                                                 }`}
                                                         >
                                                             <Save size={16} /> Save Rule
@@ -3118,8 +3192,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                                 setField({ overnightDepositAmount: val });
                                                                             }}
                                                                             className={`w-full pl-8 pr-3 py-2.5 border-2 rounded-lg font-semibold text-gray-800 dark:text-white transition-colors ${isOvernightOverride
-                                                                                    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
-                                                                                    : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                                                                ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
+                                                                                : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
                                                                                 }`}
                                                                         />
                                                                     </div>
@@ -3152,8 +3226,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                                                     setField({ dayUseDepositAmount: val });
                                                                                 }}
                                                                                 className={`w-full pl-8 pr-3 py-2.5 border-2 rounded-lg font-semibold text-gray-800 dark:text-white transition-colors ${isDayUseOverride
-                                                                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
-                                                                                        : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
+                                                                                    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/10'
+                                                                                    : 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10'
                                                                                     }`}
                                                                             />
                                                                         </div>
@@ -3196,14 +3270,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         Main Image
                                         <HelpTooltip text="Upload the main photo of this unit" />
                                     </label>
-                                    
+
                                     <div className="relative w-full h-40 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden group">
                                         {(isAddingRoom ? newRoom.image : editForm.image) ? (
                                             <>
-                                                <img 
-                                                    src={isAddingRoom ? newRoom.image : editForm.image} 
-                                                    alt="Preview" 
-                                                    className="w-full h-full object-cover cursor-zoom-in" 
+                                                <img
+                                                    src={isAddingRoom ? newRoom.image : editForm.image}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover cursor-zoom-in"
                                                     onClick={() => setZoomedImage(isAddingRoom ? newRoom.image : editForm.image)}
                                                 />
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 pointer-events-none">
@@ -3211,7 +3285,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     <span className="text-white font-medium text-sm">Click to view full image</span>
                                                 </div>
                                                 <div className="absolute top-2 right-2 flex gap-2">
-                                                    <button 
+                                                    <button
                                                         onClick={() => setZoomedImage(isAddingRoom ? newRoom.image : editForm.image)}
                                                         className="p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-lg backdrop-blur-sm transition-colors"
                                                         title="Enlarge Image"

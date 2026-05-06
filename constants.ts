@@ -106,7 +106,8 @@ export const SUPERADMIN_DEFAULTS = {
       enabled: false,
       bankName: "",
       accountName: "",
-      accountNumber: ""
+      accountNumber: "",
+      qrImage: ""
     }
   }
 };

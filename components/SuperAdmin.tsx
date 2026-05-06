@@ -4,6 +4,7 @@ import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
 import { SUPERADMIN_DEFAULTS } from '../constants';
+import { uploadToImgBB } from '../services/imgbbService';
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 
@@ -83,6 +84,7 @@ const SuperAdmin: React.FC = () => {
     const [bankName, setBankName] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.bankName);
     const [bankAccountName, setBankAccountName] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.accountName);
     const [bankAccountNumber, setBankAccountNumber] = useState(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.accountNumber);
+    const [bankQr, setBankQr] = useState<string>(SUPERADMIN_DEFAULTS.paymentMethods.bankTransfer.qrImage || '');
 
     const [pmStatus, setPmStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -110,8 +112,6 @@ const SuperAdmin: React.FC = () => {
     const [contactInfo, setContactInfo] = useState(SUPERADMIN_DEFAULTS.contactInfo);
     const [contactStatus, setContactStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
-    // AI Chat toggle
-    const [enableAiChat, setEnableAiChat] = useState(false);
 
     // Admin Eager Load toggle
     const [enableEagerLoad, setEnableEagerLoad] = useState(false);
@@ -216,7 +216,7 @@ const SuperAdmin: React.FC = () => {
                     if (snap.data().password) {
                         const dbPassword = snap.data().password;
                         setStoredPassword(dbPassword);
-                        
+
                         // Check local storage for auto-login
                         const savedPassword = window.localStorage.getItem('staycation_superadmin_pw');
                         if (savedPassword === dbPassword) {
@@ -224,12 +224,11 @@ const SuperAdmin: React.FC = () => {
                         }
                     }
                     if (snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
-                    if (typeof snap.data().enableAiChat === 'boolean') setEnableAiChat(snap.data().enableAiChat);
                     if (typeof snap.data().eagerLoadAdmin === 'boolean') setEnableEagerLoad(snap.data().eagerLoadAdmin);
                     if (snap.data().adminPasscode) setAdminPasscode(snap.data().adminPasscode);
                 }
             } catch { }
-            
+
             try {
                 const publicSnap = await getDoc(doc(db, 'settings', 'general'));
                 if (publicSnap.exists() && publicSnap.data().imgbb) {
@@ -249,7 +248,7 @@ const SuperAdmin: React.FC = () => {
                     const d = snap.data();
                     if (d.price30) setPrice30(d.price30);
                     else if (d.renewalPrice) setPrice30(d.renewalPrice); // Backward compatibility
-                    
+
                     if (d.price60) setPrice60(d.price60);
                     else if (d.renewalPrice) setPrice60(d.renewalPrice * 2);
 
@@ -267,6 +266,7 @@ const SuperAdmin: React.FC = () => {
                             setBankName(d.paymentMethods.bankTransfer.bankName || '');
                             setBankAccountName(d.paymentMethods.bankTransfer.accountName || '');
                             setBankAccountNumber(d.paymentMethods.bankTransfer.accountNumber || '');
+                            setBankQr(d.paymentMethods.bankTransfer.qrImage || '');
                         }
                     }
                 }
@@ -331,7 +331,7 @@ const SuperAdmin: React.FC = () => {
         }
         setProcessingId(null);
     };
-    
+
     // Deployment Helpers
     const copyAllEnv = () => {
         const keys = [
@@ -353,7 +353,7 @@ const SuperAdmin: React.FC = () => {
         ];
         const text = keys.map(k => `${k}=`).join('\n');
         navigator.clipboard.writeText(text);
-        
+
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setCopyToast('');
         requestAnimationFrame(() => {
@@ -388,9 +388,9 @@ Here are the keys I need you to fill:
 ${keys.map(k => `${k}=`).join('\n')}
 
 Please output only the filled .env content without any extra explanation so I can copy-paste it directly into Vercel/Netlify.`;
-        
+
         navigator.clipboard.writeText(prompt);
-        
+
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setCopyToast('');
         requestAnimationFrame(() => {
@@ -841,8 +841,8 @@ Please output only the filled .env content without any extra explanation so I ca
                             <div className="space-y-4">
                                 {renewalRequests.map((req: any) => (
                                     <div key={req.id} className={`bg-white/5 border rounded-2xl p-5 ${req.status === 'pending' ? 'border-amber-500/30' :
-                                            req.status === 'approved' ? 'border-green-500/20' :
-                                                'border-red-500/20'
+                                        req.status === 'approved' ? 'border-green-500/20' :
+                                            'border-red-500/20'
                                         }`}>
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -853,8 +853,8 @@ Please output only the filled .env content without any extra explanation so I ca
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${req.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
-                                                        req.status === 'approved' ? 'bg-green-500/20 text-green-300' :
-                                                            'bg-red-500/20 text-red-300'
+                                                    req.status === 'approved' ? 'bg-green-500/20 text-green-300' :
+                                                        'bg-red-500/20 text-red-300'
                                                     }`}>
                                                     {req.status === 'pending' ? '⏳ Pending' : req.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                                                 </span>
@@ -923,7 +923,7 @@ Please output only the filled .env content without any extra explanation so I ca
                                                 <p className="text-xs text-red-200/80 italic leading-relaxed pr-8">
                                                     "{req.rejectionReason}"
                                                 </p>
-                                                <button 
+                                                <button
                                                     onClick={() => {
                                                         setRejectionRequestId(req.id);
                                                         setRejectionReason(req.rejectionReason);
@@ -990,13 +990,13 @@ Please output only the filled .env content without any extra explanation so I ca
                                         autoFocus
                                     />
                                     <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => {setRejectionRequestId(null); setRejectionReason('');}}
+                                        <button
+                                            onClick={() => { setRejectionRequestId(null); setRejectionReason(''); }}
                                             className="flex-1 py-2.5 text-gray-400 hover:text-white font-bold rounded-xl transition-colors bg-white/5 hover:bg-white/10 text-sm"
                                         >
                                             Cancel
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => handleRejectRenewal(rejectionRequestId, rejectionReason)}
                                             disabled={!rejectionReason.trim() || processingId === rejectionRequestId}
                                             className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-500/20 text-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
@@ -1024,13 +1024,13 @@ Please output only the filled .env content without any extra explanation so I ca
 
                         {/* One-Click Deployment Helpers */}
                         <div className="flex flex-col sm:flex-row gap-3 mb-2">
-                            <button 
+                            <button
                                 onClick={copyAllEnv}
                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all active:scale-95 text-blue-400 text-sm font-bold"
                             >
                                 <Copy size={16} /> Copy .env Template
                             </button>
-                            <button 
+                            <button
                                 onClick={copyAiPrompt}
                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition-all active:scale-95 text-purple-400 text-sm font-bold"
                             >
@@ -1185,15 +1185,17 @@ Please output only the filled .env content without any extra explanation so I ca
                             </p>
                             <div className="space-y-3">
                                 {[
-                                    { key: 'VITE_IMGBB_API_KEY', desc: (
-                                        <span>
-                                            The API key from{' '}
-                                            <a href="https://api.imgbb.com" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline font-bold">
-                                                api.imgbb.com
-                                            </a>
-                                            . Used to upload images directly from the builder.
-                                        </span>
-                                    ) },
+                                    {
+                                        key: 'VITE_IMGBB_API_KEY', desc: (
+                                            <span>
+                                                The API key from{' '}
+                                                <a href="https://api.imgbb.com" target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline font-bold">
+                                                    api.imgbb.com
+                                                </a>
+                                                . Used to upload images directly from the builder.
+                                            </span>
+                                        )
+                                    },
                                 ].map(({ key, desc }, index) => (
                                     <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
@@ -1219,14 +1221,16 @@ Please output only the filled .env content without any extra explanation so I ca
                             <div className="space-y-3">
                                 {[
                                     { key: 'SMTP_EMAIL', desc: 'The exact Gmail address sending the automated emails (Example: visionarywebco@gmail.com)' },
-                                    { key: 'SMTP_PASSWORD', desc: (
-                                        <span>
-                                            The 16-character Google App Password (Example: kqrzoggmmufzxlpk). You must generate this from your{' '}
-                                            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline font-bold">
-                                                Google Account Security page
-                                            </a>.
-                                        </span>
-                                    ) },
+                                    {
+                                        key: 'SMTP_PASSWORD', desc: (
+                                            <span>
+                                                The 16-character Google App Password (Example: kqrzoggmmufzxlpk). You must generate this from your{' '}
+                                                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline font-bold">
+                                                    Google Account Security page
+                                                </a>.
+                                            </span>
+                                        )
+                                    },
                                 ].map(({ key, desc }, index) => (
                                     <div key={key} className="bg-white/10 border border-white/20 rounded-lg p-3 flex flex-col md:flex-row md:justify-between md:items-center group gap-3">
                                         <div className="flex items-center w-full md:w-auto overflow-hidden">
@@ -1613,33 +1617,6 @@ Please output only the filled .env content without any extra explanation so I ca
                             </button>
                         </div>
 
-                        {/* AI Chat Toggle */}
-                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <div className={`p-2 rounded-lg mr-4 ${enableAiChat ? 'bg-green-500/20' : 'bg-white/10'}`}>
-                                        <MessageSquare size={20} className={enableAiChat ? 'text-green-400' : 'text-gray-400'} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-md font-bold text-white">AI Chat Assistant</h3>
-                                        <p className="text-gray-400 text-xs mt-0.5">Enable the floating AI chat on the homepage</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={async () => {
-                                        const newVal = !enableAiChat;
-                                        setEnableAiChat(newVal);
-                                        try {
-                                            await setDoc(doc(db, '_superadmin', 'settings'), { enableAiChat: newVal }, { merge: true });
-                                            copyWithToast(newVal ? 'AI Chat enabled!' : 'AI Chat disabled!');
-                                        } catch { }
-                                    }}
-                                    className={`w-11 h-6 rounded-full transition-colors relative ${enableAiChat ? 'bg-green-500' : 'bg-gray-600'}`}
-                                >
-                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableAiChat ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                                </button>
-                            </div>
-                        </div>
 
                         {/* Eager Load Toggle */}
                         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
@@ -1859,8 +1836,8 @@ Please output only the filled .env content without any extra explanation so I ca
                                                 const file = e.target.files?.[0];
                                                 if (file) {
                                                     try {
-                                                        const b64 = await compressImageToBase64(file);
-                                                        setGcashQr(b64);
+                                                        const url = await uploadToImgBB(file);
+                                                        setGcashQr(url);
                                                     } catch (err: any) { alert(err.message); }
                                                 }
                                             }} className="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30 cursor-pointer" />
@@ -1899,6 +1876,26 @@ Please output only the filled .env content without any extra explanation so I ca
                                         <div>
                                             <input type="text" placeholder="Account Number" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono" />
                                         </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-1">Upload QR Code (Optional)</label>
+                                            <input type="file" accept="image/*" onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    try {
+                                                        const url = await uploadToImgBB(file);
+                                                        setBankQr(url);
+                                                    } catch (err: any) { alert(err.message); }
+                                                }
+                                            }} className="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-500/20 file:text-green-400 hover:file:bg-green-500/30 cursor-pointer" />
+                                            {bankQr && (
+                                                <div className="mt-2 relative inline-block">
+                                                    <img src={bankQr} alt="Bank QR" className="h-20 rounded border border-white/20" />
+                                                    <button onClick={() => setBankQr('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1912,7 +1909,7 @@ Please output only the filled .env content without any extra explanation so I ca
                                     try {
                                         const paymentMethods = {
                                             gcash: { enabled: gcashEnabled, accountName: gcashName, accountNumber: gcashNumber, qrImage: gcashQr },
-                                            bankTransfer: { enabled: bankEnabled, bankName: bankName, accountName: bankAccountName, accountNumber: bankAccountNumber }
+                                            bankTransfer: { enabled: bankEnabled, bankName: bankName, accountName: bankAccountName, accountNumber: bankAccountNumber, qrImage: bankQr }
                                         };
                                         await setDoc(doc(db, '_superadmin', 'settings'), { paymentMethods }, { merge: true });
                                         setPmStatus('saved');

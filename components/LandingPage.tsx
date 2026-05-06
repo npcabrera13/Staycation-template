@@ -27,6 +27,8 @@ import InlineColorBlock from './Builder/InlineColorBlock';
 import BuilderToolbar from './Builder/BuilderToolbar';
 import SetupWizard from './SetupWizard';
 import GalleryFrame from './UI/GalleryFrame';
+import MapPickerModal from './UI/MapPickerModal';
+import { Search } from 'lucide-react';
 
 const LAYOUT_CONFIGS = {
     'mosaic': {
@@ -231,6 +233,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
     const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
+    const [showMapPicker, setShowMapPicker] = useState(false);
 
     // Consolidated Gallery Images Logic
     const displayGalleryImages = useMemo(() => {
@@ -321,9 +324,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
             if (field === '') {
                 // Top-level property update (e.g. siteName, logo)
                 (updated as any)[section] = value;
-            } else if (typeof updated[section] === 'object' && updated[section] !== null) {
+            } else {
                 // Nested property update — create new object reference so useEffect detects changes
-                (updated as any)[section] = { ...(updated[section] as any), [field]: value };
+                const sectionData = (updated as any)[section] || {};
+                (updated as any)[section] = { ...sectionData, [field]: value };
             }
 
             return updated;
@@ -538,6 +542,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             className="w-full h-full"
                                             objectPosition={focusPosition}
                                             disableDecorations={true}
+                                            disableHoverEffect={true}
                                         />
                                     </div>
                                 );
@@ -568,6 +573,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             objectPosition={pos}
                                             scale={scale}
                                             disableDecorations={true}
+                                            disableHoverEffect={true}
                                             onPositionChange={(newPos) => {
                                                 const newPositions = [...(workingSettings.hero?.imagePositions || [])];
                                                 newPositions[0] = newPos;
@@ -612,6 +618,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             objectPosition={pos}
                                             scale={scale}
                                             disableDecorations={true}
+                                            disableHoverEffect={true}
                                             onPositionChange={(newPos) => {
                                                 const newPositions = [...(workingSettings.hero?.imagePositions || [])];
                                                 while (newPositions.length <= index) newPositions.push(focusPosition);
@@ -1536,57 +1543,60 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         <RevealOnScroll delay={200}>
                             <div className="w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative group">
                                 {isEditing && (
-                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-4 md:p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm overflow-y-auto">
+                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-4 md:p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
                                         <h3 className="text-white text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2">
                                             <MapPin className="w-5 h-5 md:w-6 md:h-6" /> Edit Google Map 
                                         </h3>
-                                        <div className="w-full max-w-2xl bg-white/10 p-4 md:p-6 rounded-2xl border border-white/20 backdrop-blur-md">
-                                            <label className="block text-xs md:text-sm font-bold text-gray-100 mb-1.5 md:mb-2">Google Maps Location</label>
-                                            <input 
-                                                type="text" 
-                                                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-black mb-3 md:mb-4 focus:ring-2 focus:ring-primary outline-none transition-all"
-                                                placeholder="Paste Share Link, embed URL, or type place name"
-                                                value={workingSettings.map?.embedUrl || ''}
-                                                onChange={(e) => {
-                                                    let val = e.target.value;
-                                                    if (val.includes('<iframe') && val.includes('src="')) {
-                                                        const match = val.match(/src="([^"]+)"/);
-                                                        if (match) val = match[1];
-                                                    } else if (val.includes('maps.app.goo.gl') || val.includes('goo.gl/maps')) {
-                                                        alert("To use maps on mobile, simply type your exact resort name or address (e.g., 'Paradise Resort Palawan') instead of pasting a link, and tap outside the box. The system will automatically generate the map!");
-                                                        handleSettingChange('map', 'embedUrl', '');
-                                                        return;
-                                                    }
-                                                    handleSettingChange('map', 'embedUrl', val);
-                                                }}
-                                                onBlur={(e) => {
-                                                    let val = e.target.value;
-                                                    if (val && !val.startsWith('http') && !val.includes('Loading')) {
-                                                        const embed = `https://maps.google.com/maps?q=${encodeURIComponent(val)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-                                                        handleSettingChange('map', 'embedUrl', embed);
-                                                    }
-                                                }}
-                                            />
-                                            <div className="bg-black/30 p-3 md:p-4 rounded-xl flex gap-2.5 md:gap-3 text-[11px] md:text-sm text-gray-300">
-                                                <MapPin className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
-                                                <div className="flex-1 overflow-hidden">
-                                                    <p className="mb-2 leading-relaxed text-gray-200">
-                                                        <strong>Smart Input:</strong> You can configure your map in 3 ways:
-                                                    </p>
-                                                    <ul className="list-disc pl-4 space-y-1 text-gray-400 mb-3">
-                                                        <li><strong>Share Link:</strong> Copy the <code className="text-primary px-1">maps.app.goo.gl</code> link from your phone and paste it here.</li>
-                                                        <li><strong>Place Name:</strong> Just type your resort's name and tap outside the box.</li>
-                                                        <li><strong>Embed Code:</strong> Paste the full <code className="text-primary px-1">&lt;iframe&gt;</code> HTML code.</li>
-                                                    </ul>
-                                                    <a 
-                                                        href="https://www.google.com/maps" 
-                                                        target="_blank" 
-                                                        rel="noreferrer" 
-                                                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-bold transition-all shadow-lg active:scale-95 mt-1 no-underline text-[10px] md:text-xs"
-                                                    >
-                                                        <ExternalLink size={12} className="md:w-3.5 md:h-3.5" /> Open Google Maps
-                                                    </a>
+                                        <div className="w-full max-w-2xl bg-white/10 p-4 md:p-6 rounded-2xl border border-white/20 backdrop-blur-md text-center">
+                                            <p className="text-white/80 text-xs md:text-sm mb-6 leading-relaxed font-bold">
+                                                How would you like to set your location?
+                                            </p>
+                                            
+                                            <div className="flex flex-col gap-3">
+                                                <button 
+                                                    onClick={() => setShowMapPicker(true)}
+                                                    className="w-full bg-primary hover:bg-primary-hover text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 group"
+                                                >
+                                                    <Search size={20} className="group-hover:scale-110 transition-transform" /> 
+                                                    🔍 Search for Your Resort Location
+                                                </button>
+
+                                                <div className="relative mt-2">
+                                                    <div className="absolute inset-0 flex items-center">
+                                                        <span className="w-full border-t border-white/10"></span>
+                                                    </div>
+                                                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
+                                                        <span className="px-2 bg-transparent text-white/30 backdrop-blur-sm">OR PASTE PRO CODE</span>
+                                                    </div>
                                                 </div>
+
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+                                                    placeholder="Paste <iframe> code from computer..."
+                                                    onChange={(e) => {
+                                                        let val = e.target.value;
+                                                        if (val.includes('<iframe') && val.includes('src="')) {
+                                                            const match = val.match(/src="([^"]+)"/);
+                                                            if (match) {
+                                                                handleSettingChange('map', 'embedUrl', match[1]);
+                                                                e.target.value = ''; // Clear after success
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        handleSettingChange('map', 'embedUrl', '');
+                                                        handleSettingChange('contact', 'address', '');
+                                                    }}
+                                                    className="text-[10px] text-white/40 hover:text-red-400 flex items-center gap-1 transition-colors"
+                                                >
+                                                    <RotateCcw size={10} /> Reset to Default
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -1607,7 +1617,16 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
                 </section>
 
-
+                <MapPickerModal 
+                    isOpen={showMapPicker}
+                    onClose={() => setShowMapPicker(false)}
+                    currentLocationName={workingSettings.contact?.address}
+                    onSelect={(name, embedUrl) => {
+                        handleSettingChange('map', 'embedUrl', embedUrl);
+                        // Also automatically update the address in the footer!
+                        handleSettingChange('contact', 'address', name);
+                    }}
+                />
                 <Footer
                     settings={workingSettings}
                     isEditing={isEditing}

@@ -23,11 +23,6 @@ const STEPS = [
     icon: <Calendar size={64} className="text-primary" />
   },
   {
-    title: "Ask Our AI Concierge",
-    description: "Have a specific question? Tap the chat icon in the bottom right. Our AI Concierge is available 24/7 to help with amenities and policies.",
-    icon: <MessageCircle size={64} className="text-accent" />
-  },
-  {
     title: "Manage Your Stay",
     description: "Already booked? Use 'My Bookings' to view details, check status, or manage your reservation using your email.",
     icon: <CreditCard size={64} className="text-primary" />

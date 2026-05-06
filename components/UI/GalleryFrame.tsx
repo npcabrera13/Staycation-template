@@ -12,6 +12,7 @@ interface GalleryFrameProps {
     className?: string;
     aspectRatio?: string;
     disableDecorations?: boolean;
+    disableHoverEffect?: boolean;
 }
 
 const GalleryFrame: React.FC<GalleryFrameProps> = ({
@@ -20,7 +21,8 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     scale: externalScale = 1,
     onPositionChange, onScaleChange,
     className = "", aspectRatio = "h-full",
-    disableDecorations = false
+    disableDecorations = false,
+    disableHoverEffect = false
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isRepositioning, setIsRepositioning] = useState(false);
@@ -125,7 +127,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             <img
                 src={src} alt={alt} loading="lazy" decoding="async" draggable={false}
                 style={{ objectPosition: currentPos, transform: `scale(${currentScale})`, transformOrigin: 'center center' }}
-                className={`w-full h-full object-cover pointer-events-none ${!isEditing ? 'transition-all duration-700 group-hover/frame:scale-110' : 'transition-transform duration-75'}`}
+                className={`w-full h-full object-cover pointer-events-none ${!isEditing && !disableHoverEffect ? 'transition-all duration-700 group-hover/frame:scale-110' : 'transition-transform duration-75'}`}
             />
             
             {/* Desktop Tooltip */}
@@ -177,7 +179,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
                 </div>
             )}
             
-            {!isEditing && <div className="absolute inset-0 bg-black/5 group-hover/frame:bg-black/0 pointer-events-none" />}
+            {!isEditing && !disableHoverEffect && <div className="absolute inset-0 bg-black/5 group-hover/frame:bg-black/0 pointer-events-none" />}
         </div>
     );
 };
