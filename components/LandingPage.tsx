@@ -1553,13 +1553,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                         const match = val.match(/src="([^"]+)"/);
                                                         if (match) val = match[1];
                                                     } else if (val.includes('maps.app.goo.gl') || val.includes('goo.gl/maps')) {
-                                                        handleSettingChange('map', 'embedUrl', 'Loading map from link...');
-                                                        fetch(`/api/resolve-map?url=${encodeURIComponent(val)}`)
-                                                            .then(res => res.json())
-                                                            .then(data => {
-                                                                if(data.success && data.embedUrl) handleSettingChange('map', 'embedUrl', data.embedUrl);
-                                                                else handleSettingChange('map', 'embedUrl', val);
-                                                            }).catch(() => handleSettingChange('map', 'embedUrl', val));
+                                                        alert("To use maps on mobile, simply type your exact resort name or address (e.g., 'Paradise Resort Palawan') instead of pasting a link, and tap outside the box. The system will automatically generate the map!");
+                                                        handleSettingChange('map', 'embedUrl', '');
                                                         return;
                                                     }
                                                     handleSettingChange('map', 'embedUrl', val);
