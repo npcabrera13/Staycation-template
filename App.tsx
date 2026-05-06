@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocat
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import RoomCard from './components/RoomCard';
-import AIChat from './components/AIChat';
 import RevealOnScroll from './components/RevealOnScroll';
 import SearchBar from './components/SearchBar';
 import { MOCK_ROOMS, INITIAL_BOOKINGS, COMPANY_INFO } from './constants';
@@ -23,7 +22,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 // Guests save ~445KB of JS they'd never need
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
-const BookingModal = lazy(() => import('./components/BookingModal'));
+import BookingModal from './components/BookingModal';
 const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
 
 // Simple loading bar — only shown as Suspense fallback for Admin/SuperAdmin routes
@@ -208,7 +207,6 @@ function AppContent() {
     if (eagerLoadAdmin) {
       const timer = setTimeout(() => {
         import('./components/AdminDashboard');
-        import('./components/BookingModal');
         import('./components/BookingLookupModal');
       }, 3000); // Wait 3 seconds after homepage loads before downloading admin code
       return () => clearTimeout(timer);
