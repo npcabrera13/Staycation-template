@@ -1592,7 +1592,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     </div>
                                 )}
                                 <iframe
-                                    src={workingSettings.map?.embedUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125181.43388055636!2d119.34637195647923!3d11.224378310234497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33b7accd159567c7%3A0x64464a2a15c2823!2sEl%20Nido%2C%20Palawan!5e0!3m2!1sen!2sph!4v1709536251859!5m2!1sen!2sph"}
+                                    src={(workingSettings.map?.embedUrl?.startsWith('http') ? workingSettings.map.embedUrl : null) || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125181.43388055636!2d119.34637195647923!3d11.224378310234497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33b7accd159567c7%3A0x64464a2a15c2823!2sEl%20Nido%2C%20Palawan!5e0!3m2!1sen!2sph!4v1709536251859!5m2!1sen!2sph"}
                                     width="100%"
                                     height="100%"
                                     style={{ border: 0 }}
