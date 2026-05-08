@@ -13,6 +13,7 @@ interface GalleryFrameProps {
     aspectRatio?: string;
     disableDecorations?: boolean;
     disableHoverEffect?: boolean;
+    onRepositioningChange?: (isRepositioning: boolean) => void;
 }
 
 const GalleryFrame: React.FC<GalleryFrameProps> = ({
@@ -22,10 +23,16 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     onPositionChange, onScaleChange,
     className = "", aspectRatio = "h-full",
     disableDecorations = false,
-    disableHoverEffect = false
+    disableHoverEffect = false,
+    onRepositioningChange
 }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [isRepositioning, setIsRepositioning] = useState(false);
+    const [isRepositioning, setIsRepositioningState] = useState(false);
+    
+    const setIsRepositioning = (val: boolean) => {
+        setIsRepositioningState(val);
+        onRepositioningChange?.(val);
+    };
     const containerRef = useRef<HTMLDivElement>(null);
     const [currentPos, setCurrentPos] = useState(objectPosition);
     const [currentScale, setCurrentScale] = useState(externalScale);
@@ -62,9 +69,12 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
         }, 500);
     };
 
+    const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+
     const handlePointerDown = (e: React.PointerEvent) => {
         if (!canInteract) return;
         activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        lastPointerRef.current = { x: e.clientX, y: e.clientY };
         
         if (activePointersRef.current.size === 1) {
             e.preventDefault();
@@ -88,16 +98,30 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             if (pinchStartDistRef.current) {
                 applyScale(pinchStartScaleRef.current * (dist / pinchStartDistRef.current));
             }
-        } else if (isDragging && containerRef.current) {
+        } else if (isDragging && containerRef.current && lastPointerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
-            const x = Math.max(0, Math.min(100, 100 - ((e.clientX - rect.left) / rect.width) * 100));
-            const y = Math.max(0, Math.min(100, 100 - ((e.clientY - rect.top) / rect.height) * 100));
-            setCurrentPos(`${Math.round(x)}% ${Math.round(y)}%`);
+            const dx = e.clientX - lastPointerRef.current.x;
+            const dy = e.clientY - lastPointerRef.current.y;
+            
+            // Sensitivity: We move the "focus" faster when zoomed in
+            // objectPosition works by shifting the image inside its fitted box
+            // A 1% change in objectPosition shifts the image by (imageSize - elementSize) * 0.01
+            const [curX, curY] = currentPos.split(' ').map(p => parseFloat(p));
+            
+            // Relative drag: if you drag 10px right, we want the image to shift right
+            // Lower percentage means "show more left", so dragging right should decrease percentage
+            const moveSpeed = 0.5 / currentScale;
+            const newX = Math.max(0, Math.min(100, curX - (dx / rect.width * 100 * moveSpeed)));
+            const newY = Math.max(0, Math.min(100, curY - (dy / rect.height * 100 * moveSpeed)));
+            
+            setCurrentPos(`${Math.round(newX)}% ${Math.round(newY)}%`);
         }
+        lastPointerRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
         activePointersRef.current.delete(e.pointerId);
+        lastPointerRef.current = null;
         
         if (isDragging) {
             setIsDragging(false);
@@ -107,7 +131,6 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
         
         if (activePointersRef.current.size < 2) {
             if (pinchStartDistRef.current !== null) {
-                // Pinch ended, save scale
                 onScaleChange?.(currentScale);
             }
             pinchStartDistRef.current = null;
@@ -126,7 +149,11 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
         >
             <img
                 src={src} alt={alt} loading="lazy" decoding="async" draggable={false}
-                style={{ objectPosition: currentPos, transform: `scale(${currentScale})`, transformOrigin: 'center center' }}
+                style={{ 
+                    objectPosition: currentPos, 
+                    transform: isEditing ? `scale(${currentScale})` : 'none',
+                    transformOrigin: 'center center'
+                }}
                 className={`w-full h-full object-cover pointer-events-none ${!isEditing && !disableHoverEffect ? 'transition-all duration-700 group-hover/frame:scale-110' : 'transition-transform duration-75'}`}
             />
             
@@ -144,7 +171,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             {isEditing && isTouchDevice && !isRepositioning && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsRepositioning(true); }}
-                    className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-auto shadow-xl z-20 text-xs font-medium border border-white/20 active:scale-95 transition-transform"
+                    className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-auto shadow-xl z-[40] text-xs font-medium border border-white/20 active:scale-95 transition-transform"
                 >
                     <Move size={14} /> Adjust Image
                 </button>
@@ -152,8 +179,8 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
 
             {isEditing && isTouchDevice && isRepositioning && (
                 <>
-                    <div className="absolute inset-0 bg-black/20 border-2 border-primary pointer-events-none z-10" />
-                    <div className="absolute top-4 left-0 w-full flex justify-center pointer-events-none z-20">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] border-4 border-primary pointer-events-none z-[60]" />
+                    <div className="absolute top-4 left-0 w-full flex justify-center pointer-events-none z-[70]">
                         <div className="bg-black/70 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl">
                             <ZoomIn size={12} /> Pinch to zoom, drag to move
                         </div>
@@ -166,7 +193,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
                             onPositionChange?.(currentPos);
                             onScaleChange?.(currentScale);
                         }}
-                        className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-2.5 rounded-full font-bold pointer-events-auto shadow-[0_10px_25px_rgba(0,0,0,0.5)] z-50 flex items-center gap-2 border border-white/20 active:scale-95 transition-transform"
+                        className="absolute bottom-4 right-4 bg-primary text-white px-6 py-2.5 rounded-full font-bold pointer-events-auto shadow-[0_10px_25px_rgba(0,0,0,0.5)] z-[100] flex items-center gap-2 border border-white/20 active:scale-95 transition-transform"
                     >
                         <Check size={16} /> Done Adjusting
                     </button>

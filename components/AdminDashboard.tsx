@@ -37,7 +37,7 @@ import { ImageUploadButton } from './UI/ImageUploadButton'; interface AdminDashb
     settings?: Settings;
     onUpdateSettings?: (settings: Settings) => Promise<void>;
     onExit: () => void;
-    onEnterVisualBuilder?: () => void;
+    onEnterVisualBuilder?: (targetId?: string) => void;
     // Subscription Props
     showExpiryWarning: boolean;
     expiryDays: number | null;
@@ -1581,9 +1581,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     className="w-full h-full object-contain border dark:border-gray-600 rounded-lg bg-white" 
                                                 />
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                    <a href={settingsForm.paymentMethods.gcash.qrImage} target="_blank" rel="noreferrer" className="p-2 bg-white rounded-full text-gray-900 shadow-lg">
+                                                    <button 
+                                                        onClick={() => setZoomedImage(settingsForm.paymentMethods.gcash.qrImage)} 
+                                                        className="p-2 bg-white rounded-full text-gray-900 shadow-lg hover:bg-gray-100 transition-colors"
+                                                    >
                                                         <Maximize2 size={16} />
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}
@@ -1726,9 +1729,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                     className="w-full h-full object-contain border dark:border-gray-600 rounded-lg bg-white" 
                                                 />
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                    <a href={settingsForm.paymentMethods.bankTransfer.qrImage} target="_blank" rel="noreferrer" className="p-2 bg-white rounded-full text-gray-900 shadow-lg">
+                                                    <button 
+                                                        onClick={() => setZoomedImage(settingsForm.paymentMethods.bankTransfer.qrImage)} 
+                                                        className="p-2 bg-white rounded-full text-gray-900 shadow-lg hover:bg-gray-100 transition-colors"
+                                                    >
                                                         <Maximize2 size={16} />
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}
@@ -2813,7 +2819,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 const hasDraftDeposit = draftDepositPct !== null && draftDepositPct !== currentGlobalDeposit;
 
                                 return (
-                                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg overflow-hidden transition-all shadow-sm">
+                                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg transition-all shadow-sm">
                                         {/* Collapsed State / Toggle Header */}
                                         <button
                                             onClick={() => setIsGlobalDepositExpanded(!isGlobalDepositExpanded)}
@@ -3296,7 +3302,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                                         onUploadSuccess={(url) => isAddingRoom ? setNewRoom({ ...newRoom, image: url }) : setEditForm({ ...editForm, image: url })}
                                                         onUploadError={(error) => showToast(error, "error")}
                                                         className="px-3 py-1.5 bg-white/90 text-gray-800 rounded-lg shadow-sm hover:bg-white font-bold text-xs flex items-center gap-1 backdrop-blur-sm transition-all"
-                                                        buttonText="Replace"
+                                                        buttonText={(isAddingRoom ? newRoom.image : editForm.image) === 'https://picsum.photos/800/600' ? "Upload Image" : "Replace"}
                                                     />
                                                 </div>
                                             </>

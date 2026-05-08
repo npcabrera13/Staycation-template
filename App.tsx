@@ -411,9 +411,13 @@ function AppContent() {
                   settings={settings}
                   onUpdateSettings={handleUpdateSettings}
                   onExit={() => navigate('/')}
-                  onEnterVisualBuilder={() => {
+                  onEnterVisualBuilder={(targetId?: string | any) => {
                     setStartEditing(true);
-                    navigate('/');
+                    if (targetId && typeof targetId === 'string') {
+                      navigate({ pathname: '/', hash: targetId });
+                    } else {
+                      navigate('/');
+                    }
                   }}
                   showExpiryWarning={showExpiryWarning}
                   expiryDays={expiryDays}

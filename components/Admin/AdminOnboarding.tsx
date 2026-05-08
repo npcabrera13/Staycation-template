@@ -3,7 +3,7 @@ import { X, ChevronRight, Image as ImageIcon, CreditCard, Share2, Palette, Rocke
 
 interface AdminOnboardingProps {
     onNavigate: (tab: string, targetId?: string) => void;
-    onEnterVisualBuilder?: () => void;
+    onEnterVisualBuilder?: (targetId?: string) => void;
 }
 
 const steps = [
@@ -29,7 +29,8 @@ const steps = [
         title: 'Social Links',
         subtitle: 'Connect your Instagram, Facebook',
         tab: 'settings',
-        targetId: 'settings-social',
+        targetId: 'footer',
+        isVisualBuilder: true,
     },
     {
         id: 'map',
@@ -37,7 +38,8 @@ const steps = [
         title: 'Set Your Location',
         subtitle: 'Add a Google Maps embed',
         tab: 'settings',
-        targetId: 'settings-contact',
+        targetId: 'contact',
+        isVisualBuilder: true,
     },
     {
         id: 'design',
@@ -69,7 +71,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVi
 
     const handleNavigate = (step: typeof steps[number]) => {
         if (step.isVisualBuilder && onEnterVisualBuilder) {
-            onEnterVisualBuilder();
+            onEnterVisualBuilder(step.targetId);
         } else {
             onNavigate(step.tab, step.targetId);
         }
