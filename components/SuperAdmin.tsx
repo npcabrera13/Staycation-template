@@ -38,6 +38,7 @@ const SUPERADMIN_PASSWORD = 'wellington'; // fallback default
 
 const SuperAdmin: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState('');
     const [subscription, setSubscription] = useState<SubscriptionData>(DEFAULT_SUBSCRIPTION);
@@ -235,6 +236,8 @@ const SuperAdmin: React.FC = () => {
                     setImgbbApiKey(publicSnap.data().imgbb.apiKey || '');
                 }
             } catch { }
+            
+            setIsCheckingAuth(false);
         };
         loadPassword();
     }, []);
@@ -475,6 +478,17 @@ Please output only the filled .env content without any extra explanation so I ca
 
 
     // Password Gate
+    if (isCheckingAuth) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4">
+                <div className="flex flex-col items-center">
+                    <Loader size={32} className="text-amber-500 animate-spin mb-4" />
+                    <p className="text-gray-400 text-sm">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4">
