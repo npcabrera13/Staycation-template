@@ -100,13 +100,24 @@ const MapPickerModal: React.FC<MapPickerModalProps> = ({ isOpen, onClose, onSele
                         <input 
                             type="text"
                             autoFocus
+                            onFocus={(e) => e.target.select()}
                             placeholder="Type resort name, street, or city..."
                             className="w-full pl-12 pr-12 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                             value={query}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
-                        {isLoading && (
+                        {isLoading ? (
                             <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-primary animate-spin" size={18} />
+                        ) : query && (
+                            <button
+                                onClick={() => {
+                                    setQuery('');
+                                    setResults([]);
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1"
+                            >
+                                <X size={16} />
+                            </button>
                         )}
                         {/* Search Results Dropdown */}
                         {results.length > 0 && (

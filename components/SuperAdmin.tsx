@@ -37,8 +37,9 @@ const RENEWAL_OPTIONS = [
 const SUPERADMIN_PASSWORD = 'wellington'; // fallback default
 
 const SuperAdmin: React.FC = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return !!window.localStorage.getItem('staycation_superadmin_pw');
+    });
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState('');
     const [subscription, setSubscription] = useState<SubscriptionData>(DEFAULT_SUBSCRIPTION);
@@ -218,10 +219,14 @@ const SuperAdmin: React.FC = () => {
                         const dbPassword = snap.data().password;
                         setStoredPassword(dbPassword);
 
-                        // Check local storage for auto-login
+                        // Check local storage for auto-login verification
                         const savedPassword = window.localStorage.getItem('staycation_superadmin_pw');
                         if (savedPassword === dbPassword) {
                             setIsAuthenticated(true);
+                        } else if (savedPassword) {
+                            // If they had a password but it's wrong, kick them out
+                            setIsAuthenticated(false);
+                            window.localStorage.removeItem('staycation_superadmin_pw');
                         }
                     }
                     if (snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
@@ -236,8 +241,6 @@ const SuperAdmin: React.FC = () => {
                     setImgbbApiKey(publicSnap.data().imgbb.apiKey || '');
                 }
             } catch { }
-            
-            setIsCheckingAuth(false);
         };
         loadPassword();
     }, []);
@@ -337,60 +340,90 @@ const SuperAdmin: React.FC = () => {
 
     // Deployment Helpers
     const copyAllEnv = () => {
-        const keys = [
-            'VITE_FIREBASE_API_KEY',
-            'VITE_FIREBASE_AUTH_DOMAIN',
-            'VITE_FIREBASE_PROJECT_ID',
-            'VITE_FIREBASE_STORAGE_BUCKET',
-            'VITE_FIREBASE_MESSAGING_SENDER_ID',
-            'VITE_FIREBASE_APP_ID',
-            'VITE_GEMINI_API_KEY',
-            'VITE_FAVICON_URL',
-            'VITE_OG_URL',
-            'VITE_OG_TITLE',
-            'VITE_OG_DESCRIPTION',
-            'VITE_OG_IMAGE',
-            'VITE_IMGBB_API_KEY',
-            'SMTP_EMAIL',
-            'SMTP_PASSWORD'
+        const envVars = [
+            `VITE_FIREBASE_API_KEY=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_API_KEY')?.value || ''}`,
+            `VITE_FIREBASE_AUTH_DOMAIN=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_AUTH_DOMAIN')?.value || ''}`,
+            `VITE_FIREBASE_PROJECT_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_PROJECT_ID')?.value || ''}`,
+            `VITE_FIREBASE_STORAGE_BUCKET=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_STORAGE_BUCKET')?.value || ''}`,
+            `VITE_FIREBASE_MESSAGING_SENDER_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_MESSAGING_SENDER_ID')?.value || ''}`,
+            `VITE_FIREBASE_APP_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_APP_ID')?.value || ''}`,
+            `VITE_GEMINI_API_KEY=${infra.customFields.find(f => f.key === 'VITE_GEMINI_API_KEY')?.value || ''}`,
+            `VITE_FAVICON_URL=${infra.customFields.find(f => f.key === 'VITE_FAVICON_URL')?.value || ''}`,
+            `VITE_OG_URL=${infra.customFields.find(f => f.key === 'VITE_OG_URL')?.value || ''}`,
+            `VITE_OG_TITLE=${infra.customFields.find(f => f.key === 'VITE_OG_TITLE')?.value || ''}`,
+            `VITE_OG_DESCRIPTION=${infra.customFields.find(f => f.key === 'VITE_OG_DESCRIPTION')?.value || ''}`,
+            `VITE_OG_IMAGE=${infra.customFields.find(f => f.key === 'VITE_OG_IMAGE')?.value || ''}`,
+            `VITE_IMGBB_API_KEY=${infra.imgbbApiKey}`,
+            `SMTP_EMAIL=${infra.smtpEmail}`,
+            `SMTP_PASSWORD=${infra.smtpPassword}`
         ];
-        const text = keys.map(k => `${k}=`).join('\n');
+        
+        // Append any other custom fields not explicitly mapped above
+        const mappedKeys = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_GEMINI_API_KEY', 'VITE_FAVICON_URL', 'VITE_OG_URL', 'VITE_OG_TITLE', 'VITE_OG_DESCRIPTION', 'VITE_OG_IMAGE', 'SMTP_EMAIL', 'SMTP_PASSWORD'];
+        infra.customFields.forEach(field => {
+            if (!mappedKeys.includes(field.key)) {
+                envVars.push(`${field.key}=${field.value}`);
+            }
+        });
+
+        const text = envVars.join('\n');
         navigator.clipboard.writeText(text);
 
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setCopyToast('');
         requestAnimationFrame(() => {
-            setCopyToast('All 15 Keys');
+            setCopyToast('Env Copied');
             toastTimer.current = setTimeout(() => setCopyToast(''), 2000);
         });
     };
 
     const copyAiPrompt = () => {
-        const keys = [
-            'VITE_FIREBASE_API_KEY',
-            'VITE_FIREBASE_AUTH_DOMAIN',
-            'VITE_FIREBASE_PROJECT_ID',
-            'VITE_FIREBASE_STORAGE_BUCKET',
-            'VITE_FIREBASE_MESSAGING_SENDER_ID',
-            'VITE_FIREBASE_APP_ID',
-            'VITE_GEMINI_API_KEY',
-            'VITE_FAVICON_URL',
-            'VITE_OG_URL',
-            'VITE_OG_TITLE',
-            'VITE_OG_DESCRIPTION',
-            'VITE_OG_IMAGE',
-            'VITE_IMGBB_API_KEY',
-            'SMTP_EMAIL',
-            'SMTP_PASSWORD'
+        const mappedKeys = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_GEMINI_API_KEY', 'VITE_FAVICON_URL', 'VITE_OG_URL', 'VITE_OG_TITLE', 'VITE_OG_DESCRIPTION', 'VITE_OG_IMAGE', 'SMTP_EMAIL', 'SMTP_PASSWORD'];
+        
+        const envVars = [
+            `VITE_FIREBASE_API_KEY=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_API_KEY')?.value || ''}`,
+            `VITE_FIREBASE_AUTH_DOMAIN=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_AUTH_DOMAIN')?.value || ''}`,
+            `VITE_FIREBASE_PROJECT_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_PROJECT_ID')?.value || ''}`,
+            `VITE_FIREBASE_STORAGE_BUCKET=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_STORAGE_BUCKET')?.value || ''}`,
+            `VITE_FIREBASE_MESSAGING_SENDER_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_MESSAGING_SENDER_ID')?.value || ''}`,
+            `VITE_FIREBASE_APP_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_APP_ID')?.value || ''}`,
+            `VITE_GEMINI_API_KEY=${infra.customFields.find(f => f.key === 'VITE_GEMINI_API_KEY')?.value || ''}`,
+            `VITE_FAVICON_URL=${infra.customFields.find(f => f.key === 'VITE_FAVICON_URL')?.value || ''}`,
+            `VITE_OG_URL=${infra.customFields.find(f => f.key === 'VITE_OG_URL')?.value || ''}`,
+            `VITE_OG_TITLE=${infra.customFields.find(f => f.key === 'VITE_OG_TITLE')?.value || ''}`,
+            `VITE_OG_DESCRIPTION=${infra.customFields.find(f => f.key === 'VITE_OG_DESCRIPTION')?.value || ''}`,
+            `VITE_OG_IMAGE=${infra.customFields.find(f => f.key === 'VITE_OG_IMAGE')?.value || ''}`,
+            `VITE_IMGBB_API_KEY=${infra.imgbbApiKey}`,
+            `SMTP_EMAIL=${infra.smtpEmail}`,
+            `SMTP_PASSWORD=${infra.smtpPassword}`
         ];
-        const prompt = `I'm deploying my React Staycation website. I have a list of environment variable keys and I need you to help me format them properly for a .env file. 
 
-I will provide you with the raw configuration values (like the Firebase config object or Gmail SMTP details). Please match the values to these exact keys and provide me with a clean, bulk-pasteable .env content.
+        infra.customFields.forEach(field => {
+            if (!mappedKeys.includes(field.key)) {
+                envVars.push(`${field.key}=${field.value}`);
+            }
+        });
 
-Here are the keys I need you to fill:
-${keys.map(k => `${k}=`).join('\n')}
+        // Add the raw text from firebase/cloudflare fields so AI can parse them if they are pasted as blocks
+        let rawConfigs = '';
+        if (infra.firebase) rawConfigs += `\n\n--- FIREBASE CONFIG OBJECT ---\n${infra.firebase}`;
+        if (infra.cloudflare) rawConfigs += `\n\n--- CLOUDFLARE DETAILS ---\n${infra.cloudflare}`;
 
-Please output only the filled .env content without any extra explanation so I can copy-paste it directly into Vercel/Netlify.`;
+        const prompt = `I'm deploying my React Staycation website on Cloudflare Pages. I need you to generate a strictly formatted .env file.
+
+Here is the data I currently have. Some fields might already be filled out with values, while others might be blank or need to be extracted from the raw config blocks below.
+
+--- CURRENT VARIABLES ---
+${envVars.join('\n')}${rawConfigs}
+
+INSTRUCTIONS:
+1. Extract any necessary values from the RAW CONFIG BLOCKS (if provided) and fill them into the correct CURRENT VARIABLES keys.
+2. Output the environment variables STRICTLY as a raw text block of KEY=VALUE pairs, exactly one per line.
+3. DO NOT use markdown code blocks (e.g., no \`\`\` text).
+4. DO NOT use backticks around the output.
+5. DO NOT use quotes around values unless strictly necessary.
+6. DO NOT include any extra conversational text or explanations. 
+Cloudflare Pages requires strict raw key-value pairs. Output ONLY the final environment variables list.`;
 
         navigator.clipboard.writeText(prompt);
 
@@ -478,17 +511,6 @@ Please output only the filled .env content without any extra explanation so I ca
 
 
     // Password Gate
-    if (isCheckingAuth) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4">
-                <div className="flex flex-col items-center">
-                    <Loader size={32} className="text-amber-500 animate-spin mb-4" />
-                    <p className="text-gray-400 text-sm">Verifying access...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4">
@@ -1467,6 +1489,12 @@ Please output only the filled .env content without any extra explanation so I ca
                                 >
                                     {infraSaving ? <><Loader size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Infrastructure Info</>}
                                 </button>
+                                {infraStatus === 'saved' && (
+                                    <div className="mt-3 bg-green-500/20 border border-green-500/30 rounded-xl p-3 flex items-center animate-fade-in">
+                                        <CheckCircle className="text-green-400 mr-2" size={16} />
+                                        <p className="text-green-300 text-xs font-medium">Infrastructure updated successfully!</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
