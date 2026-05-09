@@ -247,6 +247,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
+    // Touch support for swiping
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const minSwipeDistance = 50;
+
     useEffect(() => {
         if (room) {
             setStep(1);
@@ -297,6 +302,28 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     const prevImage = (e?: React.MouseEvent) => {
         e?.stopPropagation();
         setCurrentImgIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    };
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            nextImage();
+        } else if (isRightSwipe) {
+            prevImage();
+        }
     };
 
     const nights = (selectedStart && selectedEnd) ? differenceInDays(selectedEnd, selectedStart) : 0;
@@ -580,13 +607,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                         {step !== 3 && (
                             <div className="w-full lg:w-5/12 bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700">
                                 <div
-                                    className="relative h-48 md:h-64 lg:h-72 group bg-gray-200 cursor-zoom-in overflow-hidden"
+                                    className="relative h-48 md:h-64 lg:h-72 group bg-gray-200 cursor-zoom-in overflow-hidden select-none"
                                     onClick={() => setIsImageExpanded(true)}
+                                    onTouchStart={onTouchStart}
+                                    onTouchMove={onTouchMove}
+                                    onTouchEnd={onTouchEnd}
                                 >
                                     <img
                                         src={allImages[currentImgIndex]}
                                         alt={room.name}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
 
@@ -1271,7 +1301,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
 
             {/* Immersive Expanded Image Gallery */}
             {isImageExpanded && step !== 3 && (
-                <div className="fixed inset-0 z-[70] bg-black text-white flex flex-col animate-fade-in">
+                <div 
+                    className="fixed inset-0 z-[70] bg-black text-white flex flex-col animate-fade-in select-none"
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                >
 
                     {/* Toolbar */}
                     <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/60 to-transparent">
@@ -1323,7 +1358,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
                     </div>
 
                     {/* Bottom Info Overlay */}
-                    <div className={`relative z-40 bg-gradient-to-t from-black via-black/90 to-transparent pt-16 pb-6 px-6 transition-all duration-500 ${showGalleryInfo ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+                    <div className={`relative z-40 bg-gradient-to-t from-black via-black/90 to-transparent pt-16 pb-6 px-6 transition-all duration-300 ${showGalleryInfo ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
                         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end justify-between gap-6">
 
                             {/* Text Info */}

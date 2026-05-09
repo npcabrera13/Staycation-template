@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Lock, Power, User, Save, Loader, CheckCircle, AlertCircle, Shield, LogOut, Database, Copy, RefreshCw, ExternalLink, Globe, Monitor, Clock, Plus, Settings, Trash2, Edit, Key, Eye, EyeOff, Mail, Phone, MessageSquare, CreditCard, X, Zap, HelpCircle, Sparkles, Image as ImageIcon, MessageCircle, Info } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { compressImageToBase64 } from '../utils/imageUtils';
@@ -118,6 +118,9 @@ const SuperAdmin: React.FC = () => {
     // Admin Eager Load toggle
     const [enableEagerLoad, setEnableEagerLoad] = useState(false);
 
+    // Floating Messenger toggle
+    const [enableFloatingMessenger, setEnableFloatingMessenger] = useState(true);
+
     // Admin passcode (read-only in SuperAdmin)
     const [adminPasscode, setAdminPasscode] = useState('');
     const [showAdminPasscode, setShowAdminPasscode] = useState(false);
@@ -231,6 +234,7 @@ const SuperAdmin: React.FC = () => {
                     }
                     if (snap.data().contactInfo) setContactInfo(snap.data().contactInfo);
                     if (typeof snap.data().eagerLoadAdmin === 'boolean') setEnableEagerLoad(snap.data().eagerLoadAdmin);
+                    if (typeof snap.data().enableFloatingMessenger === 'boolean') setEnableFloatingMessenger(snap.data().enableFloatingMessenger);
                     if (snap.data().adminPasscode) setAdminPasscode(snap.data().adminPasscode);
                 }
             } catch { }
@@ -1693,6 +1697,42 @@ Cloudflare Pages requires strict raw key-value pairs. Output ONLY the final envi
                                     className={`w-11 h-6 rounded-full transition-colors relative ${enableEagerLoad ? 'bg-green-500' : 'bg-gray-600'}`}
                                 >
                                     <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableEagerLoad ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Floating Messenger Toggle */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className={`p-2 rounded-lg mr-4 ${enableFloatingMessenger ? 'bg-amber-500/20' : 'bg-white/10'}`}>
+                                        <MessageCircle size={20} className={enableFloatingMessenger ? 'text-amber-400' : 'text-gray-400'} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center">
+                                            <h3 className="text-md font-bold text-white mr-2">Floating Messenger</h3>
+                                            <div className="group relative z-10 flex items-center justify-center">
+                                                <Info size={14} className="text-gray-400 cursor-pointer hover:text-amber-400 transition-colors" />
+                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-gray-900 text-gray-200 text-xs p-2 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none text-center border border-gray-700">
+                                                    Displays a floating button on the client view that links to the configured Facebook page.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-0.5">Show Facebook chat icon on the bottom right.</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        const newVal = !enableFloatingMessenger;
+                                        setEnableFloatingMessenger(newVal);
+                                        try {
+                                            await setDoc(doc(db, '_superadmin', 'settings'), { enableFloatingMessenger: newVal }, { merge: true });
+                                            copyWithToast(newVal ? 'Floating Messenger enabled!' : 'Floating Messenger disabled!');
+                                        } catch { }
+                                    }}
+                                    className={`w-11 h-6 rounded-full transition-colors relative ${enableFloatingMessenger ? 'bg-green-500' : 'bg-gray-600'}`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableFloatingMessenger ? 'translate-x-5' : 'translate-x-0.5'}`} />
                                 </button>
                             </div>
                         </div>

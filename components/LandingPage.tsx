@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { useNotification } from '../contexts/NotificationContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import FloatingMessenger from './UI/FloatingMessenger';
 import RoomCard from './RoomCard';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -1313,7 +1314,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             return (
                                                 <div
                                                     key={i}
-                                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out transform ${positionClass}`}
+                                                    className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ease-out transform ${positionClass}`}
                                                 >
                                                     <img
                                                     src={img}
@@ -1687,6 +1688,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 />
             )
             }
+
+            {/* Floating Messenger Icon */}
+            <FloatingMessenger facebookUrl={settings?.social?.facebook} />
         </>
     );
 };
