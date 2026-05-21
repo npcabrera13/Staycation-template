@@ -119,7 +119,7 @@ const SuperAdmin: React.FC = () => {
     const [enableEagerLoad, setEnableEagerLoad] = useState(false);
 
     // Floating Messenger toggle
-    const [enableFloatingMessenger, setEnableFloatingMessenger] = useState(true);
+    const [enableFloatingMessenger, setEnableFloatingMessenger] = useState(false);
 
     // Admin passcode (read-only in SuperAdmin)
     const [adminPasscode, setAdminPasscode] = useState('');
@@ -344,7 +344,7 @@ const SuperAdmin: React.FC = () => {
 
     // Deployment Helpers
     const copyAllEnv = () => {
-        const envVars = [
+        const rawEnvVars = [
             `VITE_FIREBASE_API_KEY=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_API_KEY')?.value || ''}`,
             `VITE_FIREBASE_AUTH_DOMAIN=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_AUTH_DOMAIN')?.value || ''}`,
             `VITE_FIREBASE_PROJECT_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_PROJECT_ID')?.value || ''}`,
@@ -366,8 +366,16 @@ const SuperAdmin: React.FC = () => {
         const mappedKeys = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_GEMINI_API_KEY', 'VITE_FAVICON_URL', 'VITE_OG_URL', 'VITE_OG_TITLE', 'VITE_OG_DESCRIPTION', 'VITE_OG_IMAGE', 'SMTP_EMAIL', 'SMTP_PASSWORD'];
         infra.customFields.forEach(field => {
             if (!mappedKeys.includes(field.key)) {
-                envVars.push(`${field.key}=${field.value}`);
+                rawEnvVars.push(`${field.key}=${field.value}`);
             }
+        });
+
+        // Filter out variables that have empty or whitespace-only values
+        const envVars = rawEnvVars.filter(line => {
+            const index = line.indexOf('=');
+            if (index === -1) return false;
+            const value = line.substring(index + 1);
+            return value.trim() !== '';
         });
 
         const text = envVars.join('\n');
@@ -384,7 +392,7 @@ const SuperAdmin: React.FC = () => {
     const copyAiPrompt = () => {
         const mappedKeys = ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_GEMINI_API_KEY', 'VITE_FAVICON_URL', 'VITE_OG_URL', 'VITE_OG_TITLE', 'VITE_OG_DESCRIPTION', 'VITE_OG_IMAGE', 'SMTP_EMAIL', 'SMTP_PASSWORD'];
         
-        const envVars = [
+        const rawEnvVars = [
             `VITE_FIREBASE_API_KEY=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_API_KEY')?.value || ''}`,
             `VITE_FIREBASE_AUTH_DOMAIN=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_AUTH_DOMAIN')?.value || ''}`,
             `VITE_FIREBASE_PROJECT_ID=${infra.customFields.find(f => f.key === 'VITE_FIREBASE_PROJECT_ID')?.value || ''}`,
@@ -404,8 +412,16 @@ const SuperAdmin: React.FC = () => {
 
         infra.customFields.forEach(field => {
             if (!mappedKeys.includes(field.key)) {
-                envVars.push(`${field.key}=${field.value}`);
+                rawEnvVars.push(`${field.key}=${field.value}`);
             }
+        });
+
+        // Filter out variables that have empty or whitespace-only values
+        const envVars = rawEnvVars.filter(line => {
+            const index = line.indexOf('=');
+            if (index === -1) return false;
+            const value = line.substring(index + 1);
+            return value.trim() !== '';
         });
 
         // Add the raw text from firebase/cloudflare fields so AI can parse them if they are pasted as blocks
@@ -426,7 +442,8 @@ INSTRUCTIONS:
 3. DO NOT use markdown code blocks (e.g., no \`\`\` text).
 4. DO NOT use backticks around the output.
 5. DO NOT use quotes around values unless strictly necessary.
-6. DO NOT include any extra conversational text or explanations. 
+6. DO NOT include any extra conversational text or explanations.
+7. If a variable is empty or does not have a value, DO NOT include it on the final output.
 Cloudflare Pages requires strict raw key-value pairs. Output ONLY the final environment variables list.`;
 
         navigator.clipboard.writeText(prompt);

@@ -259,7 +259,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                                 <label className="cursor-pointer w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl transition-all text-xs font-bold">
                                     {isUploadingLogo ? <Loader size={13} className="animate-spin" /> : <Upload size={13} />}
                                     {isUploadingLogo ? 'Uploading...' : (logoUrl ? 'Change' : 'Upload Logo')}
-                                    <input type="file" accept="image/*" className="hidden" disabled={isUploadingLogo}
+                                    <input type="file" accept="image/*" className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none" disabled={isUploadingLogo}
                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setIsUploadingLogo, setLogoUrl); e.target.value = ''; }}
                                     />
                                 </label>
@@ -283,7 +283,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                                 <label className="cursor-pointer w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl transition-all text-xs font-bold">
                                     {isUploadingHero ? <Loader size={13} className="animate-spin" /> : <Upload size={13} />}
                                     {isUploadingHero ? 'Uploading...' : (heroImageUrl ? 'Change' : 'Upload Banner')}
-                                    <input type="file" accept="image/*" className="hidden" disabled={isUploadingHero}
+                                    <input type="file" accept="image/*" className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none" disabled={isUploadingHero}
                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setIsUploadingHero, setHeroImageUrl); e.target.value = ''; }}
                                     />
                                 </label>
@@ -328,7 +328,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                         <label className="cursor-pointer flex items-center justify-center gap-2 py-3 px-8 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold text-sm transition-all shadow-sm">
                             {isUploadingLogo ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
                             {isUploadingLogo ? 'Uploading...' : (logoUrl ? 'Change Logo' : 'Upload Logo')}
-                            <input type="file" accept="image/*" className="hidden" disabled={isUploadingLogo}
+                            <input type="file" accept="image/*" className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none" disabled={isUploadingLogo}
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setIsUploadingLogo, setLogoUrl); e.target.value = ''; }}
                             />
                         </label>
@@ -366,7 +366,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
                         <label className="cursor-pointer flex items-center justify-center gap-2 py-3 px-8 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold text-sm transition-all shadow-sm">
                             {isUploadingHero ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
                             {isUploadingHero ? 'Uploading...' : (heroImageUrl ? 'Change Banner' : 'Upload Banner')}
-                            <input type="file" accept="image/*" className="hidden" disabled={isUploadingHero}
+                            <input type="file" accept="image/*" className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none" disabled={isUploadingHero}
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setIsUploadingHero, setHeroImageUrl); e.target.value = ''; }}
                             />
                         </label>

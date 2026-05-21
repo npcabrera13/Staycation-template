@@ -2421,14 +2421,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </div>
 
                                 <div className="flex space-x-2">
-                                    {onSeed && rooms.length === 0 && (
-                                        <button
-                                            onClick={onSeed}
-                                            className="flex items-center px-4 py-2 bg-yellow-100 border border-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors shadow-sm"
-                                        >
-                                            <Sparkles size={18} className="mr-2" /> Seed Data
-                                        </button>
-                                    )}
                                     <button
                                         onClick={openExportModal}
                                         className="flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-primary transition-colors shadow-sm"

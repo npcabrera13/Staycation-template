@@ -16,6 +16,8 @@ interface BuilderToolbarProps {
     onUpdateSettings?: (section: keyof Settings, field: string, value: any) => void;
     isMinimized?: boolean;
     onToggleMinimize?: (minimized: boolean) => void;
+    onUndo?: () => void;
+    canUndo?: boolean;
 }
 
 const THEME_PRESETS = [
@@ -71,7 +73,9 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     settings,
     onUpdateSettings,
     isMinimized = false,
-    onToggleMinimize
+    onToggleMinimize,
+    onUndo,
+    canUndo = false
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
     const [mobileExpanded, setMobileExpanded] = useState(false);
@@ -496,13 +500,27 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         <span>Visual Builder</span>
                     </div>
 
-                    <button 
-                        onClick={() => onToggleMinimize?.(true)} 
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        title="Minimize Panel"
-                    >
-                        <X size={18} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={onUndo}
+                            disabled={!canUndo}
+                            className={`p-1.5 rounded-full transition-colors ${
+                                canUndo 
+                                    ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                    : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                            }`}
+                            title="Undo Change"
+                        >
+                            <RotateCcw size={18} />
+                        </button>
+                        <button 
+                            onClick={() => onToggleMinimize?.(true)} 
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            title="Minimize Panel"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
                 </div>
                 {renderFullPanel()}
             </div>
@@ -523,7 +541,19 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">🎨 Themes</span>
                         </div>
                         
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={onUndo}
+                                disabled={!canUndo}
+                                className={`p-1.5 rounded-full transition-colors active:scale-90 ${
+                                    canUndo 
+                                        ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                        : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                                }`}
+                                title="Undo Change"
+                            >
+                                <RotateCcw size={16} />
+                            </button>
                             {hasChanges && (
                                 <button
                                     onClick={onSave}
@@ -587,9 +617,23 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                     <Edit size={18} />
                                     <span>Visual Builder</span>
                                 </div>
-                                <button onClick={() => setMobileExpanded(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                                    <X size={20} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={onUndo}
+                                        disabled={!canUndo}
+                                        className={`p-1 rounded-full transition-colors active:scale-90 ${
+                                            canUndo 
+                                                ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                                : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                                        }`}
+                                        title="Undo Change"
+                                    >
+                                        <RotateCcw size={18} />
+                                    </button>
+                                    <button onClick={() => setMobileExpanded(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                                        <X size={20} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         {renderFullPanel()}

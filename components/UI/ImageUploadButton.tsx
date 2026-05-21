@@ -45,7 +45,7 @@ export const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 accept="image/*"
-                className="hidden"
+                className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none"
             />
             <button
                 type="button"

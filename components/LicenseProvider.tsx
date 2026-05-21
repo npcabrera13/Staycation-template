@@ -7,6 +7,15 @@ import { Loader } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { SUPERADMIN_DEFAULTS } from '../constants';
 
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+        )
+    ]);
+};
+
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 
 interface LicenseContextType {
@@ -83,7 +92,7 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
 
     const loadContactInfo = async () => {
         try {
-            const snap = await getDoc(doc(db, '_superadmin', 'settings'));
+            const snap = await withTimeout(getDoc(doc(db, '_superadmin', 'settings')), 1500);
             if (snap.exists()) {
                 const data = snap.data();
                 
@@ -115,7 +124,7 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
     const checkLicense = async () => {
         try {
             const docRef = doc(db, '_superadmin', 'subscription');
-            const docSnap = await getDoc(docRef);
+            const docSnap = await withTimeout(getDoc(docRef), 1500);
 
             if (!docSnap.exists()) {
                 // No subscription doc = not configured yet, allow access
@@ -141,8 +150,8 @@ const LicenseProvider: React.FC<LicenseProviderProps> = ({ children }) => {
             let serverNow: Date;
             try {
                 const timeRef = doc(db, '_superadmin', '_timecheck');
-                await setDoc(timeRef, { t: serverTimestamp() });
-                const timeSnap = await getDoc(timeRef);
+                await withTimeout(setDoc(timeRef, { t: serverTimestamp() }), 1000);
+                const timeSnap = await withTimeout(getDoc(timeRef), 1000);
                 const ts = timeSnap.data()?.t as Timestamp;
                 serverNow = ts?.toDate() || new Date();
             } catch {

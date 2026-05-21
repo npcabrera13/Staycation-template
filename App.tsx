@@ -25,6 +25,15 @@ const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
 import BookingModal from './components/BookingModal';
 const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
 
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+        )
+    ]);
+};
+
 // Simple loading bar — only shown as Suspense fallback for Admin/SuperAdmin routes
 const PageLoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
@@ -102,10 +111,10 @@ function AppContent() {
           // NOTE: We intentionally do NOT fetch bookings here.
           // Bookings are only loaded when a user opens a room modal.
           // This cuts homepage Firebase reads by ~60% for anonymous visitors.
-          [fetchedRooms, fetchedSettings] = await Promise.all([
+          [fetchedRooms, fetchedSettings] = await withTimeout(Promise.all([
             roomService.getAll(),
             settingsService.getSettings()
-          ]);
+          ]), 1500);
           // Cache for 5 minutes
           sessionStorage.setItem(cacheKey, JSON.stringify({ rooms: fetchedRooms, settings: fetchedSettings }));
           sessionStorage.setItem(cacheKey + '_ts', Date.now().toString());
@@ -180,8 +189,9 @@ function AppContent() {
         }
       } catch (error) {
         console.error("Failed to load data:", error);
-        if (rooms.length === 0) setRooms([]);
-        if (bookings.length === 0) setBookings([]);
+        // Fallback to MOCK_ROOMS so the site displays beautiful content even when offline
+        setRooms(MOCK_ROOMS);
+        setBookings([]);
         setSettings(DEFAULT_SETTINGS);
       } finally {
         setIsLoading(false);

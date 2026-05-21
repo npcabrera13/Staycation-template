@@ -19,14 +19,14 @@ const FloatingMessenger: React.FC<FloatingMessengerProps> = ({ facebookUrl }) =>
                 
                 if (snap.exists()) {
                     const data = snap.data();
-                    // Default to true if not explicitly set to false
-                    setIsEnabled(data.enableFloatingMessenger !== false);
+                    // Default to false unless explicitly set to true
+                    setIsEnabled(data.enableFloatingMessenger === true);
                 } else {
-                    setIsEnabled(true);
+                    setIsEnabled(false);
                 }
             } catch (error) {
                 console.error("Failed to fetch superadmin settings for floating messenger", error);
-                setIsEnabled(true); // Graceful fallback
+                setIsEnabled(false); // Graceful fallback
             }
         };
 
