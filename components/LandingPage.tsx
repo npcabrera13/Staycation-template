@@ -323,18 +323,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [tempInheritGallery, setTempInheritGallery] = useState<boolean>(true);
     const [showMediaPickerIdx, setShowMediaPickerIdx] = useState<number | null>(null);
 
-    // Hero Background Manager States
-    const [showHeroManager, setShowHeroManager] = useState(false);
-    const [tempHeroImages, setTempHeroImages] = useState<string[]>([]);
-    const [tempHeroPositions, setTempHeroPositions] = useState<string[]>([]);
-    const [tempHeroScales, setTempHeroScales] = useState<number[]>([]);
-    const [tempMobileImage, setTempMobileImage] = useState<string>('');
-    const [tempFocusPoint, setTempFocusPoint] = useState<'top' | 'center' | 'bottom'>('center');
-    const [tempOverlayOpacity, setTempOverlayOpacity] = useState<number>(50);
-    const [tempTextShadow, setTempTextShadow] = useState<string>('sm');
-    const [tempSlideInterval, setTempSlideInterval] = useState<number>(5000);
-    const [showHeroMediaPickerIdx, setShowHeroMediaPickerIdx] = useState<number | null>(null);
-
     // All unique images across the app for the media picker
     const allAppImages = useMemo(() => {
         const imgs: string[] = [
@@ -342,10 +330,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
             ...(workingSettings.hero?.images || [workingSettings.hero?.image || '']),
             workingSettings.logo || '',
             ...tempGalleryImages,
-            ...tempHeroImages,
         ];
         return Array.from(new Set(imgs.filter(Boolean)));
-    }, [rooms, workingSettings, tempGalleryImages, tempHeroImages]);
+    }, [rooms, workingSettings, tempGalleryImages]);
 
     const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
     const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
@@ -814,37 +801,17 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         ></div>
                     </div>
 
-                    {isEditing && (
-                        <div className="absolute bottom-6 left-6 right-6 z-40 flex justify-between pointer-events-none">
+                    {isEditing && !isHeroAdjusting && (
+                        <div className="absolute bottom-6 right-6 z-40">
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsHeroAdjusting(true);
                                 }}
-                                className="flex items-center bg-black/60 backdrop-blur-md text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20"
+                                className="flex items-center bg-primary text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20 animate-fade-in"
                             >
-                                <Move size={18} className="mr-2 text-primary" /> Adjust Background Image
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const heroImgs = [...(workingSettings.hero?.images || [workingSettings.hero?.image || ''])];
-                                    setTempHeroImages(heroImgs);
-                                    setTempHeroPositions([...(workingSettings.hero?.imagePositions || [])]);
-                                    setTempHeroScales([...(workingSettings.hero?.imageScales || [])]);
-                                    setTempMobileImage(workingSettings.hero?.mobileImage || '');
-                                    setTempFocusPoint(workingSettings.hero?.imageFocusPoint || 'center');
-                                    setTempOverlayOpacity(workingSettings.hero?.overlayOpacity ?? 50);
-                                    setTempTextShadow(workingSettings.hero?.textShadow ?? 'sm');
-                                    setTempSlideInterval(workingSettings.hero?.slideInterval ?? 5000);
-                                    setShowHeroManager(true);
-                                }}
-                                className="flex items-center bg-primary text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20"
-                            >
-                                <ImageIcon size={18} className="mr-2" /> Manage Hero Backgrounds
+                                <Move size={18} className="mr-2" /> Adjust Image Position
                             </button>
                         </div>
                     )}
@@ -1709,266 +1676,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 </div>
                             </div>
                         </div>
-                    )}
-
-                    {/* Hero Background Manager Modal */}
-                    {showHeroManager && (
-                        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowHeroManager(false)}>
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-                                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                                    <h3 className="text-xl font-bold flex items-center dark:text-white">
-                                        <ImageIcon className="mr-2 text-primary" size={20} /> Manage Hero Backgrounds
-                                    </h3>
-                                    <button onClick={() => setShowHeroManager(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                        ✕
-                                    </button>
-                                </div>
-                                <div className="p-4 overflow-y-auto flex-1 space-y-6 animate-fade-in">
-                                    
-                                    {/* Focus Point, Mobile Background, Text Readability & Overlay */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-4">
-                                            <h4 className="font-bold text-xs uppercase tracking-widest text-primary">Slide & Overlay Settings</h4>
-                                            
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">
-                                                    Slide Interval: {tempSlideInterval / 1000}s
-                                                </label>
-                                                <input
-                                                    type="range"
-                                                    min="2000"
-                                                    max="10000"
-                                                    step="500"
-                                                    value={tempSlideInterval}
-                                                    onChange={(e) => setTempSlideInterval(parseInt(e.target.value))}
-                                                    className="w-full accent-primary h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">
-                                                    Overlay Opacity: {tempOverlayOpacity}%
-                                                </label>
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="90"
-                                                    value={tempOverlayOpacity}
-                                                    onChange={(e) => setTempOverlayOpacity(parseInt(e.target.value))}
-                                                    className="w-full accent-primary h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-2">
-                                                    Text Shadow
-                                                </label>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {['none', 'sm', 'lg'].map(opt => (
-                                                        <button
-                                                            key={opt}
-                                                            type="button"
-                                                            onClick={() => setTempTextShadow(opt)}
-                                                            className={`px-2 py-1.5 text-xs capitalize rounded border text-center transition-all ${tempTextShadow === opt ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
-                                                        >
-                                                            {opt === 'none' ? 'None' : opt === 'sm' ? 'Soft' : 'Strong'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-4">
-                                            <h4 className="font-bold text-xs uppercase tracking-widest text-primary">Responsive Options</h4>
-                                            
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-2">
-                                                    🎯 Default Focus Point
-                                                </label>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {(['top', 'center', 'bottom'] as const).map(opt => (
-                                                        <button
-                                                            key={opt}
-                                                            type="button"
-                                                            onClick={() => setTempFocusPoint(opt)}
-                                                            className={`px-2 py-1.5 text-xs capitalize rounded border text-center transition-all ${tempFocusPoint === opt ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
-                                                        >
-                                                            {opt === 'top' ? '⬆️ Top' : opt === 'bottom' ? '⬇️ Bottom' : '⏺️ Center'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-2 flex items-center">
-                                                    📱 Mobile Hero Image (Optional)
-                                                </label>
-                                                {tempMobileImage ? (
-                                                    <div className="relative h-20 w-16 mx-auto rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm group/mob">
-                                                        <img src={tempMobileImage} alt="Mobile preview" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/40 opacity-100 flex flex-col items-center justify-center gap-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setTempMobileImage('')}
-                                                                className="bg-red-500 text-white rounded px-2 py-0.5 text-[9px] font-bold shadow"
-                                                            >
-                                                                Remove
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <ImageUploadButton
-                                                        onUploadSuccess={(url) => setTempMobileImage(url)}
-                                                        onUploadError={(err) => console.error(err)}
-                                                        className="w-full py-2 text-xs text-primary border border-primary border-dashed rounded-lg hover:bg-primary/5 flex items-center justify-center gap-1 font-bold"
-                                                        buttonText="Upload Mobile Image"
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Slider Background Images */}
-                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <h4 className="font-bold text-gray-800 dark:text-white mb-4 uppercase text-xs tracking-wider">
-                                            Slider Background Images
-                                        </h4>
-                                        {tempHeroImages.map((imgUrl, idx) => {
-                                            const scale = tempHeroScales[idx] || 1;
-                                            return (
-                                                <div key={idx} className="bg-white dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm relative group mb-4">
-                                                    <div className="flex flex-col sm:flex-row gap-4">
-                                                        {/* Interactive Preview Frame */}
-                                                        <div className="w-full sm:w-48 h-32 flex-shrink-0">
-                                                            <GalleryFrame 
-                                                                src={imgUrl || DEFAULT_SETTINGS.hero.image} 
-                                                                alt={`Hero Slide ${idx + 1}`} 
-                                                                isEditing={true}
-                                                                objectPosition={tempHeroPositions[idx] || '50% 50%'}
-                                                                scale={scale}
-                                                                onPositionChange={(newPos) => {
-                                                                    const newPosArr = [...tempHeroPositions];
-                                                                    while (newPosArr.length <= idx) newPosArr.push('50% 50%');
-                                                                    newPosArr[idx] = newPos;
-                                                                    setTempHeroPositions(newPosArr);
-                                                                }}
-                                                                onScaleChange={(newScale) => {
-                                                                    const newScales = [...tempHeroScales];
-                                                                    while (newScales.length <= idx) newScales.push(1);
-                                                                    newScales[idx] = newScale;
-                                                                    setTempHeroScales(newScales);
-                                                                }}
-                                                            />
-                                                        </div>
-
-                                                        <div className="flex-1 space-y-4">
-                                                            <div className="space-y-2">
-                                                                <div className="flex gap-2">
-                                                                    <ImageUploadButton
-                                                                        onUploadSuccess={(url) => {
-                                                                            const newImgs = [...tempHeroImages];
-                                                                            newImgs[idx] = url;
-                                                                            setTempHeroImages(newImgs);
-                                                                        }}
-                                                                        onUploadError={(err) => console.error(err)}
-                                                                        className="flex-1 py-2 px-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 flex items-center justify-center gap-1.5 transition-colors"
-                                                                        buttonText="Upload Slide"
-                                                                    />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setShowHeroMediaPickerIdx(idx)}
-                                                                        className="flex-1 py-2 px-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-1.5 transition-colors"
-                                                                    >
-                                                                        📷 From Gallery
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex items-center gap-3 text-gray-400 italic text-[10px]">
-                                                                <Move size={12} />
-                                                                Drag image in frame to position · Scroll/Pinch to zoom
-                                                            </div>
-                                                        </div>
-
-                                                        {tempHeroImages.length > 1 && (
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const newImgs = [...tempHeroImages];
-                                                                    const newPos = [...tempHeroPositions];
-                                                                    const newScales = [...tempHeroScales];
-                                                                    newImgs.splice(idx, 1);
-                                                                    newPos.splice(idx, 1);
-                                                                    newScales.splice(idx, 1);
-                                                                    setTempHeroImages(newImgs);
-                                                                    setTempHeroPositions(newPos);
-                                                                    setTempHeroScales(newScales);
-                                                                }}
-                                                                className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 text-red-500 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border border-gray-100 dark:border-gray-700"
-                                                                title="Remove Slide"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                setTempHeroImages([...tempHeroImages, ""]);
-                                                setTempHeroPositions([...tempHeroPositions, "50% 50%"]);
-                                                setTempHeroScales([...tempHeroScales, 1]);
-                                            }}
-                                            className="mt-2 w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 text-gray-500 dark:text-gray-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all font-bold flex flex-col items-center"
-                                        >
-                                            <Plus size={24} className="mb-2" />
-                                            Add Slide Image
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3">
-                                    <button type="button" onClick={() => setShowHeroManager(false)} className="px-5 py-2 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition">Cancel</button>
-                                    <button 
-                                        type="button"
-                                        onClick={() => {
-                                            const cleanedImages = tempHeroImages.filter(u => u.trim() !== "");
-                                            handleSettingChange('hero', 'images', cleanedImages);
-                                            if (cleanedImages.length > 0) {
-                                                handleSettingChange('hero', 'image', cleanedImages[0]);
-                                            }
-                                            handleSettingChange('hero', 'imagePositions', tempHeroPositions);
-                                            handleSettingChange('hero', 'imageScales', tempHeroScales);
-                                            handleSettingChange('hero', 'mobileImage', tempMobileImage);
-                                            handleSettingChange('hero', 'imageFocusPoint', tempFocusPoint);
-                                            handleSettingChange('hero', 'overlayOpacity', tempOverlayOpacity);
-                                            handleSettingChange('hero', 'textShadow', tempTextShadow);
-                                            handleSettingChange('hero', 'slideInterval', tempSlideInterval);
-                                            setShowHeroManager(false);
-                                        }} 
-                                        className="px-5 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover shadow-md transition"
-                                    >
-                                        Apply Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Hero Media Picker */}
-                    {showHeroMediaPickerIdx !== null && (
-                        <MediaPicker
-                            images={allAppImages}
-                            onSelect={(url) => {
-                                const newImgs = [...tempHeroImages];
-                                newImgs[showHeroMediaPickerIdx] = url;
-                                setTempHeroImages(newImgs);
-                                setShowHeroMediaPickerIdx(null);
-                            }}
-                            onClose={() => setShowHeroMediaPickerIdx(null)}
-                        />
                     )}
 
                     {/* Media Picker — triggered by "From Gallery" in gallery manager */}
