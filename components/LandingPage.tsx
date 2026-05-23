@@ -196,15 +196,17 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [workingSettings, setWorkingSettings] = useState<Settings>(settings || DEFAULT_SETTINGS);
     const [hasChanges, setHasChanges] = useState(false);
     const [undoStack, setUndoStack] = useState<Settings[]>([]);
+    const [redoStack, setRedoStack] = useState<Settings[]>([]);
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
     const [activeAboutSlide, setActiveAboutSlide] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-    // Clear undo stack when exiting edit mode
+    // Clear undo and redo stacks when exiting edit mode
     useEffect(() => {
         if (!isEditing) {
             setUndoStack([]);
+            setRedoStack([]);
         }
     }, [isEditing]);
 
@@ -217,7 +219,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
             const timer = setTimeout(() => {
                 const el = document.getElementById(targetId);
                 if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const yOffset = -90; // offset to clear fixed mobile navbar
+                    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
                     // Flash a highlight effect
                     el.classList.add('ring-4', 'ring-primary', 'transition-all', 'duration-1000');
                     setTimeout(() => el.classList.remove('ring-4', 'ring-primary'), 3000);
@@ -409,24 +413,25 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     // Live update CSS variables for Theme
     React.useEffect(() => {
-        if (workingSettings.theme) {
-            if (workingSettings.theme.primaryColor) {
-                document.documentElement.style.setProperty('--color-primary', workingSettings.theme.primaryColor);
+        const themeToApply = isEditing ? workingSettings.theme : settings?.theme;
+        if (themeToApply) {
+            if (themeToApply.primaryColor) {
+                document.documentElement.style.setProperty('--color-primary', themeToApply.primaryColor);
             }
-            if (workingSettings.theme.primaryHoverColor) {
-                document.documentElement.style.setProperty('--color-primary-hover', workingSettings.theme.primaryHoverColor);
+            if (themeToApply.primaryHoverColor) {
+                document.documentElement.style.setProperty('--color-primary-hover', themeToApply.primaryHoverColor);
             }
-            if (workingSettings.theme.secondaryColor) {
-                document.documentElement.style.setProperty('--color-secondary', workingSettings.theme.secondaryColor);
+            if (themeToApply.secondaryColor) {
+                document.documentElement.style.setProperty('--color-secondary', themeToApply.secondaryColor);
             }
             // Auto-mirror accent to primary (accent picker removed from builder)
-            document.documentElement.style.setProperty('--color-accent', workingSettings.theme.accentColor || workingSettings.theme.primaryColor);
-            if (workingSettings.theme.fontFamily) {
-                document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
-                document.body.classList.add(`font-${workingSettings.theme.fontFamily}`);
-            }
+            document.documentElement.style.setProperty('--color-accent', themeToApply.accentColor || themeToApply.primaryColor);
+            
+            // Apply font family
+            document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
+            document.body.classList.add(`font-${themeToApply.fontFamily || 'sans'}`);
         }
-    }, [workingSettings.theme]);
+    }, [workingSettings.theme, settings?.theme, isEditing]);
 
     const handleSettingChange = (section: keyof Settings, field: string, value: any) => {
         setUndoStack(prev => {
@@ -437,6 +442,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
             }
             return [...prev, JSON.parse(currentStateStr)].slice(-50);
         });
+        setRedoStack([]); // Clear redo stack on new change
 
         setWorkingSettings(prev => {
             const updated = JSON.parse(JSON.stringify(prev));
@@ -457,19 +463,30 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     const handleUndo = () => {
         if (undoStack.length === 0) return;
-        setUndoStack(prev => {
-            const newStack = [...prev];
-            const previousState = newStack.pop();
-            if (previousState) {
-                setWorkingSettings(previousState);
-                
-                // Compare with original settings to see if we still have changes
-                const originalStr = JSON.stringify(settingsRef.current);
-                const prevStr = JSON.stringify(previousState);
-                setHasChanges(prevStr !== originalStr);
-            }
-            return newStack;
-        });
+        const previousState = undoStack[undoStack.length - 1];
+        if (previousState) {
+            setRedoStack(prev => [...prev, JSON.parse(JSON.stringify(workingSettings))]);
+            setUndoStack(prev => prev.slice(0, -1));
+            setWorkingSettings(previousState);
+            
+            const originalStr = JSON.stringify(settingsRef.current);
+            const prevStr = JSON.stringify(previousState);
+            setHasChanges(prevStr !== originalStr);
+        }
+    };
+
+    const handleRedo = () => {
+        if (redoStack.length === 0) return;
+        const nextState = redoStack[redoStack.length - 1];
+        if (nextState) {
+            setUndoStack(prev => [...prev, JSON.parse(JSON.stringify(workingSettings))]);
+            setRedoStack(prev => prev.slice(0, -1));
+            setWorkingSettings(nextState);
+            
+            const originalStr = JSON.stringify(settingsRef.current);
+            const nextStr = JSON.stringify(nextState);
+            setHasChanges(nextStr !== originalStr);
+        }
     };
 
     const handleSave = async () => {
@@ -866,7 +883,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 isEditing={isEditing}
                                 onClick={() => {
                                     if (!isEditing) {
-                                        document.getElementById('rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        const element = document.getElementById('room-cards');
+                                        if (element) {
+                                            const yOffset = -90; // offset to clear fixed mobile navbar
+                                            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                            window.scrollTo({ top: y, behavior: 'smooth' });
+                                        }
                                     }
                                 }}
                             />
@@ -986,6 +1008,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 )}
 
                                 <div
+                                    id="room-cards"
                                     ref={scrollContainerRef}
                                     className={`flex items-stretch overflow-x-auto snap-x snap-proximity gap-6 py-8 px-[7.5vw] md:px-4 -mx-4 md:mx-0 scrollbar-hide ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab"} ${filteredRooms.length === 1 ? "justify-center" : ""}`}
                                     onScroll={handleScroll}
@@ -2081,6 +2104,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onLogout={onExitAdmin}
                     onUndo={handleUndo}
                     canUndo={undoStack.length > 0}
+                    onRedo={handleRedo}
+                    canRedo={redoStack.length > 0}
                 />
             )}
 

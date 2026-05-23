@@ -72,7 +72,24 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
     const [logoUrl, setLogoUrl] = useState(settings.logo || '');
     const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
     const savedHero = settings.hero?.image || '';
-    const [heroImageUrl, setHeroImageUrl] = useState(savedHero === DEFAULT_HERO_IMAGE ? '' : savedHero);
+    const [heroImages, setHeroImages] = useState<string[]>(() => {
+        const imgs = settings.hero?.images || [];
+        if (imgs.length > 0) return imgs.filter(Boolean);
+        if (savedHero && savedHero !== DEFAULT_HERO_IMAGE) return [savedHero];
+        return [];
+    });
+    const heroImageUrl = heroImages[0] || '';
+    const setHeroImageUrl = (url: string) => {
+        setHeroImages(prev => {
+            const next = [...prev];
+            if (url) {
+                next[0] = url;
+            } else {
+                next.shift();
+            }
+            return next;
+        });
+    };
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [isUploadingHero, setIsUploadingHero] = useState(false);
     const [uploadError, setUploadError] = useState('');
@@ -136,7 +153,10 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
 
             // Sync uploaded images
             if (logoUrl.trim()) updated.logo = logoUrl.trim();
-            if (heroImageUrl.trim()) updated.hero.image = heroImageUrl.trim();
+            if (heroImages.length > 0) {
+                updated.hero.images = heroImages;
+                updated.hero.image = heroImages[0];
+            }
 
             // Sync Colors
             if (selectedColorIdx !== null) {
@@ -339,38 +359,70 @@ const SetupWizard: React.FC<SetupWizardProps> = ({
             case 2:
                 return (
                     <div className="flex flex-col items-center text-center px-4 w-full max-w-lg mx-auto">
-                        <div className="text-5xl md:text-6xl mb-6">🌅</div>
+                        <div className="text-5xl md:text-6xl mb-6 animate-fade-in">🌅</div>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                            Set your hero banner
+                            Set your hero carousel
                         </h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-base mb-6 max-w-md">
-                            The full-screen background image guests see first. Skip to use the default.
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-md">
+                            Upload one or more full-screen photos. Uploading multiple creates a gorgeous crossfading slideshow!
                         </p>
 
-                        {heroImageUrl ? (
-                            <div className="relative w-full max-w-sm mb-4">
-                                <div className="w-full h-44 rounded-2xl overflow-hidden border-2 border-primary/30">
-                                    <img src={heroImageUrl} alt="Hero preview" className="w-full h-full object-cover" />
+                        <div className="w-full space-y-3 mb-6 max-h-[220px] overflow-y-auto pr-1">
+                            {heroImages.map((img, index) => (
+                                <div key={index} className="relative h-20 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm flex items-center bg-gray-50 dark:bg-gray-800 animate-fade-in">
+                                    <div className="w-24 h-full bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                        {img ? (
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <ImageIcon size={20} className="text-gray-400" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 px-4 text-left">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Slide {index + 1}</p>
+                                        <p className="text-xs text-gray-400 truncate max-w-[160px]">{img ? "Uploaded successfully" : "Pending upload..."}</p>
+                                    </div>
+                                    <div className="absolute right-3 flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newImages = heroImages.filter((_, i) => i !== index);
+                                                setHeroImages(newImages);
+                                            }}
+                                            className="p-2 bg-red-100 dark:bg-red-950/40 text-red-500 hover:text-white hover:bg-red-500 dark:hover:bg-red-500 rounded-xl transition-all shadow-sm animate-fade-in"
+                                            title="Delete Slide"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <button onClick={() => setHeroImageUrl('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-lg">
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="w-full max-w-sm h-44 bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center mb-4 gap-2">
-                                <ImageIcon size={36} className="text-gray-300" />
-                                <p className="text-gray-400 text-sm">No banner uploaded yet</p>
-                            </div>
-                        )}
+                            ))}
 
-                        <label className="cursor-pointer flex items-center justify-center gap-2 py-3 px-8 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold text-sm transition-all shadow-sm">
+                            {heroImages.length === 0 && (
+                                <div className="w-full h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-2 animate-fade-in">
+                                    <ImageIcon size={30} className="text-gray-300" />
+                                    <p className="text-gray-400 text-xs">No carousel images uploaded yet</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <label className="cursor-pointer w-full flex items-center justify-center gap-2 py-3 px-8 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold text-sm transition-all shadow-md active:scale-[0.98]">
                             {isUploadingHero ? <Loader size={16} className="animate-spin" /> : <Upload size={16} />}
-                            {isUploadingHero ? 'Uploading...' : (heroImageUrl ? 'Change Banner' : 'Upload Banner')}
+                            {isUploadingHero ? 'Uploading Slide...' : '+ Add Carousel Slide Image'}
                             <input type="file" accept="image/*" className="opacity-0 absolute inset-0 w-0 h-0 pointer-events-none" disabled={isUploadingHero}
-                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setIsUploadingHero, setHeroImageUrl); e.target.value = ''; }}
+                                onChange={(e) => { 
+                                    const f = e.target.files?.[0]; 
+                                    if (f) {
+                                        handleImageUpload(f, setIsUploadingHero, (url) => {
+                                            setHeroImages(prev => [...prev, url]);
+                                        });
+                                    } 
+                                    e.target.value = ''; 
+                                }}
                             />
                         </label>
-                        {uploadError && <p className="mt-3 text-xs text-red-500">{uploadError}</p>}
+                        {uploadError && <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 w-full text-left">⚠️ {uploadError}</p>}
                     </div>
                 );
 

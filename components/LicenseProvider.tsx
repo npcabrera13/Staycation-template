@@ -7,14 +7,14 @@ import { Loader } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { SUPERADMIN_DEFAULTS } from '../constants';
 
-const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
         promise,
         new Promise<T>((_, reject) => 
             setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
         )
     ]);
-};
+}
 
 type LockMode = 'none' | 'homepage' | 'admin' | 'both';
 

@@ -84,22 +84,23 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
   };
 
   const scrollToSection = (id: string) => {
-    // ...
     if (isEditing) return;
     setIsOpen(false);
-    if (location.pathname !== '/') {
-      navigate('/');
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } else {
+    
+    const performScroll = () => {
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        const yOffset = -90; // offset to clear the sticky navbar
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
       }
+    };
+
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(performScroll, 150);
+    } else {
+      performScroll();
     }
   };
 
@@ -156,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
           <div className="hidden lg:flex items-center space-x-8">
             {/* Updated text colors to gray-600 and hover primary */}
             <button onClick={() => scrollToSection('hero')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Home</button>
-            <button onClick={() => scrollToSection('rooms')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</button>
+            <button onClick={() => scrollToSection('room-cards')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Rooms</button>
             <button onClick={() => scrollToSection('about')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">About</button>
             <button onClick={() => scrollToSection('contact')} className="text-gray-600 hover:text-primary transition-colors duration-300 text-sm uppercase tracking-wide font-medium">Contact</button>
 
@@ -177,7 +178,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
             </button>
 
             {/* Updated button to solid primary color for contrast on white */}
-            <button onClick={() => scrollToSection('rooms')} className="bg-primary text-white px-6 py-2.5 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-primary/40 transform hover:-translate-y-0.5">
+            <button onClick={() => scrollToSection('room-cards')} className="bg-primary text-white px-6 py-2.5 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-primary/40 transform hover:-translate-y-0.5">
               Book Now
             </button>
           </div>
@@ -196,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
         <div className="lg:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 shadow-2xl animate-slide-down overflow-hidden">
           <div className="px-4 pt-4 pb-6 space-y-2">
             <button onClick={() => scrollToSection('hero')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Home</button>
-            <button onClick={() => scrollToSection('rooms')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Rooms</button>
+            <button onClick={() => scrollToSection('room-cards')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Rooms</button>
             <button onClick={() => scrollToSection('about')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">About</button>
             <button onClick={() => scrollToSection('contact')} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium">Contact</button>
             <button onClick={() => { onOpenMyBookings(); setIsOpen(false); }} className="w-full text-left block px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary rounded-lg transition-colors font-medium border-t border-gray-100 dark:border-gray-800 mt-2">Find My Booking</button>
@@ -210,7 +211,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
 
-            <button onClick={() => scrollToSection('rooms')} className="w-full block px-4 py-3 bg-primary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
+            <button onClick={() => scrollToSection('room-cards')} className="w-full block px-4 py-3 bg-primary text-white font-bold rounded-lg mt-4 shadow-lg active:scale-95 transition-transform">
               Book Your Stay
             </button>
           </div>

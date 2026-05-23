@@ -25,14 +25,14 @@ const SuperAdmin = lazy(() => import('./components/SuperAdmin'));
 import BookingModal from './components/BookingModal';
 const BookingLookupModal = lazy(() => import('./components/BookingLookupModal'));
 
-const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
         promise,
         new Promise<T>((_, reject) => 
             setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
         )
     ]);
-};
+}
 
 // Simple loading bar — only shown as Suspense fallback for Admin/SuperAdmin routes
 const PageLoadingFallback = () => (

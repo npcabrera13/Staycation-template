@@ -1,9 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, X, Edit, RotateCcw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints, SlidersHorizontal } from 'lucide-react';
+import { Save, X, Edit, RotateCcw, RotateCw, PaintBucket, Image as ImageIcon, Share2, Layout, Settings as SettingsIcon, ChevronDown, ChevronRight, Monitor, Smartphone, Maximize, LogOut, Footprints, SlidersHorizontal, Move } from 'lucide-react';
 import { Settings } from '../../types';
 import InfoTooltip from '../UI/InfoTooltip';
 import { ImageUploadButton } from '../UI/ImageUploadButton';
+
+import GalleryFrame from '../UI/GalleryFrame';
 
 interface BuilderToolbarProps {
     isEditing: boolean;
@@ -18,6 +20,8 @@ interface BuilderToolbarProps {
     onToggleMinimize?: (minimized: boolean) => void;
     onUndo?: () => void;
     canUndo?: boolean;
+    onRedo?: () => void;
+    canRedo?: boolean;
 }
 
 const THEME_PRESETS = [
@@ -75,10 +79,13 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     isMinimized = false,
     onToggleMinimize,
     onUndo,
-    canUndo = false
+    canUndo = false,
+    onRedo,
+    canRedo = false
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
     const [mobileExpanded, setMobileExpanded] = useState(false);
+    const [adjustingSlideIdx, setAdjustingSlideIdx] = useState<number | null>(null);
 
     if (!isEditing) {
         return (
@@ -108,13 +115,37 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
 
     if (isMinimized) {
         return (
-            <div className="fixed top-24 left-4 z-50 animate-slide-right">
+            <div className="fixed top-24 left-4 z-50 flex items-center gap-2 animate-slide-right">
                 <button
                     onClick={() => onToggleMinimize?.(false)}
-                    className="bg-white text-gray-700 p-3 rounded-full shadow-2xl hover:bg-gray-50 border border-gray-200"
+                    className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 p-3 rounded-full shadow-2xl hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
                     title="Open Builder Panel"
                 >
                     <SettingsIcon size={24} />
+                </button>
+                <button
+                    onClick={onUndo}
+                    disabled={!canUndo}
+                    className={`p-3 rounded-full shadow-2xl border transition-all active:scale-95 ${
+                        canUndo 
+                            ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700' 
+                            : 'bg-white/50 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600 border-gray-100 dark:border-gray-800 cursor-not-allowed opacity-50'
+                    }`}
+                    title="Undo Change"
+                >
+                    <RotateCcw size={20} />
+                </button>
+                <button
+                    onClick={onRedo}
+                    disabled={!canRedo}
+                    className={`p-3 rounded-full shadow-2xl border transition-all active:scale-95 ${
+                        canRedo 
+                            ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700' 
+                            : 'bg-white/50 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600 border-gray-100 dark:border-gray-800 cursor-not-allowed opacity-50'
+                    }`}
+                    title="Redo Change"
+                >
+                    <RotateCw size={20} />
                 </button>
             </div>
         );
@@ -223,16 +254,19 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     isOpen={openSection === 'hero'}
                     onClick={() => setOpenSection(openSection === 'hero' ? null : 'hero')}
                 >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <label className="block text-xs font-bold text-gray-500">Background Images (Slider)</label>
                         {(settings?.hero.images || [settings?.hero.image || '']).map((img, index) => (
-                            <div key={index} className="mb-2 relative group/slot">
+                            <div key={index} className="mb-3">
                                 {img ? (
-                                    // Filled slot: preview card
-                                    <div className="relative h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
-                                        <img src={img} alt="" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/slot:opacity-100 transition-opacity" />
-                                        <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/slot:opacity-100 transition-opacity">
+                                    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl p-3 bg-white dark:bg-gray-800/40 space-y-2">
+                                        <div className="relative h-20 rounded-xl overflow-hidden shadow-sm bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                            <div className="absolute bottom-1.5 left-2 bg-black/60 backdrop-blur-sm text-[8px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                                Slide {index + 1}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1.5">
                                             <ImageUploadButton
                                                 onUploadSuccess={(url) => {
                                                     const newImages = [...(settings?.hero.images || [settings?.hero.image || ''])];
@@ -241,27 +275,30 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                                     if (index === 0) onUpdateSettings?.('hero', 'image', url);
                                                 }}
                                                 onUploadError={(err) => console.error(err)}
-                                                className="px-2 py-1 bg-white/90 text-gray-800 rounded-lg text-[10px] font-bold hover:bg-white shadow-sm"
+                                                className="flex-1 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-900 text-gray-750 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
                                                 buttonText="Replace"
                                             />
                                             <button
+                                                type="button"
+                                                onClick={() => setAdjustingSlideIdx(index)}
+                                                className="flex-1 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                            >
+                                                <Move size={10} /> Adjust
+                                            </button>
+                                            <button
+                                                type="button"
                                                 onClick={() => {
                                                     const newImages = (settings?.hero.images || [settings?.hero.image || '']).filter((_, i) => i !== index);
                                                     onUpdateSettings?.('hero', 'images', newImages);
                                                     if (index === 0 && newImages.length > 0) onUpdateSettings?.('hero', 'image', newImages[0]);
                                                 }}
-                                                className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm"
-                                                title="Remove"
+                                                className="py-1.5 px-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 text-red-500 border border-red-200/40 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
                                             >
-                                                <X size={12} />
+                                                <X size={10} />
                                             </button>
-                                        </div>
-                                        <div className="absolute bottom-1.5 left-2 text-[9px] text-white/80 font-medium">
-                                            Slide {index + 1}
                                         </div>
                                     </div>
                                 ) : (
-                                    // Empty slot: upload button
                                     <div className="flex gap-1">
                                         <ImageUploadButton
                                             onUploadSuccess={(url) => {
@@ -293,7 +330,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                 const newImages = [...(settings?.hero.images || [settings?.hero.image || '']), ''];
                                 onUpdateSettings?.('hero', 'images', newImages);
                             }}
-                            className="w-full py-1 text-xs text-primary border border-primary border-dashed rounded hover:bg-primary/5 dark:hover:bg-primary/10 flex items-center justify-center gap-1"
+                            className="w-full py-2 text-xs text-primary border border-primary border-dashed rounded-xl hover:bg-primary/5 dark:hover:bg-primary/10 flex items-center justify-center gap-1 font-bold active:scale-98 transition-all"
                         >
                             + Add Another Image
                         </button>
@@ -513,6 +550,18 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         >
                             <RotateCcw size={18} />
                         </button>
+                        <button
+                            onClick={onRedo}
+                            disabled={!canRedo}
+                            className={`p-1.5 rounded-full transition-colors ${
+                                canRedo 
+                                    ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                    : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                            }`}
+                            title="Redo Change"
+                        >
+                            <RotateCw size={18} />
+                        </button>
                         <button 
                             onClick={() => onToggleMinimize?.(true)} 
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -553,6 +602,18 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                 title="Undo Change"
                             >
                                 <RotateCcw size={16} />
+                            </button>
+                            <button
+                                onClick={onRedo}
+                                disabled={!canRedo}
+                                className={`p-1.5 rounded-full transition-colors active:scale-90 ${
+                                    canRedo 
+                                        ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                        : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                                }`}
+                                title="Redo Change"
+                            >
+                                <RotateCw size={16} />
                             </button>
                             {hasChanges && (
                                 <button
@@ -630,6 +691,18 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                     >
                                         <RotateCcw size={18} />
                                     </button>
+                                    <button
+                                        onClick={onRedo}
+                                        disabled={!canRedo}
+                                        className={`p-1 rounded-full transition-colors active:scale-90 ${
+                                            canRedo 
+                                                ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' 
+                                                : 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
+                                        }`}
+                                        title="Redo Change"
+                                    >
+                                        <RotateCw size={18} />
+                                    </button>
                                     <button onClick={() => setMobileExpanded(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
                                         <X size={20} />
                                     </button>
@@ -637,6 +710,87 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                             </div>
                         </div>
                         {renderFullPanel()}
+                    </div>
+                </div>
+            )}
+
+            {adjustingSlideIdx !== null && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm animate-fade-in" onClick={() => setAdjustingSlideIdx(null)} />
+                    
+                    {/* Modal Box */}
+                    <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-scale-in">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <SlidersHorizontal size={16} className="text-primary" />
+                                Adjust Hero Slide {adjustingSlideIdx + 1}
+                            </h3>
+                            <button
+                                onClick={() => setAdjustingSlideIdx(null)}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4">
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Click &amp; drag the image to reposition it. Scroll to zoom on desktop, or pinch-to-zoom on touch screens.
+                            </p>
+                            
+                            {/* Interactive Frame Box */}
+                            <div className="relative border-4 border-dashed border-gray-250 dark:border-gray-700 rounded-3xl overflow-hidden shadow-inner h-60 bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+                                {(() => {
+                                    const imgUrl = (settings?.hero.images || [settings?.hero.image || ''])[adjustingSlideIdx];
+                                    const pos = settings?.hero.imagePositions?.[adjustingSlideIdx] || '50% 50%';
+                                    const scale = settings?.hero.imageScales?.[adjustingSlideIdx] || 1;
+                                    
+                                    return imgUrl ? (
+                                        <GalleryFrame
+                                            src={imgUrl}
+                                            alt={`Reposition slide ${adjustingSlideIdx + 1}`}
+                                            isEditing={true}
+                                            disableDecorations={true}
+                                            disableHoverEffect={true}
+                                            aspectRatio="h-full w-full"
+                                            objectPosition={pos}
+                                            scale={scale}
+                                            onPositionChange={(newPos) => {
+                                                const currentPositions = [...(settings?.hero.imagePositions || [])];
+                                                while (currentPositions.length <= adjustingSlideIdx) {
+                                                    currentPositions.push('50% 50%');
+                                                }
+                                                currentPositions[adjustingSlideIdx] = newPos;
+                                                onUpdateSettings?.('hero', 'imagePositions', currentPositions);
+                                            }}
+                                            onScaleChange={(newScale) => {
+                                                const currentScales = [...(settings?.hero.imageScales || [])];
+                                                while (currentScales.length <= adjustingSlideIdx) {
+                                                    currentScales.push(1);
+                                                }
+                                                currentScales[adjustingSlideIdx] = newScale;
+                                                onUpdateSettings?.('hero', 'imageScales', currentScales);
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="text-xs text-gray-400 font-medium">No image in this slot</div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
+                            <button
+                                onClick={() => setAdjustingSlideIdx(null)}
+                                className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover shadow-sm active:scale-95 transition-all"
+                            >
+                                Done Adjusting
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

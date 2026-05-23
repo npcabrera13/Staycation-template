@@ -38,15 +38,21 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
 
   const scrollToSection = (id: string) => {
     if (isEditing) return;
+    
+    const performScroll = () => {
+      const element = document.getElementById(id);
+      if (element) {
+        const yOffset = -90; // offset to clear the sticky navbar
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    };
+
     if (location.pathname !== '/') {
       navigate('/');
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) element.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      setTimeout(performScroll, 150);
     } else {
-      const element = document.getElementById(id);
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
+      performScroll();
     }
   };
 
@@ -88,7 +94,7 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
             <ul className="space-y-2 text-sm text-gray-300">
               {/* Static links usually don't need editing, just the text maybe? Skipping for now as user asked for 'footer text' mostly */}
               <li><span onClick={() => scrollToSection('hero')} className="hover:text-white transition-colors cursor-pointer">Home</span></li>
-              <li><span onClick={() => scrollToSection('rooms')} className="hover:text-white transition-colors cursor-pointer">Rooms</span></li>
+              <li><span onClick={() => scrollToSection('room-cards')} className="hover:text-white transition-colors cursor-pointer">Rooms</span></li>
               <li><span onClick={() => scrollToSection('about')} className="hover:text-white transition-colors cursor-pointer">About Us</span></li>
               <li><span onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors cursor-pointer">Contact</span></li>
             </ul>

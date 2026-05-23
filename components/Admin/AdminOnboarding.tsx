@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ChevronRight, Image as ImageIcon, CreditCard, Share2, Palette, Rocket, CheckCircle2, Circle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Image as ImageIcon, CreditCard, Share2, Palette, Rocket, CheckCircle2, Circle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
 
 interface AdminOnboardingProps {
     onNavigate: (tab: string, targetId?: string) => void;
@@ -14,6 +14,14 @@ const steps = [
         subtitle: 'Add GCash, bank, or card details',
         tab: 'settings',
         targetId: 'settings-payment',
+        instructions: 'Add GCash, bank transfer, or card details so guests can book directly. GCash is the most popular payment option in the Philippines.',
+        guidelines: [
+            'Go to the Settings Tab in the Admin Dashboard.',
+            'Locate the "Payment Settings" section.',
+            'Enter your GCash Number, Bank Name, Account Name, and Account Number.',
+            'Toggle on GCash or Bank Transfer payments and click "Save Changes".'
+        ],
+        proTip: 'Keep GCash details accurate. Make sure your name matches your GCash registered account name to build guest trust!',
     },
     {
         id: 'photos',
@@ -22,6 +30,14 @@ const steps = [
         subtitle: 'Replace placeholder images',
         tab: 'rooms',
         targetId: undefined,
+        instructions: 'High-quality photos increase bookings by up to 40%. Replace the placeholder images with your actual rooms.',
+        guidelines: [
+            'Navigate to the "Rooms" section in your sidebar.',
+            'Select a room and click the "Edit Room" button.',
+            'Scroll to the Gallery section, drag and drop or upload your room photos.',
+            'Set a "Feature Image" as the main cover photo for the room card.'
+        ],
+        proTip: 'Capture images in landscape orientation during high daylight hours for natural, welcoming lighting.',
     },
     {
         id: 'social',
@@ -31,6 +47,14 @@ const steps = [
         tab: 'settings',
         targetId: 'footer',
         isVisualBuilder: true,
+        instructions: 'Integrate your Facebook page, Instagram profile, and TikTok so guests can follow and tag your property.',
+        guidelines: [
+            'Click "Go there" to open the Visual Builder.',
+            'Open the "Social & Links" accordion section in the builder toolbar.',
+            'Enter the absolute URLs for Facebook, Instagram, Airbnb, and TikTok.',
+            'Toggle the social icons you want to display in your website\'s footer.'
+        ],
+        proTip: 'Social proof is key! Link directly to pages with active reviews.',
     },
     {
         id: 'map',
@@ -40,6 +64,14 @@ const steps = [
         tab: 'settings',
         targetId: 'contact',
         isVisualBuilder: true,
+        instructions: 'Make it easy for guests to find your property by embedding a Google Maps panel directly on your contact page.',
+        guidelines: [
+            'Click the "Go there" button to scroll to the Contact Section in the Visual Builder.',
+            'In the visual builder, locate the Google Maps input field.',
+            'Go to Google Maps in a separate tab, search your property, click "Share" -> "Embed a map", and copy the source URL inside the src="..." attribute.',
+            'Paste the copied link into the Google Maps Embed field in the builder.'
+        ],
+        proTip: 'Only paste the URL inside the src quotes (e.g. https://www.google.com/maps/embed?...), not the full <iframe> tag.',
     },
     {
         id: 'design',
@@ -49,12 +81,22 @@ const steps = [
         tab: 'overview',
         targetId: undefined,
         isVisualBuilder: true,
+        instructions: 'Brand your staycation website by customizing colors, typography, and logo branding.',
+        guidelines: [
+            'Click "Go there" to open the Visual Builder.',
+            'Open the "Theme & Colors" accordion section.',
+            'Choose from our beautifully crafted color presets (like Navy & Gold or Emerald Luxe), or pick custom primary/secondary colors matching your brand.',
+            'Customize the Global Font Family (Sans-Serif, Serif, Monospace).',
+            'Press "Save & Publish" to go live instantly.'
+        ],
+        proTip: 'Keep colors high-contrast (e.g. dark colors for primary buttons) to ensure text remains highly readable.',
     },
 ];
 
 const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVisualBuilder }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
+    const [expandedStep, setExpandedStep] = useState<string | null>('payment');
 
     const remaining = steps.length - completed.size;
     const progress = Math.round((completed.size / steps.length) * 100);
@@ -132,8 +174,8 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVi
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {/* Panel — slides from right on md+, from bottom on mobile */}
-                    <div className="fixed z-[118] inset-x-0 bottom-0 md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-[400px] flex flex-col shadow-2xl animate-slide-up md:animate-slide-in-right overflow-hidden rounded-t-3xl md:rounded-none md:rounded-l-3xl">
+                    {/* Panel ── slides from right on md+, from bottom on mobile */}
+                    <div className="fixed z-[118] inset-x-0 bottom-0 md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-[420px] flex flex-col shadow-2xl animate-slide-up md:animate-slide-in-right overflow-hidden rounded-t-3xl md:rounded-none md:rounded-l-3xl">
 
                         {/* Header */}
                         <div className="relative bg-gradient-to-br from-primary via-blue-600 to-secondary px-6 pt-6 pb-8 text-white shrink-0">
@@ -180,49 +222,107 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVi
                         <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 px-4 py-4 space-y-3 max-h-[60vh] md:max-h-none">
                             {steps.map((step, idx) => {
                                 const done = completed.has(step.id);
+                                const isExpanded = expandedStep === step.id;
+
                                 return (
                                     <div
                                         key={step.id}
-                                        className={`group relative rounded-2xl border-2 transition-all duration-300 ${done
-                                            ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-                                            : 'border-gray-100 dark:border-gray-700/60 bg-white dark:bg-gray-800 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5'
+                                        onClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('.checkbox-btn')) return;
+                                            setExpandedStep(isExpanded ? null : step.id);
+                                        }}
+                                        className={`group relative rounded-2xl border-2 transition-all duration-350 cursor-pointer overflow-hidden ${done
+                                            ? 'border-green-200 dark:border-green-800 bg-green-50/60 dark:bg-green-900/10'
+                                            : isExpanded
+                                                ? 'border-primary bg-primary/[0.02] dark:bg-primary/[0.04] shadow-md shadow-primary/5'
+                                                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-850 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3 p-4">
-                                            {/* Step number / emoji */}
-                                            <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 transition-colors ${done ? 'bg-green-100 dark:bg-green-800' : 'bg-gray-50 dark:bg-gray-700 group-hover:bg-primary/10'}`}>
-                                                <span className="text-xl leading-none">{step.emoji}</span>
-                                                <span className="text-[9px] font-black mt-0.5 text-gray-400 dark:text-gray-500">{String(idx + 1).padStart(2, '0')}</span>
+                                        {/* Step Card Header */}
+                                        <div className="flex items-center justify-between gap-3 p-4">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                {/* Step number / emoji */}
+                                                <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 transition-colors ${done ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-50 dark:bg-gray-800 group-hover:bg-primary/10'}`}>
+                                                    <span className="text-xl leading-none">{step.emoji}</span>
+                                                    <span className="text-[9px] font-black mt-0.5 text-gray-400 dark:text-gray-500">{String(idx + 1).padStart(2, '0')}</span>
+                                                </div>
+
+                                                {/* Text info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className={`font-bold text-sm leading-tight flex items-center gap-1.5 ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-secondary dark:text-white'}`}>
+                                                        {step.title}
+                                                    </h4>
+                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{step.subtitle}</p>
+                                                </div>
                                             </div>
 
-                                            {/* Text */}
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className={`font-bold text-sm leading-tight ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-secondary dark:text-white'}`}>
-                                                    {step.title}
-                                                </h4>
-                                                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{step.subtitle}</p>
+                                            {/* Expand Icon and Checkbox toggle */}
+                                            <div className="flex items-center gap-2">
+                                                {/* Toggle checkbox */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleStep(step.id);
+                                                    }}
+                                                    className="checkbox-btn shrink-0 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                                    aria-label={done ? 'Mark incomplete' : 'Mark complete'}
+                                                >
+                                                    {done
+                                                        ? <CheckCircle2 size={22} className="text-green-500 shrink-0" />
+                                                        : <Circle size={22} className="text-gray-300 dark:text-gray-600 hover:text-primary transition-colors shrink-0" />
+                                                    }
+                                                </button>
+                                                
+                                                <div className="text-gray-400 shrink-0">
+                                                    {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Step Guidelines Accordion Content */}
+                                        {isExpanded && (
+                                            <div className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-800 space-y-3 animate-fade-in bg-white/50 dark:bg-gray-900/50">
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+                                                    {step.instructions}
+                                                </p>
+
+                                                {/* Step list box */}
+                                                <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 space-y-2 border border-gray-100 dark:border-gray-800/80">
+                                                    <h5 className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">📋 Setup Steps Checklist:</h5>
+                                                    <ul className="space-y-2 list-none">
+                                                        {step.guidelines.map((line, lIdx) => (
+                                                            <li key={lIdx} className="flex gap-2 text-xs text-gray-700 dark:text-gray-300 leading-tight items-start">
+                                                                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{lIdx + 1}</span>
+                                                                <span className="pt-0.5">{line}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+
+                                                {/* Pro Tip Callout Box */}
+                                                {step.proTip && (
+                                                    <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-3 border border-primary/10 flex gap-2">
+                                                        <span className="text-sm select-none shrink-0">💡</span>
+                                                        <p className="text-[11px] text-primary dark:text-primary-hover font-medium leading-normal">
+                                                            <span className="font-bold">Pro Tip: </span>{step.proTip}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Go Launch Action Button */}
                                                 {!done && (
                                                     <button
-                                                        onClick={() => handleNavigate(step)}
-                                                        className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleNavigate(step);
+                                                        }}
+                                                        className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-primary/10 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
                                                     >
-                                                        Go there <ArrowRight size={11} />
+                                                        Start Step {idx + 1} <ArrowRight size={14} />
                                                     </button>
                                                 )}
                                             </div>
-
-                                            {/* Toggle checkbox */}
-                                            <button
-                                                onClick={() => toggleStep(step.id)}
-                                                className="shrink-0 p-1 rounded-full transition-transform hover:scale-110 active:scale-95"
-                                                aria-label={done ? 'Mark incomplete' : 'Mark complete'}
-                                            >
-                                                {done
-                                                    ? <CheckCircle2 size={22} className="text-green-500" />
-                                                    : <Circle size={22} className="text-gray-300 dark:text-gray-600 hover:text-primary transition-colors" />
-                                                }
-                                            </button>
-                                        </div>
+                                        )}
                                     </div>
                                 );
                             })}
