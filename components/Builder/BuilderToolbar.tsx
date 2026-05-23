@@ -22,6 +22,7 @@ interface BuilderToolbarProps {
     canUndo?: boolean;
     onRedo?: () => void;
     canRedo?: boolean;
+    onAdjustHero?: (index: number) => void;
 }
 
 const THEME_PRESETS = [
@@ -81,11 +82,11 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     onUndo,
     canUndo = false,
     onRedo,
-    canRedo = false
+    canRedo = false,
+    onAdjustHero
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
     const [mobileExpanded, setMobileExpanded] = useState(false);
-    const [adjustingSlideIdx, setAdjustingSlideIdx] = useState<number | null>(null);
 
     if (!isEditing) {
         return (
@@ -280,10 +281,14 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setAdjustingSlideIdx(index)}
+                                                onClick={() => {
+                                                    onAdjustHero?.(index);
+                                                    // If on mobile expanded sheet, minimize it so they can see the homepage background!
+                                                    if (mobileExpanded) setMobileExpanded(false);
+                                                }}
                                                 className="flex-1 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
                                             >
-                                                <Move size={10} /> Adjust
+                                                <Move size={10} /> Adjust Image
                                             </button>
                                             <button
                                                 type="button"
@@ -714,86 +719,6 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                 </div>
             )}
 
-            {adjustingSlideIdx !== null && (
-                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-                    {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm animate-fade-in" onClick={() => setAdjustingSlideIdx(null)} />
-                    
-                    {/* Modal Box */}
-                    <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-scale-in">
-                        {/* Modal Header */}
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                <SlidersHorizontal size={16} className="text-primary" />
-                                Adjust Hero Slide {adjustingSlideIdx + 1}
-                            </h3>
-                            <button
-                                onClick={() => setAdjustingSlideIdx(null)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="p-6 space-y-4">
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Click &amp; drag the image to reposition it. Scroll to zoom on desktop, or pinch-to-zoom on touch screens.
-                            </p>
-                            
-                            {/* Interactive Frame Box */}
-                            <div className="relative border-4 border-dashed border-gray-250 dark:border-gray-700 rounded-3xl overflow-hidden shadow-inner h-60 bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-                                {(() => {
-                                    const imgUrl = (settings?.hero.images || [settings?.hero.image || ''])[adjustingSlideIdx];
-                                    const pos = settings?.hero.imagePositions?.[adjustingSlideIdx] || '50% 50%';
-                                    const scale = settings?.hero.imageScales?.[adjustingSlideIdx] || 1;
-                                    
-                                    return imgUrl ? (
-                                        <GalleryFrame
-                                            src={imgUrl}
-                                            alt={`Reposition slide ${adjustingSlideIdx + 1}`}
-                                            isEditing={true}
-                                            disableDecorations={true}
-                                            disableHoverEffect={true}
-                                            aspectRatio="h-full w-full"
-                                            objectPosition={pos}
-                                            scale={scale}
-                                            onPositionChange={(newPos) => {
-                                                const currentPositions = [...(settings?.hero.imagePositions || [])];
-                                                while (currentPositions.length <= adjustingSlideIdx) {
-                                                    currentPositions.push('50% 50%');
-                                                }
-                                                currentPositions[adjustingSlideIdx] = newPos;
-                                                onUpdateSettings?.('hero', 'imagePositions', currentPositions);
-                                            }}
-                                            onScaleChange={(newScale) => {
-                                                const currentScales = [...(settings?.hero.imageScales || [])];
-                                                while (currentScales.length <= adjustingSlideIdx) {
-                                                    currentScales.push(1);
-                                                }
-                                                currentScales[adjustingSlideIdx] = newScale;
-                                                onUpdateSettings?.('hero', 'imageScales', currentScales);
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="text-xs text-gray-400 font-medium">No image in this slot</div>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
-                            <button
-                                onClick={() => setAdjustingSlideIdx(null)}
-                                className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover shadow-sm active:scale-95 transition-all"
-                            >
-                                Done Adjusting
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

@@ -14,6 +14,7 @@ interface GalleryFrameProps {
     disableDecorations?: boolean;
     disableHoverEffect?: boolean;
     onRepositioningChange?: (isRepositioning: boolean) => void;
+    isRepositioning?: boolean;
 }
 
 const GalleryFrame: React.FC<GalleryFrameProps> = ({
@@ -24,13 +25,17 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     className = "", aspectRatio = "h-full",
     disableDecorations = false,
     disableHoverEffect = false,
-    onRepositioningChange
+    onRepositioningChange,
+    isRepositioning: externalRepositioning
 }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [isRepositioning, setIsRepositioningState] = useState(false);
+    const [localRepositioning, setLocalRepositioning] = useState(false);
+    const isRepositioning = externalRepositioning !== undefined ? externalRepositioning : localRepositioning;
     
     const setIsRepositioning = (val: boolean) => {
-        setIsRepositioningState(val);
+        if (externalRepositioning === undefined) {
+            setLocalRepositioning(val);
+        }
         onRepositioningChange?.(val);
     };
     const containerRef = useRef<HTMLDivElement>(null);
@@ -171,7 +176,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             {isEditing && isTouchDevice && !isRepositioning && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsRepositioning(true); }}
-                    className="absolute top-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-auto shadow-xl z-[40] text-xs font-medium border border-white/20 active:scale-95 transition-transform"
+                    className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-auto shadow-xl z-[40] text-xs font-medium border border-white/20 active:scale-95 transition-transform"
                 >
                     <Move size={14} /> Adjust Image
                 </button>

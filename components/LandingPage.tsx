@@ -489,6 +489,11 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }
     };
 
+    const handleAdjustHero = (idx: number) => {
+        setActiveHeroSlide(idx);
+        setIsHeroAdjusting(true);
+    };
+
     const handleSave = async () => {
         if (onUpdateSettings) {
             await onUpdateSettings(workingSettings);
@@ -687,7 +692,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                 {/* Hero Section */}
                 <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-24">
-                    <div className="absolute inset-0">
+                    <div className={`absolute inset-0 ${isHeroAdjusting ? 'z-40 pointer-events-auto' : 'z-0'}`}>
                         {/* Get valid images array */}
                         {(() => {
                             const focusPoint = workingSettings.hero?.imageFocusPoint || 'center';
@@ -717,7 +722,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 const pos = workingSettings.hero?.imagePositions?.[0] || focusPosition;
                                 const scale = workingSettings.hero?.imageScales?.[0] || 1;
                                 return (
-                                    <div className="absolute inset-0">
+                                    <div className={`absolute inset-0 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-10'}`}>
                                         {/* Mobile hero image (if set) */}
                                         {mobileImage && mobileImage.trim() !== '' && (
                                             <img
@@ -733,6 +738,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             src={validImages[0]}
                                             alt="Hero Background"
                                             isEditing={isEditing}
+                                            isRepositioning={isHeroAdjusting}
                                             className={`w-full h-full ${mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
                                             objectPosition={pos}
                                             scale={scale}
@@ -762,7 +768,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 return (
                                     <div
                                         key={index}
-                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? `opacity-100 ${isHeroAdjusting ? 'z-50' : 'z-10'} pointer-events-auto` : 'opacity-0 z-0 pointer-events-none'}`}
+                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? `opacity-100 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-10'} pointer-events-auto` : 'opacity-0 z-0 pointer-events-none'}`}
                                     >
                                         {/* Mobile hero image override (only on active slide 0) */}
                                         {index === 0 && mobileImage && mobileImage.trim() !== '' && (
@@ -779,6 +785,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             src={img}
                                             alt={`Hero Background ${index + 1}`}
                                             isEditing={isEditing}
+                                            isRepositioning={isActive && isHeroAdjusting}
                                             className={`w-full h-full ${index === 0 && mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
                                             objectPosition={pos}
                                             scale={scale}
@@ -808,8 +815,20 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     </div>
 
                     {isEditing && (
-                        <div className="absolute bottom-6 right-6 z-40">
+                        <div className="absolute bottom-6 left-6 right-6 z-40 flex justify-between pointer-events-none">
                             <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsHeroAdjusting(true);
+                                }}
+                                className="flex items-center bg-black/60 backdrop-blur-md text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:bg-black/80 hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20"
+                            >
+                                <Move size={18} className="mr-2 text-primary" /> Adjust Background Image
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     const heroImgs = [...(workingSettings.hero?.images || [workingSettings.hero?.image || ''])];
@@ -2106,6 +2125,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     canUndo={undoStack.length > 0}
                     onRedo={handleRedo}
                     canRedo={redoStack.length > 0}
+                    onAdjustHero={handleAdjustHero}
                 />
             )}
 
