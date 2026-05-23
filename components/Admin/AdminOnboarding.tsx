@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
-import { X, ChevronRight, ChevronDown, Image as ImageIcon, CreditCard, Share2, Palette, Rocket, CheckCircle2, Circle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+    X, Image as ImageIcon, CreditCard, Share2, Palette, Rocket, 
+    CheckCircle2, Circle, ArrowRight, ArrowLeft, MapPin, Sparkles, Trophy, 
+    Facebook, Instagram, Info, ChevronRight
+} from 'lucide-react';
 
 interface AdminOnboardingProps {
     onNavigate: (tab: string, targetId?: string) => void;
@@ -11,113 +15,143 @@ const steps = [
         id: 'payment',
         emoji: '💰',
         title: 'GCash & Bank Details',
-        subtitle: 'Set up your payments piggy bank!',
+        subtitle: 'Payments piggy bank!',
         tab: 'settings',
         targetId: 'settings-payment',
-        intro: 'When guests want to stay at your awesome property, they need a way to pay you! We will set up your GCash piggy bank and bank details so payments fly straight into your pocket! 💵',
-        guidelines: [
-            'Look at the left side of your screen. Find that button with the little gear icon ⚙️ labeled "Settings" and click it!',
-            'Scroll down until you see the big card that says "Payment Settings" (look for the credit card icon 💳 next to it).',
-            'Under the GCash Details box, type in your 11-digit GCash Mobile Number (like 09171234567).',
-            'Type your full name in the "GCash Account Name" box. Make sure it matches your official GCash name exactly!',
-            'If you want to receive bank transfers too, fill in your Bank Name (like BDO or BPI), Account Name, and Bank Account Number.',
-            'Crucial Action! Find the toggle switch next to "Enable GCash" and tap it so it turns blue/green (ON)!',
-            'Scroll to the bottom of the page and click the big green "Save Changes" button. You did it! 🎉'
-        ],
-        superTip: 'Double check your mobile phone number! Sending money to the wrong phone number is like dropping your delicious ice cream cone on the floor! 🍦',
-        watchOut: 'Never share your GCash MPIN or OTP code with anyone! Those are secret keys only for your eyes! 🤫'
+        intro: 'Set up your GCash and bank details so guest bookings transfer directly to your wallet. 💵',
+        actionLabel: 'Configure Payouts Now ➜',
+        visualType: 'payment'
     },
     {
         id: 'photos',
-        emoji: '🖼️',
-        title: 'Add Room Photos',
-        subtitle: 'Make your rooms look amazing!',
+        emoji: '📸',
+        title: 'Upload Room Photos',
+        subtitle: 'Make your rooms shine!',
         tab: 'rooms',
         targetId: undefined,
-        intro: 'Imagine looking at a toy catalog. You would want to see real, beautiful pictures of the cool toys, right? Guests want to see your cozy beds, sparkling pool, and clean bathrooms! 📸',
-        guidelines: [
-            'Click the button with the bed icon 🛏️ labeled "Rooms" on the left sidebar.',
-            'You will see a list of your staycation rooms. Pick one (like the "Deluxe Suite") and click the blue "Edit Room" button.',
-            'Scroll down to the "Room Gallery" section (look for the photo frame icon 🖼️).',
-            'Click the "Upload Photo" button. Select a beautiful photo of your property from your phone or computer.',
-            'Once the photo uploads, click the little Star icon ⭐ on your picture to make it the "Cover Photo" (the big main image guests see on the website first!).',
-            'Add at least 3 to 4 photos showing the comfy bed, the view, and the clean bathroom.',
-            'Click the green "Update Room" button to save. Repeat this for your other rooms!'
-        ],
-        superTip: 'Open all your curtains and turn on the lights before taking pictures! Bright, sunny rooms look bigger, happier, and much cleaner! ☀️',
-        watchOut: 'Upload wide photos (horizontal 📺) rather than tall photos (vertical 📱). Wide photos fit the website boxes perfectly without getting cropped!'
+        intro: 'Replace placeholders with actual sunny landscape photos of your beds, pools, and views. 🖼️',
+        actionLabel: 'Manage Room Photos ➜',
+        visualType: 'photos'
     },
     {
         id: 'social',
         emoji: '📲',
         title: 'Social Media Links',
-        subtitle: 'Connect with your friends!',
+        subtitle: 'Connect with followers!',
         tab: 'settings',
         targetId: 'footer',
         isVisualBuilder: true,
-        intro: 'Let\'s put links to your Facebook and Instagram pages at the bottom of your website! That way, guests can click them to see your daily posts, beautiful stories, and send you direct messages! 💬',
-        guidelines: [
-            'Click the glowing blue "Go there" button below to launch the Website Builder Panel!',
-            'In the builder sidebar on the left, find the section labeled "Social & Links" (look for the paperclip/link icon 🔗). Tap it to open.',
-            'Open your Facebook app or Instagram page in another tab, copy your page\'s web address (e.g. https://facebook.com/yourstaycation), and paste it into the "Facebook URL" input field.',
-            'Do the exact same thing for your "Instagram URL" and "Airbnb/Booking.com" links if you have them!',
-            'Turn on the little toggle switches next to the links you want to show in the footer of your website.',
-            'Click the big blue "Save & Publish" button at the top of the builder sidebar. Scroll to the bottom of your website—your social buttons are live!'
-        ],
-        superTip: 'If you don\'t have a business page yet, you can link to your personal profile or leave the fields blank until you create a dedicated page!',
-        watchOut: 'Make sure your links start with https://! If you just write facebook.com, the buttons won\'t know how to navigate on the internet! 🌐'
+        intro: 'Connect your Facebook and Instagram links in the footer so guests can follow and DM you. 💬',
+        actionLabel: 'Link Social Accounts ➜',
+        visualType: 'social'
     },
     {
         id: 'map',
         emoji: '📍',
-        title: 'Set Your Map Location',
-        subtitle: 'Help guests find your paradise!',
+        title: 'Pin Location Map',
+        subtitle: 'Help guests navigate!',
         tab: 'settings',
         targetId: 'contact',
         isVisualBuilder: true,
-        intro: 'We\'re going to put a real, interactive map on your website. Guests can pinch, scroll, and zoom this map to see exactly where your property is and get driving directions! 🗺️',
-        guidelines: [
-            'Click the "Go there" button below. The page will automatically scroll you right to the "Contact & Map" section.',
-            'In the builder sidebar on the left, find the accordion labeled "Contact & Map" and tap it open.',
-            'Let\'s find your map embed link! Open a new tab in your web browser and go to Google Maps (maps.google.com).',
-            'Search for your property name or address. Click the "Share" button (it looks like a paper airplane ✈️), then select the "Embed a map" tab.',
-            'You will see a long HTML code starting with <iframe. Look closely! Only copy the web link inside the double quotes after src=". It looks like https://www.google.com/maps/embed?pb=...',
-            'Paste this copied link directly into the "Google Maps Embed URL" text field in the builder sidebar.',
-            'Click "Save & Publish"! The map will immediately update to show your property!'
-        ],
-        superTip: 'Make sure the link you copy contains /embed! If you copy a regular Google Maps share link (like https://goo.gl/maps/...), the map box will show an error.',
-        watchOut: 'Do NOT paste the entire <iframe ...></iframe> code! Just the web link inside the quotes. 🕵️‍♂️'
+        intro: 'Embed an interactive Google Maps card in your contact section for seamless driving navigation. 🗺️',
+        actionLabel: 'Pin Location Map ➜',
+        visualType: 'map'
     },
     {
         id: 'design',
         emoji: '🎨',
-        title: 'Color & Design',
-        subtitle: 'Paint your beautiful website!',
+        title: 'Branding & Design',
+        subtitle: 'Color theme customization!',
         tab: 'overview',
         targetId: undefined,
         isVisualBuilder: true,
-        intro: 'Let\'s paint your website! You can pick from beautiful preset color boxes (like deep royal blue or luxurious green) or mix your own custom color palette to make your site look stunning! 🖌️',
-        guidelines: [
-            'Click the "Go there" button below to launch the Website Builder.',
-            'Open the section labeled "Theme & Colors" (look for the paint palette icon 🎨).',
-            'Look at the "Color Presets" row. Try clicking the different boxes: Navy & Gold 🌌, Emerald Luxe 🌲, Sunset Warmth 🌅, or Serene Teal 🌊.',
-            'You can also pick a "Custom Primary Color" by clicking the color circle and sliding your mouse around the rainbow!',
-            'Scroll down to "Typography" and select a font style: Sans-Serif (Modern), Serif (Elegant), or Monospace (Typewriter).',
-            'Tap "Save & Publish" at the top to lock in your beautiful new design!'
-        ],
-        superTip: 'Choose a rich, dark primary color so white text on buttons stands out and is super easy for grandmas and grandpas to read! 👵👴',
-        watchOut: 'Try not to use too many colors at once. Pick 2 primary colors and stick with them to keep your website looking extremely professional! 🛡️'
+        intro: 'Paint your site with luxury preset color palettes (Navy, Emerald, Sunset) or mix custom HSL hues. 🖌️',
+        actionLabel: 'Style Theme Colors ➜',
+        visualType: 'design'
     }
 ];
 
 const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVisualBuilder }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
-    const [expandedStep, setExpandedStep] = useState<string | null>('payment');
+    const [currentStepIdx, setCurrentStepIdx] = useState<number>(-1); // -1: Welcome Screen, 5: Celebration Screen
+    const [direction, setDirection] = useState<'next' | 'prev'>('next');
+    const [animationKey, setAnimationKey] = useState<number>(0);
+
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const remaining = steps.length - completed.size;
     const progress = Math.round((completed.size / steps.length) * 100);
     const allDone = completed.size === steps.length;
+
+    // Full-screen Canvas Confetti Animation Trigger
+    useEffect(() => {
+        if (isOpen && currentStepIdx === steps.length && canvasRef.current) {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let animationFrameId: number;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+            const particles = Array.from({ length: 150 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                r: Math.random() * 5 + 3,
+                d: Math.random() * canvas.height,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                tilt: Math.random() * 10 - 5,
+                tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+                tiltAngle: 0
+            }));
+
+            const draw = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => {
+                    p.tiltAngle += p.tiltAngleIncremental;
+                    p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2.2;
+                    p.x += Math.sin(p.tiltAngle);
+                    p.tilt = Math.sin(p.tiltAngle - i / 3) * 15;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                    ctx.stroke();
+
+                    if (p.y > canvas.height) {
+                        particles[i] = {
+                            x: Math.random() * canvas.width,
+                            y: -20,
+                            r: p.r,
+                            d: p.d,
+                            color: p.color,
+                            tilt: p.tilt,
+                            tiltAngleIncremental: p.tiltAngleIncremental,
+                            tiltAngle: p.tiltAngle
+                        };
+                    }
+                });
+                animationFrameId = requestAnimationFrame(draw);
+            };
+
+            draw();
+
+            const handleResize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', handleResize);
+
+            return () => {
+                cancelAnimationFrame(animationFrameId);
+                window.removeEventListener('resize', handleResize);
+            };
+        }
+    }, [isOpen, currentStepIdx]);
 
     const toggleStep = (id: string) => {
         setCompleted(prev => {
@@ -137,269 +171,413 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVi
         setIsOpen(false);
     };
 
+    const goNext = () => {
+        setDirection('next');
+        setAnimationKey(prev => prev + 1);
+        setCurrentStepIdx(prev => Math.min(steps.length, prev + 1));
+    };
+
+    const goBack = () => {
+        setDirection('prev');
+        setAnimationKey(prev => prev + 1);
+        setCurrentStepIdx(prev => Math.max(-1, prev - 1));
+    };
+
+    const markCompleteAndNext = (id: string) => {
+        setCompleted(prev => {
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+        });
+        goNext();
+    };
+
+    // Render interactive CSS mockup graphics based on slide type
+    const renderVisualMockup = (type: string) => {
+        switch (type) {
+            case 'payment':
+                return (
+                    <div className="relative w-full h-32 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner select-none">
+                        <div className="absolute top-2 right-3 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span className="text-[7px] font-black tracking-widest uppercase text-emerald-600 dark:text-emerald-400">Live Payouts</span>
+                        </div>
+                        <div className="relative w-36 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg border border-white/20 p-2.5 flex flex-col justify-between text-white scale-95 animate-phone-float">
+                            <div className="flex justify-between items-center">
+                                <CreditCard size={16} className="text-white/80" />
+                                <span className="text-[8px] font-black tracking-widest uppercase opacity-85">GCash Pay</span>
+                            </div>
+                            <div className="text-left">
+                                <div className="text-[7px] opacity-60">Payout Number</div>
+                                <div className="text-xs font-mono font-bold leading-none tracking-wider">0917 •••• 567</div>
+                            </div>
+                        </div>
+                        {/* Falling coins drops */}
+                        <span className="absolute text-yellow-500 text-lg left-12 top-4 animate-coin-drop-1 select-none">🪙</span>
+                        <span className="absolute text-yellow-500 text-sm right-12 top-2 animate-coin-drop-1 select-none" style={{ animationDelay: '0.4s' }}>🪙</span>
+                        <span className="absolute text-yellow-500 text-base left-1/2 top-3 animate-coin-drop-1 select-none" style={{ animationDelay: '0.8s' }}>🪙</span>
+                    </div>
+                );
+            case 'photos':
+                return (
+                    <div className="relative w-full h-32 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden p-3 shadow-inner">
+                        {/* Slide-out old photo card */}
+                        <div className="absolute left-3 w-24 h-16 bg-gray-200 dark:bg-gray-750 rounded-xl border border-gray-300 dark:border-gray-700 flex items-center justify-center animate-pulse opacity-25">
+                            <span className="text-[9px] text-gray-400">Old</span>
+                        </div>
+                        {/* Slide-in beautiful photo card */}
+                        <div className="w-36 h-22 bg-white dark:bg-gray-700 rounded-xl shadow-md border border-primary/10 p-1 flex flex-col gap-1 z-10 transition-all hover:scale-105 duration-300">
+                            <div className="h-14 rounded-lg overflow-hidden relative">
+                                <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="" className="w-full h-full object-cover" />
+                                <div className="absolute top-1 right-1 bg-amber-400 text-[6px] font-black text-white p-0.5 rounded-full shadow animate-bounce">
+                                    ★
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center px-1 text-[8px] font-black uppercase text-gray-500 dark:text-gray-300">
+                                <span>Deluxe Villa</span>
+                                <span className="text-emerald-500">Perfect</span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'social':
+                return (
+                    <div className="relative w-full h-32 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner p-4">
+                        {/* Staycation Logo */}
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-lg animate-phone-float relative z-10">
+                            🏝️
+                        </div>
+                        {/* Left Social bubble */}
+                        <div className="absolute left-6 w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-750 flex items-center justify-center shadow-md animate-logo-shake z-10" style={{ animationDelay: '0.5s' }}>
+                            <Facebook size={20} className="text-blue-600" />
+                        </div>
+                        {/* Right Social bubble */}
+                        <div className="absolute right-6 w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-gray-150 dark:border-gray-750 flex items-center justify-center shadow-md animate-logo-shake z-10">
+                            <Instagram size={20} className="text-pink-500" />
+                        </div>
+                        {/* Dotted paths */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 350 128">
+                            <path d="M 64 64 L 175 64" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4,4" className="animate-social-pulse" />
+                            <path d="M 286 64 L 175 64" stroke="#ec4899" strokeWidth="2" strokeDasharray="4,4" className="animate-social-pulse" />
+                        </svg>
+                    </div>
+                );
+            case 'map':
+                return (
+                    <div className="relative w-full h-32 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner">
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#374151_1px,transparent_1px),linear-gradient(to_bottom,#374151_1px,transparent_1px)] bg-[size:14px_14px] opacity-30" />
+                        <div className="absolute w-10 h-10 rounded-full border border-primary/40 bg-primary/10 animate-ripple flex items-center justify-center"></div>
+                        <div className="absolute w-10 h-10 rounded-full border border-primary/20 bg-primary/5 animate-ripple flex items-center justify-center" style={{ animationDelay: '1s' }}></div>
+                        <div className="relative z-10 animate-pin-drop">
+                            <MapPin size={34} className="text-red-500 fill-red-500/20 drop-shadow-lg" />
+                            <div className="w-2 h-0.5 bg-black/30 rounded-full blur-[1px] absolute -bottom-0.5 left-1/2 -translate-x-1/2"></div>
+                        </div>
+                    </div>
+                );
+            case 'design':
+                return (
+                    <div className="relative w-full h-32 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner">
+                        <div className="flex gap-4 items-center justify-center animate-phone-float">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-900 to-amber-500 shadow-md ring-2 ring-white/50 border border-black/10 scale-90" title="Navy & Gold" />
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-400 shadow-lg ring-4 ring-white/70 border border-black/10 hover:scale-110 transition-transform cursor-pointer relative" title="Emerald Luxe">
+                                <span className="absolute -top-1.5 -right-1.5 bg-amber-400 text-[5px] font-black text-white px-1 py-0.5 rounded-full uppercase tracking-wider shadow animate-pulse">Live</span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-500 to-amber-300 shadow-md ring-2 ring-white/50 border border-black/10 scale-90" title="Sunset Warmth" />
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
         <>
-            {/* ── Floating Beacon ── */}
-            <div className="fixed bottom-24 md:bottom-6 right-6 z-[120] flex flex-col items-end gap-2 pointer-events-none">
+            {/* Confetti Explosion Canvas */}
+            {isOpen && currentStepIdx === steps.length && (
+                <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[200] w-screen h-screen" />
+            )}
 
-                {/* Tooltip bubble */}
+            {/* ── Floating Rocket Beacon ── */}
+            <div className="fixed bottom-24 md:bottom-6 right-6 z-[120] flex flex-col items-end gap-2 pointer-events-none select-none">
                 {!isOpen && (
                     <div className="pointer-events-auto animate-fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/20 px-4 py-2 flex items-center gap-2">
                         <Sparkles size={13} className="text-primary shrink-0" />
                         <span className="text-xs font-bold text-secondary dark:text-white whitespace-nowrap">
-                            {allDone ? '🎉 Your site is ready!' : `${remaining} setup step${remaining !== 1 ? 's' : ''} remaining`}
+                            {allDone ? '🎉 Your site is live!' : `${remaining} setup step${remaining !== 1 ? 's' : ''} left`}
                         </span>
                     </div>
                 )}
 
-                {/* Main beacon button */}
                 <button
-                    onClick={() => setIsOpen(v => !v)}
+                    onClick={() => {
+                        setIsOpen(true);
+                        setCurrentStepIdx(-1);
+                    }}
                     aria-label="Open Setup Guide"
                     className="pointer-events-auto relative group focus:outline-none"
                 >
-                    {/* Pulsating ring — only when steps remain */}
                     {!allDone && !isOpen && (
                         <>
                             <span className="absolute inset-0 rounded-full animate-ping bg-primary/30" />
-                            <span className="absolute inset-1 rounded-full animate-ping animation-delay-300 bg-primary/20" />
+                            <span className="absolute inset-1 rounded-full animate-ping bg-primary/20" />
                         </>
                     )}
-
-                    {/* Badge */}
                     {!allDone && (
-                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-black shadow-lg">
+                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-black shadow-lg animate-bounce">
                             {remaining}
                         </span>
                     )}
-
                     <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary via-blue-500 to-secondary flex items-center justify-center shadow-2xl shadow-primary/40 transition-transform duration-300 group-hover:scale-110 group-active:scale-95 ring-4 ring-white dark:ring-gray-900">
-                        {isOpen
-                            ? <X size={22} className="text-white" />
-                            : <span className="text-[26px] leading-none select-none">{allDone ? '🎉' : '🚀'}</span>
-                        }
+                        <span className="text-[26px] leading-none select-none">{allDone ? '🎉' : '🚀'}</span>
                     </div>
                 </button>
             </div>
 
-            {/* ── Slide-in Drawer Panel ── */}
+            {/* ── Immersive Phone Setup Wizard Modal ── */}
             {isOpen && (
                 <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[115] animate-fade-in"
+                    {/* Backdrop blur overlay */}
+                    <div 
+                        className="fixed inset-0 bg-black/60 backdrop-blur-md z-[115] animate-fade-in flex items-center justify-center p-4"
                         onClick={() => setIsOpen(false)}
-                    />
-
-                    {/* Panel ── slides from right on md+, from bottom on mobile */}
-                    <div className="fixed z-[118] inset-x-0 bottom-0 md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-[420px] flex flex-col shadow-2xl animate-slide-up md:animate-slide-in-right overflow-hidden rounded-t-3xl md:rounded-none md:rounded-l-3xl">
-
-                        {/* Header */}
-                        <div className="relative bg-gradient-to-br from-primary via-blue-600 to-secondary px-6 pt-6 pb-8 text-white shrink-0">
-                            {/* Decorative blobs */}
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl pointer-events-none" />
-
-                            <div className="relative flex items-center justify-between mb-5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl shadow-inner">
-                                        🚀
-                                    </div>
-                                    <div>
-                                        <h2 className="font-black text-xl leading-tight">Setup Guide</h2>
-                                        <p className="text-white/70 text-[11px] font-medium tracking-wide uppercase mt-0.5">
-                                            Launch your property
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
-                                >
-                                    <X size={16} />
-                                </button>
+                    >
+                        {/* ── Smartphone Chassis Wrapper ── */}
+                        <div 
+                            className="relative w-full max-w-[380px] h-[660px] bg-gray-950 rounded-[48px] p-3.5 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] border-4 border-gray-800/80 flex flex-col justify-center animate-slide-up select-none ring-8 ring-black/30 md:scale-100 scale-95"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Smartphone notch / Dynamic Island camera sensor */}
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-[130] flex items-center justify-end px-2.5 pointer-events-none border border-white/5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-900 border border-gray-950 shrink-0"></span>
                             </div>
 
-                            {/* Progress bar */}
-                            <div>
-                                <div className="flex justify-between text-xs text-white/70 mb-1.5 font-semibold">
-                                    <span>{completed.size} of {steps.length} complete</span>
-                                    <span>{progress}%</span>
+                            {/* Inner Screen Panel */}
+                            <div className="relative w-full h-full bg-white dark:bg-gray-900 rounded-[34px] overflow-hidden flex flex-col border border-white/10 shadow-inner">
+                                
+                                {/* Top mock status bar */}
+                                <div className="h-9 shrink-0 px-6 pt-3 flex justify-between items-center text-[10px] font-bold text-gray-400 dark:text-gray-500 pointer-events-none select-none z-[125]">
+                                    <span>9:41 AM 📱</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span>📶</span>
+                                        <span>🔋 100%</span>
+                                    </div>
                                 </div>
-                                <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-sm"
-                                        style={{ width: `${progress}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Step list */}
-                        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 px-4 py-4 space-y-3 max-h-[60vh] md:max-h-none">
-                            {steps.map((step, idx) => {
-                                const done = completed.has(step.id);
-                                const isExpanded = expandedStep === step.id;
-
-                                return (
-                                    <div
-                                        key={step.id}
-                                        onClick={(e) => {
-                                            if ((e.target as HTMLElement).closest('.checkbox-btn')) return;
-                                            setExpandedStep(isExpanded ? null : step.id);
-                                        }}
-                                        className={`group relative rounded-2xl border-2 transition-all duration-350 cursor-pointer overflow-hidden ${done
-                                            ? 'border-green-200 dark:border-green-800 bg-green-50/60 dark:bg-green-900/10'
-                                            : isExpanded
-                                                ? 'border-primary bg-primary/[0.02] dark:bg-primary/[0.04] shadow-md shadow-primary/5'
-                                                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-850 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5'
-                                        }`}
-                                    >
-                                        {/* Step Card Header */}
-                                        <div className="flex items-center justify-between gap-3 p-4">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                {/* Step number / emoji */}
-                                                <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 transition-colors ${done ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-50 dark:bg-gray-800 group-hover:bg-primary/10'}`}>
-                                                    <span className="text-xl leading-none">{step.emoji}</span>
-                                                    <span className="text-[9px] font-black mt-0.5 text-gray-400 dark:text-gray-500">{String(idx + 1).padStart(2, '0')}</span>
-                                                </div>
-
-                                                {/* Text info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className={`font-bold text-sm leading-tight flex items-center gap-1.5 ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-secondary dark:text-white'}`}>
-                                                        {step.title}
-                                                    </h4>
-                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{step.subtitle}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Expand Icon and Checkbox toggle */}
-                                            <div className="flex items-center gap-2">
-                                                {/* Toggle checkbox */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleStep(step.id);
-                                                    }}
-                                                    className="checkbox-btn shrink-0 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                                    aria-label={done ? 'Mark incomplete' : 'Mark complete'}
-                                                >
-                                                    {done
-                                                        ? <CheckCircle2 size={22} className="text-green-500 shrink-0" />
-                                                        : <Circle size={22} className="text-gray-300 dark:text-gray-600 hover:text-primary transition-colors shrink-0" />
-                                                    }
-                                                </button>
-                                                
-                                                <div className="text-gray-400 shrink-0">
-                                                    {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                                                </div>
-                                            </div>
+                                {/* Step Progress Track (Subtle dots at top) */}
+                                {currentStepIdx >= 0 && currentStepIdx < steps.length && (
+                                    <div className="px-6 py-2 shrink-0 flex justify-between items-center select-none z-[125]">
+                                        <button 
+                                            onClick={goBack}
+                                            className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider"
+                                        >
+                                            <ArrowLeft size={10} className="mr-0.5" /> Back
+                                        </button>
+                                        <div className="flex gap-1.5">
+                                            {steps.map((_, sIdx) => (
+                                                <span 
+                                                    key={sIdx} 
+                                                    className={`h-1.5 rounded-full transition-all duration-300 ${sIdx === currentStepIdx ? 'w-5 bg-primary' : completed.has(steps[sIdx].id) ? 'w-2.5 bg-emerald-500' : 'w-1.5 bg-gray-250 dark:bg-gray-700'}`}
+                                                />
+                                            ))}
                                         </div>
+                                        <button 
+                                            onClick={goNext}
+                                            className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider"
+                                        >
+                                            Skip <ArrowRight size={10} className="ml-0.5" />
+                                        </button>
+                                    </div>
+                                )}
 
-                                        {/* Step Guidelines Accordion Content */}
-                                        {isExpanded && (
-                                            <div className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-800 space-y-4 animate-fade-in bg-white/50 dark:bg-gray-900/50">
-                                                {/* Child-friendly Intro */}
-                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed bg-primary/[0.03] dark:bg-primary/[0.05] p-3.5 rounded-2xl border border-primary/5">
-                                                    {step.intro}
-                                                </p>
+                                {/* Slide Content Body with smooth React Key animation */}
+                                <div key={animationKey} className={`flex-1 flex flex-col justify-between p-6 overflow-y-auto ${direction === 'next' ? 'animate-slide-next' : 'animate-slide-prev'}`}>
+                                    
+                                    {/* 1. WELCOME SCREEN (Step = -1) */}
+                                    {currentStepIdx === -1 && (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
+                                            <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-primary via-blue-500 to-indigo-600 flex items-center justify-center text-4xl shadow-2xl relative animate-phone-float mb-6 ring-4 ring-white dark:ring-gray-800">
+                                                <Rocket size={38} className="text-white" />
+                                                <div className="absolute -top-1 -right-1 flex h-4 w-4 animate-ping rounded-full bg-primary/60" />
+                                            </div>
+                                            <h3 className="text-xl font-black text-secondary dark:text-white leading-tight tracking-tight">
+                                                Welcome to Your Staycation Site!
+                                            </h3>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed max-w-[240px] mt-3">
+                                                Let\'s launch your beautiful paradise in 5 quick, visual steps. Takes under 3 minutes!
+                                            </p>
+                                            
+                                            <button
+                                                onClick={goNext}
+                                                className="w-full mt-10 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                            >
+                                                Start Setup Wizard <ArrowRight size={14} />
+                                            </button>
+                                        </div>
+                                    )}
 
-                                                {/* Numbered Success Map Checklist */}
-                                                <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-2xl p-4 space-y-3 border border-gray-100 dark:border-gray-800/80">
-                                                    <h5 className="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                                                        <span>📋</span> Map to Success
-                                                    </h5>
-                                                    <ul className="space-y-3 list-none">
-                                                        {step.guidelines.map((line, lIdx) => (
-                                                            <li key={lIdx} className="flex gap-2.5 text-xs text-gray-705 dark:text-gray-300 leading-relaxed items-start">
-                                                                <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center shrink-0 shadow-sm mt-0.5">{lIdx + 1}</span>
-                                                                <span className="pt-0.5">{line}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
+                                    {/* 2. ACTIVE STEPS (Steps 0 to 4) */}
+                                    {currentStepIdx >= 0 && currentStepIdx < steps.length && (() => {
+                                        const step = steps[currentStepIdx];
+                                        const done = completed.has(step.id);
+                                        return (
+                                            <div className="flex-1 flex flex-col justify-between h-full">
+                                                <div className="space-y-4">
+                                                    {/* Visual Mockup Card */}
+                                                    {renderVisualMockup(step.visualType)}
+
+                                                    {/* Headers */}
+                                                    <div className="text-center">
+                                                        <span className="text-[26px] block mb-1 leading-none">{step.emoji}</span>
+                                                        <h3 className="text-base font-black text-secondary dark:text-white leading-tight flex items-center justify-center gap-1.5">
+                                                            {step.title}
+                                                            {done && <CheckCircle2 size={16} className="text-emerald-500" />}
+                                                        </h3>
+                                                        <p className="text-[11px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mt-0.5">{step.subtitle}</p>
+                                                    </div>
+
+                                                    {/* Friendly Simple Description */}
+                                                    <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold leading-relaxed text-center bg-gray-50/50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-850 p-3 rounded-xl">
+                                                        {step.intro}
+                                                    </p>
                                                 </div>
 
-                                                {/* Super Power Tip Callout */}
-                                                {step.superTip && (
-                                                    <div className="bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl p-3.5 border border-emerald-500/10 flex gap-2.5 items-start">
-                                                        <span className="text-base select-none shrink-0 mt-0.5">💡</span>
-                                                        <div>
-                                                            <h6 className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Super Power Tip!</h6>
-                                                            <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium leading-normal mt-0.5">
-                                                                {step.superTip}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Watch Out! Warning Callout */}
-                                                {step.watchOut && (
-                                                    <div className="bg-amber-500/5 dark:bg-amber-500/10 rounded-2xl p-3.5 border border-amber-500/10 flex gap-2.5 items-start">
-                                                        <span className="text-base select-none shrink-0 mt-0.5">⚠️</span>
-                                                        <div>
-                                                            <h6 className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Watch Out!</h6>
-                                                            <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium leading-normal mt-0.5">
-                                                                {step.watchOut}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Go Launch Action Button */}
-                                                {!done && (
+                                                {/* Slide Actions */}
+                                                <div className="space-y-2 mt-6">
+                                                    {/* Primary Setup Trigger */}
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleNavigate(step);
-                                                        }}
-                                                        className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-primary/10 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                                                        onClick={() => handleNavigate(step)}
+                                                        className="w-full py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-black shadow-lg shadow-primary/10 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                                     >
-                                                        Start Step {idx + 1} <ArrowRight size={14} />
+                                                        {step.actionLabel}
                                                     </button>
-                                                )}
+                                                    
+                                                    {/* Mark complete toggler */}
+                                                    <button
+                                                        onClick={() => markCompleteAndNext(step.id)}
+                                                        className="w-full py-2.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold active:scale-95 transition-all flex items-center justify-center gap-1"
+                                                    >
+                                                        <CheckCircle2 size={14} /> {done ? 'Step Completed ✓' : 'Mark Done & Next'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                        );
+                                    })()}
 
-                        {/* Footer */}
-                        <div className={`shrink-0 px-4 py-4 border-t border-gray-100 dark:border-gray-800 ${allDone ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-white dark:bg-gray-900'}`}>
-                            {allDone ? (
-                                <p className="text-white font-black text-center text-sm py-1">🎉 All done! Your property is live-ready.</p>
-                            ) : (
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-full py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    Continue later
-                                </button>
-                            )}
+                                    {/* 3. CELEBRATION SCREEN (Step = 5) */}
+                                    {currentStepIdx === steps.length && (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-6 h-full">
+                                            
+                                            {/* Rotating trophy mockup */}
+                                            <div className="relative w-full h-36 bg-gradient-to-br from-amber-500/10 via-emerald-500/5 to-blue-500/10 rounded-2xl flex flex-col items-center justify-center border border-emerald-500/20 overflow-hidden shadow-inner select-none mb-4 animate-phone-float">
+                                                <div className="absolute inset-0 flex items-center justify-center animate-rotate-sparkle pointer-events-none">
+                                                    <Sparkles size={160} className="text-amber-400/15" />
+                                                </div>
+                                                <Trophy size={48} className="text-amber-500 fill-amber-500/10 drop-shadow-[0_10px_20px_rgba(245,158,11,0.25)]" />
+                                                <div className="mt-2.5 flex items-center gap-1.5 bg-emerald-500/15 backdrop-blur-md px-3 py-0.5 rounded-full border border-emerald-500/25">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    <span className="text-[9px] font-black tracking-wide uppercase text-emerald-600 dark:text-emerald-400">All Set!</span>
+                                                </div>
+                                            </div>
+
+                                            <h3 className="text-lg font-black text-secondary dark:text-white leading-tight">
+                                                Your Website is Live!
+                                            </h3>
+                                            
+                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium leading-relaxed max-w-[260px] mt-2.5">
+                                                Congratulations! Your beautiful staycation villa is fully configured and ready to secure payouts directly to your account.
+                                            </p>
+                                            
+                                            <button
+                                                onClick={() => setIsOpen(false)}
+                                                className="w-full mt-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1 cursor-pointer border border-white/10"
+                                            >
+                                                Launch Public Site 🚀
+                                            </button>
+                                        </div>
+                                    )}
+
+                                </div>
+                            </div>
+                            
+                            {/* Mock home indicator swipe bar */}
+                            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-800 rounded-full z-[130] pointer-events-none"></div>
                         </div>
                     </div>
                 </>
             )}
 
+            {/* Custom Animations injection block */}
             <style>{`
-                @keyframes slide-up {
-                    from { transform: translateY(100%); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-6px) rotate(1.5deg); }
                 }
-                @keyframes slide-in-right {
-                    from { transform: translateX(100%); opacity: 0; }
+                .animate-phone-float { animation: float 4.5s ease-in-out infinite; }
+
+                @keyframes coin-drop-1 {
+                    0% { transform: translateY(-40px) scale(0); opacity: 0; }
+                    50% { transform: translateY(0px) scale(1); opacity: 1; }
+                    75% { transform: translateY(-5px) scale(1); }
+                    100% { transform: translateY(0px) scale(1); opacity: 1; }
+                }
+                .animate-coin-drop-1 { animation: coin-drop-1 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) infinite; }
+
+                @keyframes ripple {
+                    0% { transform: scale(0.6); opacity: 1; }
+                    100% { transform: scale(2.2); opacity: 0; }
+                }
+                .animate-ripple { animation: ripple 2.2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite; }
+
+                @keyframes pin-drop {
+                    0% { transform: translateY(-50px); opacity: 0; }
+                    55% { transform: translateY(0px); opacity: 1; }
+                    75% { transform: translateY(-8px); }
+                    100% { transform: translateY(0px); opacity: 1; }
+                }
+                .animate-pin-drop { animation: pin-drop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.15) infinite; }
+
+                @keyframes logo-shake {
+                    0%, 100% { transform: rotate(-4deg); }
+                    50% { transform: rotate(4deg); }
+                }
+                .animate-logo-shake { animation: logo-shake 2.8s ease-in-out infinite; }
+
+                @keyframes rotate-sparkle {
+                    0% { transform: rotate(0deg) scale(0.9); }
+                    50% { transform: rotate(180deg) scale(1.05); }
+                    100% { transform: rotate(360deg) scale(0.9); }
+                }
+                .animate-rotate-sparkle { animation: rotate-sparkle 7s linear infinite; }
+
+                @keyframes slide-next-in {
+                    from { transform: translateX(35px); opacity: 0; }
                     to { transform: translateX(0); opacity: 1; }
                 }
+                @keyframes slide-prev-in {
+                    from { transform: translateX(-35px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .animate-slide-next { animation: slide-next-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .animate-slide-prev { animation: slide-prev-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+                @keyframes social-pulse {
+                    0% { stroke-dashoffset: 0; }
+                    100% { stroke-dashoffset: -20; }
+                }
+                .animate-social-pulse { animation: social-pulse 2s linear infinite; }
+
                 @keyframes fade-in {
                     from { opacity: 0; }
                     to { opacity: 1; }
                 }
-                .animate-slide-up { animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-                @media (min-width: 768px) {
-                    .md\\:animate-slide-in-right { animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+                .animate-fade-in { animation: fade-in 0.25s ease forwards; }
+
+                @keyframes slide-up {
+                    from { transform: translateY(30px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
                 }
-                .animate-fade-in { animation: fade-in 0.25s ease; }
-                .animation-delay-300 { animation-delay: 300ms; }
+                .animate-slide-up { animation: slide-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
             `}</style>
         </>
     );
