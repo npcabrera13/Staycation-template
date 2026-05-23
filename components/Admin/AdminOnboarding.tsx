@@ -9,88 +9,105 @@ interface AdminOnboardingProps {
 const steps = [
     {
         id: 'payment',
-        emoji: '💳',
-        title: 'Payment Methods',
-        subtitle: 'Add GCash, bank, or card details',
+        emoji: '💰',
+        title: 'GCash & Bank Details',
+        subtitle: 'Set up your payments piggy bank!',
         tab: 'settings',
         targetId: 'settings-payment',
-        instructions: 'Add GCash, bank transfer, or card details so guests can book directly. GCash is the most popular payment option in the Philippines.',
+        intro: 'When guests want to stay at your awesome property, they need a way to pay you! We will set up your GCash piggy bank and bank details so payments fly straight into your pocket! 💵',
         guidelines: [
-            'Go to the Settings Tab in the Admin Dashboard.',
-            'Locate the "Payment Settings" section.',
-            'Enter your GCash Number, Bank Name, Account Name, and Account Number.',
-            'Toggle on GCash or Bank Transfer payments and click "Save Changes".'
+            'Look at the left side of your screen. Find that button with the little gear icon ⚙️ labeled "Settings" and click it!',
+            'Scroll down until you see the big card that says "Payment Settings" (look for the credit card icon 💳 next to it).',
+            'Under the GCash Details box, type in your 11-digit GCash Mobile Number (like 09171234567).',
+            'Type your full name in the "GCash Account Name" box. Make sure it matches your official GCash name exactly!',
+            'If you want to receive bank transfers too, fill in your Bank Name (like BDO or BPI), Account Name, and Bank Account Number.',
+            'Crucial Action! Find the toggle switch next to "Enable GCash" and tap it so it turns blue/green (ON)!',
+            'Scroll to the bottom of the page and click the big green "Save Changes" button. You did it! 🎉'
         ],
-        proTip: 'Keep GCash details accurate. Make sure your name matches your GCash registered account name to build guest trust!',
+        superTip: 'Double check your mobile phone number! Sending money to the wrong phone number is like dropping your delicious ice cream cone on the floor! 🍦',
+        watchOut: 'Never share your GCash MPIN or OTP code with anyone! Those are secret keys only for your eyes! 🤫'
     },
     {
         id: 'photos',
         emoji: '🖼️',
         title: 'Add Room Photos',
-        subtitle: 'Replace placeholder images',
+        subtitle: 'Make your rooms look amazing!',
         tab: 'rooms',
         targetId: undefined,
-        instructions: 'High-quality photos increase bookings by up to 40%. Replace the placeholder images with your actual rooms.',
+        intro: 'Imagine looking at a toy catalog. You would want to see real, beautiful pictures of the cool toys, right? Guests want to see your cozy beds, sparkling pool, and clean bathrooms! 📸',
         guidelines: [
-            'Navigate to the "Rooms" section in your sidebar.',
-            'Select a room and click the "Edit Room" button.',
-            'Scroll to the Gallery section, drag and drop or upload your room photos.',
-            'Set a "Feature Image" as the main cover photo for the room card.'
+            'Click the button with the bed icon 🛏️ labeled "Rooms" on the left sidebar.',
+            'You will see a list of your staycation rooms. Pick one (like the "Deluxe Suite") and click the blue "Edit Room" button.',
+            'Scroll down to the "Room Gallery" section (look for the photo frame icon 🖼️).',
+            'Click the "Upload Photo" button. Select a beautiful photo of your property from your phone or computer.',
+            'Once the photo uploads, click the little Star icon ⭐ on your picture to make it the "Cover Photo" (the big main image guests see on the website first!).',
+            'Add at least 3 to 4 photos showing the comfy bed, the view, and the clean bathroom.',
+            'Click the green "Update Room" button to save. Repeat this for your other rooms!'
         ],
-        proTip: 'Capture images in landscape orientation during high daylight hours for natural, welcoming lighting.',
+        superTip: 'Open all your curtains and turn on the lights before taking pictures! Bright, sunny rooms look bigger, happier, and much cleaner! ☀️',
+        watchOut: 'Upload wide photos (horizontal 📺) rather than tall photos (vertical 📱). Wide photos fit the website boxes perfectly without getting cropped!'
     },
     {
         id: 'social',
         emoji: '📲',
-        title: 'Social Links',
-        subtitle: 'Connect your Instagram, Facebook',
+        title: 'Social Media Links',
+        subtitle: 'Connect with your friends!',
         tab: 'settings',
         targetId: 'footer',
         isVisualBuilder: true,
-        instructions: 'Integrate your Facebook page, Instagram profile, and TikTok so guests can follow and tag your property.',
+        intro: 'Let\'s put links to your Facebook and Instagram pages at the bottom of your website! That way, guests can click them to see your daily posts, beautiful stories, and send you direct messages! 💬',
         guidelines: [
-            'Click "Go there" to open the Visual Builder.',
-            'Open the "Social & Links" accordion section in the builder toolbar.',
-            'Enter the absolute URLs for Facebook, Instagram, Airbnb, and TikTok.',
-            'Toggle the social icons you want to display in your website\'s footer.'
+            'Click the glowing blue "Go there" button below to launch the Website Builder Panel!',
+            'In the builder sidebar on the left, find the section labeled "Social & Links" (look for the paperclip/link icon 🔗). Tap it to open.',
+            'Open your Facebook app or Instagram page in another tab, copy your page\'s web address (e.g. https://facebook.com/yourstaycation), and paste it into the "Facebook URL" input field.',
+            'Do the exact same thing for your "Instagram URL" and "Airbnb/Booking.com" links if you have them!',
+            'Turn on the little toggle switches next to the links you want to show in the footer of your website.',
+            'Click the big blue "Save & Publish" button at the top of the builder sidebar. Scroll to the bottom of your website—your social buttons are live!'
         ],
-        proTip: 'Social proof is key! Link directly to pages with active reviews.',
+        superTip: 'If you don\'t have a business page yet, you can link to your personal profile or leave the fields blank until you create a dedicated page!',
+        watchOut: 'Make sure your links start with https://! If you just write facebook.com, the buttons won\'t know how to navigate on the internet! 🌐'
     },
     {
         id: 'map',
         emoji: '📍',
-        title: 'Set Your Location',
-        subtitle: 'Add a Google Maps embed',
+        title: 'Set Your Map Location',
+        subtitle: 'Help guests find your paradise!',
         tab: 'settings',
         targetId: 'contact',
         isVisualBuilder: true,
-        instructions: 'Make it easy for guests to find your property by embedding a Google Maps panel directly on your contact page.',
+        intro: 'We\'re going to put a real, interactive map on your website. Guests can pinch, scroll, and zoom this map to see exactly where your property is and get driving directions! 🗺️',
         guidelines: [
-            'Click the "Go there" button to scroll to the Contact Section in the Visual Builder.',
-            'In the visual builder, locate the Google Maps input field.',
-            'Go to Google Maps in a separate tab, search your property, click "Share" -> "Embed a map", and copy the source URL inside the src="..." attribute.',
-            'Paste the copied link into the Google Maps Embed field in the builder.'
+            'Click the "Go there" button below. The page will automatically scroll you right to the "Contact & Map" section.',
+            'In the builder sidebar on the left, find the accordion labeled "Contact & Map" and tap it open.',
+            'Let\'s find your map embed link! Open a new tab in your web browser and go to Google Maps (maps.google.com).',
+            'Search for your property name or address. Click the "Share" button (it looks like a paper airplane ✈️), then select the "Embed a map" tab.',
+            'You will see a long HTML code starting with <iframe. Look closely! Only copy the web link inside the double quotes after src=". It looks like https://www.google.com/maps/embed?pb=...',
+            'Paste this copied link directly into the "Google Maps Embed URL" text field in the builder sidebar.',
+            'Click "Save & Publish"! The map will immediately update to show your property!'
         ],
-        proTip: 'Only paste the URL inside the src quotes (e.g. https://www.google.com/maps/embed?...), not the full <iframe> tag.',
+        superTip: 'Make sure the link you copy contains /embed! If you copy a regular Google Maps share link (like https://goo.gl/maps/...), the map box will show an error.',
+        watchOut: 'Do NOT paste the entire <iframe ...></iframe> code! Just the web link inside the quotes. 🕵️‍♂️'
     },
     {
         id: 'design',
         emoji: '🎨',
-        title: 'Customize Design',
-        subtitle: 'Personalize colors and branding',
+        title: 'Color & Design',
+        subtitle: 'Paint your beautiful website!',
         tab: 'overview',
         targetId: undefined,
         isVisualBuilder: true,
-        instructions: 'Brand your staycation website by customizing colors, typography, and logo branding.',
+        intro: 'Let\'s paint your website! You can pick from beautiful preset color boxes (like deep royal blue or luxurious green) or mix your own custom color palette to make your site look stunning! 🖌️',
         guidelines: [
-            'Click "Go there" to open the Visual Builder.',
-            'Open the "Theme & Colors" accordion section.',
-            'Choose from our beautifully crafted color presets (like Navy & Gold or Emerald Luxe), or pick custom primary/secondary colors matching your brand.',
-            'Customize the Global Font Family (Sans-Serif, Serif, Monospace).',
-            'Press "Save & Publish" to go live instantly.'
+            'Click the "Go there" button below to launch the Website Builder.',
+            'Open the section labeled "Theme & Colors" (look for the paint palette icon 🎨).',
+            'Look at the "Color Presets" row. Try clicking the different boxes: Navy & Gold 🌌, Emerald Luxe 🌲, Sunset Warmth 🌅, or Serene Teal 🌊.',
+            'You can also pick a "Custom Primary Color" by clicking the color circle and sliding your mouse around the rainbow!',
+            'Scroll down to "Typography" and select a font style: Sans-Serif (Modern), Serif (Elegant), or Monospace (Typewriter).',
+            'Tap "Save & Publish" at the top to lock in your beautiful new design!'
         ],
-        proTip: 'Keep colors high-contrast (e.g. dark colors for primary buttons) to ensure text remains highly readable.',
-    },
+        superTip: 'Choose a rich, dark primary color so white text on buttons stands out and is super easy for grandmas and grandpas to read! 👵👴',
+        watchOut: 'Try not to use too many colors at once. Pick 2 primary colors and stick with them to keep your website looking extremely professional! 🛡️'
+    }
 ];
 
 const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVisualBuilder }) => {
@@ -281,31 +298,50 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({ onNavigate, onEnterVi
 
                                         {/* Step Guidelines Accordion Content */}
                                         {isExpanded && (
-                                            <div className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-800 space-y-3 animate-fade-in bg-white/50 dark:bg-gray-900/50">
-                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
-                                                    {step.instructions}
+                                            <div className="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-gray-800 space-y-4 animate-fade-in bg-white/50 dark:bg-gray-900/50">
+                                                {/* Child-friendly Intro */}
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed bg-primary/[0.03] dark:bg-primary/[0.05] p-3.5 rounded-2xl border border-primary/5">
+                                                    {step.intro}
                                                 </p>
 
-                                                {/* Step list box */}
-                                                <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 space-y-2 border border-gray-100 dark:border-gray-800/80">
-                                                    <h5 className="text-[9px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">📋 Setup Steps Checklist:</h5>
-                                                    <ul className="space-y-2 list-none">
+                                                {/* Numbered Success Map Checklist */}
+                                                <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-2xl p-4 space-y-3 border border-gray-100 dark:border-gray-800/80">
+                                                    <h5 className="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                                        <span>📋</span> Map to Success
+                                                    </h5>
+                                                    <ul className="space-y-3 list-none">
                                                         {step.guidelines.map((line, lIdx) => (
-                                                            <li key={lIdx} className="flex gap-2 text-xs text-gray-700 dark:text-gray-300 leading-tight items-start">
-                                                                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{lIdx + 1}</span>
+                                                            <li key={lIdx} className="flex gap-2.5 text-xs text-gray-705 dark:text-gray-300 leading-relaxed items-start">
+                                                                <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center shrink-0 shadow-sm mt-0.5">{lIdx + 1}</span>
                                                                 <span className="pt-0.5">{line}</span>
                                                             </li>
                                                         ))}
                                                     </ul>
                                                 </div>
 
-                                                {/* Pro Tip Callout Box */}
-                                                {step.proTip && (
-                                                    <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-3 border border-primary/10 flex gap-2">
-                                                        <span className="text-sm select-none shrink-0">💡</span>
-                                                        <p className="text-[11px] text-primary dark:text-primary-hover font-medium leading-normal">
-                                                            <span className="font-bold">Pro Tip: </span>{step.proTip}
-                                                        </p>
+                                                {/* Super Power Tip Callout */}
+                                                {step.superTip && (
+                                                    <div className="bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl p-3.5 border border-emerald-500/10 flex gap-2.5 items-start">
+                                                        <span className="text-base select-none shrink-0 mt-0.5">💡</span>
+                                                        <div>
+                                                            <h6 className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Super Power Tip!</h6>
+                                                            <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium leading-normal mt-0.5">
+                                                                {step.superTip}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Watch Out! Warning Callout */}
+                                                {step.watchOut && (
+                                                    <div className="bg-amber-500/5 dark:bg-amber-500/10 rounded-2xl p-3.5 border border-amber-500/10 flex gap-2.5 items-start">
+                                                        <span className="text-base select-none shrink-0 mt-0.5">⚠️</span>
+                                                        <div>
+                                                            <h6 className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Watch Out!</h6>
+                                                            <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium leading-normal mt-0.5">
+                                                                {step.watchOut}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 )}
 
