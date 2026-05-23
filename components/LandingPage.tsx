@@ -18,7 +18,7 @@ import {
     Sparkles, X, Wifi, Shield, Star, Coffee, Home, 
     Waves, Wind, ChefHat, Car, Dumbbell, Tv, Utensils, 
     Monitor, Zap, Sun, Umbrella, Bell, Bath, Armchair, Bike, Key, Edit, Hash,
-    Layout, RotateCcw, Move, ExternalLink, Maximize
+    Layout, RotateCcw, Move, ExternalLink, Maximize, Check
 } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
@@ -363,6 +363,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
     // Hero Slider Interval
     useEffect(() => {
+        if (isHeroAdjusting) return; // Pause slider autoplay during background image adjustments!
+
         // Filter out empty images
         const images = (workingSettings.hero?.images || [workingSettings.hero?.image]).filter(img => img && img.trim() !== '' && img.includes('http'));
         if (!images || images.length <= 1) return;
@@ -372,7 +374,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }, workingSettings.hero?.slideInterval || 5000);
 
         return () => clearInterval(interval);
-    }, [workingSettings.hero?.images, workingSettings.hero?.slideInterval, workingSettings.hero?.image]);
+    }, [workingSettings.hero?.images, workingSettings.hero?.slideInterval, workingSettings.hero?.image, isHeroAdjusting]);
 
     // Effect to handle external edit trigger
     React.useEffect(() => {
@@ -650,6 +652,14 @@ const LandingPage: React.FC<LandingPageProps> = ({
         }
     };
 
+    const heroFocusPoint = workingSettings.hero?.imageFocusPoint || 'center';
+    const heroFocusPosition = heroFocusPoint === 'top' ? 'top' : heroFocusPoint === 'bottom' ? 'bottom' : 'center';
+    const heroMobileImage = workingSettings.hero?.mobileImage;
+    const heroValidImages = useMemo(() => {
+        return (workingSettings.hero?.images || [workingSettings.hero?.image || ''])
+            .filter(img => img && typeof img === 'string' && img.trim() !== '' && img.includes('http'));
+    }, [workingSettings.hero?.images, workingSettings.hero?.image]);
+
     return (
         <>
             {/* Content Wrapper that shifts when Builder is open - DESKTOP ONLY */}
@@ -680,53 +690,42 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 {/* Hero Section */}
                 <div id="hero" className="relative h-[75vh] md:h-[100vh] min-h-[500px] md:min-h-[600px] bg-secondary text-white overflow-hidden scroll-mt-24">
                     <div className={`absolute inset-0 ${isHeroAdjusting ? 'z-40 pointer-events-auto' : 'z-0'}`}>
-                        {/* Get valid images array */}
-                        {(() => {
-                            const focusPoint = workingSettings.hero?.imageFocusPoint || 'center';
-                            const focusPosition = focusPoint === 'top' ? 'top' : focusPoint === 'bottom' ? 'bottom' : 'center';
-                            const mobileImage = workingSettings.hero?.mobileImage;
-                            const validImages = (workingSettings.hero?.images || [workingSettings.hero?.image]).filter(img => img && img.trim() !== '' && img.includes('http'));
-
-                            if (validImages.length === 0) {
-                                // No valid images - show default
-                                return (
-                                    <div className="absolute inset-0">
-                                        <GalleryFrame
-                                            src={DEFAULT_SETTINGS.hero.image}
-                                            alt="Hero Background"
-                                            isEditing={isEditing}
-                                            className="w-full h-full"
-                                            objectPosition={focusPosition}
-                                            disableDecorations={true}
-                                            disableHoverEffect={true}
-                                        />
-                                    </div>
-                                );
-                            }
-
-                            if (validImages.length === 1) {
-                                // Single image - no carousel
-                                const pos = workingSettings.hero?.imagePositions?.[0] || focusPosition;
+                        {heroValidImages.length === 0 ? (
+                            // No valid images - show default
+                            <div className="absolute inset-0">
+                                <GalleryFrame
+                                    src={DEFAULT_SETTINGS.hero.image}
+                                    alt="Hero Background"
+                                    isEditing={isEditing}
+                                    className="w-full h-full"
+                                    objectPosition={heroFocusPosition}
+                                    disableDecorations={true}
+                                    disableHoverEffect={true}
+                                />
+                            </div>
+                        ) : heroValidImages.length === 1 ? (
+                            // Single image - no carousel
+                            (() => {
+                                const pos = workingSettings.hero?.imagePositions?.[0] || heroFocusPosition;
                                 const scale = workingSettings.hero?.imageScales?.[0] || 1;
                                 return (
                                     <div className={`absolute inset-0 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-10'}`}>
-                                        {/* Mobile hero image (if set) */}
-                                        {mobileImage && mobileImage.trim() !== '' && (
+                                        {heroMobileImage && heroMobileImage.trim() !== '' && (
                                             <img
-                                                src={mobileImage}
+                                                src={heroMobileImage}
                                                 alt="Hero Background"
                                                 fetchPriority="high"
                                                 loading="eager"
                                                 className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
-                                                style={{ objectPosition: focusPosition }}
+                                                style={{ objectPosition: heroFocusPosition }}
                                             />
                                         )}
                                         <GalleryFrame
-                                            src={validImages[0]}
+                                            src={heroValidImages[0]}
                                             alt="Hero Background"
                                             isEditing={isEditing}
                                             isRepositioning={isHeroAdjusting}
-                                            className={`w-full h-full ${mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            className={`w-full h-full ${heroMobileImage && heroMobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
                                             objectPosition={pos}
                                             scale={scale}
                                             disableDecorations={true}
@@ -745,27 +744,26 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                         />
                                     </div>
                                 );
-                            }
-
+                            })()
+                        ) : (
                             // Multiple images - carousel with crossfade
-                            return validImages.map((img, index) => {
+                            heroValidImages.map((img, index) => {
                                 const isActive = index === (activeHeroSlide ?? 0);
-                                const pos = workingSettings.hero?.imagePositions?.[index] || focusPosition;
+                                const pos = workingSettings.hero?.imagePositions?.[index] || heroFocusPosition;
                                 const scale = workingSettings.hero?.imageScales?.[index] || 1;
                                 return (
                                     <div
                                         key={index}
                                         className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? `opacity-100 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-10'} pointer-events-auto` : 'opacity-0 z-0 pointer-events-none'}`}
                                     >
-                                        {/* Mobile hero image override (only on active slide 0) */}
-                                        {index === 0 && mobileImage && mobileImage.trim() !== '' && (
+                                        {index === 0 && heroMobileImage && heroMobileImage.trim() !== '' && (
                                             <img
-                                                src={mobileImage}
+                                                src={heroMobileImage}
                                                 alt="Hero Background"
                                                 fetchPriority="high"
                                                 loading="eager"
                                                 className="md:hidden w-full h-full object-cover absolute inset-0 z-[1]"
-                                                style={{ objectPosition: focusPosition }}
+                                                style={{ objectPosition: heroFocusPosition }}
                                             />
                                         )}
                                         <GalleryFrame
@@ -773,7 +771,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             alt={`Hero Background ${index + 1}`}
                                             isEditing={isEditing}
                                             isRepositioning={isActive && isHeroAdjusting}
-                                            className={`w-full h-full ${index === 0 && mobileImage && mobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
+                                            className={`w-full h-full ${index === 0 && heroMobileImage && heroMobileImage.trim() !== '' ? 'hidden md:block' : ''}`}
                                             objectPosition={pos}
                                             scale={scale}
                                             disableDecorations={true}
@@ -781,25 +779,95 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             onRepositioningChange={setIsHeroAdjusting}
                                             onPositionChange={(newPos) => {
                                                 const newPositions = [...(workingSettings.hero?.imagePositions || [])];
+                                                for (let i = 0; i < index; i++) {
+                                                    if (newPositions[i] === undefined) {
+                                                        newPositions[i] = heroFocusPosition;
+                                                    }
+                                                }
                                                 newPositions[index] = newPos;
                                                 handleSettingChange('hero', 'imagePositions', newPositions);
                                             }}
                                             onScaleChange={(newScale) => {
                                                 const newScales = [...(workingSettings.hero?.imageScales || [])];
+                                                for (let i = 0; i < index; i++) {
+                                                    if (newScales[i] === undefined) {
+                                                        newScales[i] = 1;
+                                                    }
+                                                }
                                                 newScales[index] = newScale;
                                                 handleSettingChange('hero', 'imageScales', newScales);
                                             }}
                                         />
                                     </div>
                                 );
-                            });
-                        })()}
+                            })
+                        )}
 
                         <div
                             className="absolute inset-0 bg-black transition-opacity duration-300 z-20 pointer-events-none"
                             style={{ opacity: (workingSettings.hero?.overlayOpacity ?? 50) / 100 }}
                         ></div>
                     </div>
+
+                    {/* Navigation Arrows */}
+                    {heroValidImages.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveHeroSlide(prev => (prev - 1 + heroValidImages.length) % heroValidImages.length);
+                                }}
+                                className={`absolute left-4 top-1/2 -translate-y-1/2 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-30 pointer-events-auto'} bg-black/40 hover:bg-black/60 text-white p-3 rounded-full backdrop-blur-md border border-white/15 shadow-2xl active:scale-90 hover:scale-105 transition-all cursor-pointer flex items-center justify-center group`}
+                                title="Previous Slide"
+                            >
+                                <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveHeroSlide(prev => (prev + 1) % heroValidImages.length);
+                                }}
+                                className={`absolute right-4 top-1/2 -translate-y-1/2 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-30 pointer-events-auto'} bg-black/40 hover:bg-black/60 text-white p-3 rounded-full backdrop-blur-md border border-white/15 shadow-2xl active:scale-90 hover:scale-105 transition-all cursor-pointer flex items-center justify-center group`}
+                                title="Next Slide"
+                            >
+                                <ChevronRight size={22} className="group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Slide Indicator Dots */}
+                    {heroValidImages.length > 1 && (
+                        <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 ${isHeroAdjusting ? 'z-50 pointer-events-auto' : 'z-30 pointer-events-auto'} flex items-center gap-2.5 bg-black/35 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/10 shadow-lg`}>
+                            {heroValidImages.map((_, index) => {
+                                const isActive = index === (activeHeroSlide ?? 0);
+                                return (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveHeroSlide(index);
+                                        }}
+                                        className={`transition-all duration-300 rounded-full cursor-pointer ${isActive ? 'w-6 h-2 bg-amber-400' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
+                                        title={`Go to Slide ${index + 1}`}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Top Adjusting Slide Indicator */}
+                    {isHeroAdjusting && heroValidImages.length > 1 && (
+                        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-black/85 backdrop-blur-md text-white text-[11px] font-bold tracking-wider uppercase px-4 py-2 rounded-full border border-white/15 shadow-[0_15px_30px_rgba(0,0,0,0.5)] flex items-center gap-2 animate-fade-in">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            </span>
+                            Adjusting Slide {activeHeroSlide + 1} of {heroValidImages.length}
+                        </div>
+                    )}
 
                     {isEditing && !isHeroAdjusting && (
                         <div className="absolute bottom-6 right-6 z-40">
@@ -812,6 +880,21 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                 className="flex items-center bg-primary text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20 animate-fade-in"
                             >
                                 <Move size={18} className="mr-2" /> Adjust Image Position
+                            </button>
+                        </div>
+                    )}
+
+                    {isEditing && isHeroAdjusting && (
+                        <div className="absolute bottom-6 right-6 z-50">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsHeroAdjusting(false);
+                                }}
+                                className="flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer pointer-events-auto border border-white/20 animate-fade-in"
+                            >
+                                <Check size={18} className="mr-2" /> Done Adjusting
                             </button>
                         </div>
                     )}
