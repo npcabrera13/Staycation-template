@@ -29,6 +29,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     isRepositioning: externalRepositioning
 }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const isDraggingRef = useRef(false);
     const [localRepositioning, setLocalRepositioning] = useState(false);
     const isRepositioning = externalRepositioning !== undefined ? externalRepositioning : localRepositioning;
     
@@ -42,6 +43,11 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     const [currentPos, setCurrentPos] = useState(objectPosition);
     const [currentScale, setCurrentScale] = useState(externalScale);
     
+    // Create Refs to track the latest scale and position synchronously. 
+    // This avoids stale closures when high-frequency pointermove events fire during dragging/zooming on PCs.
+    const currentPosRef = useRef(objectPosition);
+    const currentScaleRef = useRef(externalScale);
+    
     const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
     const pinchStartDistRef = useRef<number | null>(null);
     const pinchStartScaleRef = useRef<number>(1);
@@ -49,52 +55,78 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
 
     // Determine if it's a touch device
     const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
-    const canInteract = isEditing && (!isTouchDevice || isRepositioning);
+    const canInteract = isEditing && (isRepositioning || (!isTouchDevice && isDragging));
 
-    useEffect(() => { setCurrentPos(objectPosition); }, [objectPosition]);
-    useEffect(() => { setCurrentScale(externalScale); }, [externalScale]);
+    useEffect(() => { 
+        setCurrentPos(objectPosition); 
+        currentPosRef.current = objectPosition;
+    }, [objectPosition]);
+
+    useEffect(() => { 
+        setCurrentScale(externalScale); 
+        currentScaleRef.current = externalScale;
+    }, [externalScale]);
+
+    // Auto-zoom to 1.15x when entering repositioning mode if scale is 1, so the user can immediately drag the image bounds!
+    useEffect(() => {
+        if (isRepositioning && currentScaleRef.current === 1) {
+            const autoScale = 1.15;
+            setCurrentScale(autoScale);
+            currentScaleRef.current = autoScale;
+            onScaleChange?.(autoScale);
+        }
+    }, [isRepositioning]);
 
     const clampScale = (s: number) => Math.min(3, Math.max(1, parseFloat(s.toFixed(2))));
 
     const applyScale = (s: number) => {
         const clamped = clampScale(s);
         setCurrentScale(clamped);
+        currentScaleRef.current = clamped;
         return clamped;
     };
 
     const handleWheel = (e: React.WheelEvent) => {
-        if (!canInteract) return;
-        e.preventDefault();
-        const newScale = applyScale(currentScale + (e.deltaY > 0 ? -0.1 : 0.1));
+        if (!isEditing || !isRepositioning) return;
         
-        // Debounce the save for wheel events
-        if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
-        wheelTimeoutRef.current = setTimeout(() => {
-            onScaleChange?.(newScale);
-        }, 500);
+        // Only zoom if Ctrl (or Cmd on Mac) key is held down. 
+        // This prevents accidental zooming when the user is simply trying to scroll up/down the page.
+        // Note: Modern browser trackpad pinch gestures naturally trigger wheel events with e.ctrlKey = true under the hood, so pinch-zoom continues to work flawlessly out of the box!
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const newScale = applyScale(currentScaleRef.current + (e.deltaY > 0 ? -0.1 : 0.1));
+            
+            // Debounce the save for wheel events
+            if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+            wheelTimeoutRef.current = setTimeout(() => {
+                onScaleChange?.(currentScaleRef.current);
+            }, 500);
+        }
     };
 
     const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if (!canInteract) return;
+        if (!isEditing || (!isRepositioning && isTouchDevice)) return;
         activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         lastPointerRef.current = { x: e.clientX, y: e.clientY };
         
         if (activePointersRef.current.size === 1) {
             e.preventDefault();
             setIsDragging(true);
+            isDraggingRef.current = true;
             try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch {}
         } else if (activePointersRef.current.size === 2) {
             setIsDragging(false);
+            isDraggingRef.current = false;
             const pts = Array.from(activePointersRef.current.values()) as Array<{x: number, y: number}>;
             pinchStartDistRef.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-            pinchStartScaleRef.current = currentScale;
+            pinchStartScaleRef.current = currentScaleRef.current;
         }
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
-        if (!canInteract) return;
+        if (!isEditing) return;
         activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         
         if (activePointersRef.current.size >= 2) {
@@ -103,7 +135,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             if (pinchStartDistRef.current) {
                 applyScale(pinchStartScaleRef.current * (dist / pinchStartDistRef.current));
             }
-        } else if (isDragging && containerRef.current && lastPointerRef.current) {
+        } else if (isDraggingRef.current && containerRef.current && lastPointerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
             const dx = e.clientX - lastPointerRef.current.x;
             const dy = e.clientY - lastPointerRef.current.y;
@@ -111,15 +143,17 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             // Sensitivity: We move the "focus" faster when zoomed in
             // objectPosition works by shifting the image inside its fitted box
             // A 1% change in objectPosition shifts the image by (imageSize - elementSize) * 0.01
-            const [curX, curY] = currentPos.split(' ').map(p => parseFloat(p));
+            const [curX, curY] = currentPosRef.current.split(' ').map(p => parseFloat(p));
             
             // Relative drag: if you drag 10px right, we want the image to shift right
             // Lower percentage means "show more left", so dragging right should decrease percentage
-            const moveSpeed = 0.5 / currentScale;
+            const moveSpeed = 0.5 / currentScaleRef.current;
             const newX = Math.max(0, Math.min(100, curX - (dx / rect.width * 100 * moveSpeed)));
             const newY = Math.max(0, Math.min(100, curY - (dy / rect.height * 100 * moveSpeed)));
             
-            setCurrentPos(`${Math.round(newX)}% ${Math.round(newY)}%`);
+            const nextPos = `${Math.round(newX)}% ${Math.round(newY)}%`;
+            currentPosRef.current = nextPos;
+            setCurrentPos(nextPos);
         }
         lastPointerRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -128,15 +162,16 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
         activePointersRef.current.delete(e.pointerId);
         lastPointerRef.current = null;
         
-        if (isDragging) {
+        if (isDraggingRef.current) {
             setIsDragging(false);
+            isDraggingRef.current = false;
             try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
-            onPositionChange?.(currentPos);
+            onPositionChange?.(currentPosRef.current);
         }
         
         if (activePointersRef.current.size < 2) {
             if (pinchStartDistRef.current !== null) {
-                onScaleChange?.(currentScale);
+                onScaleChange?.(currentScaleRef.current);
             }
             pinchStartDistRef.current = null;
         }
@@ -149,6 +184,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             onWheel={handleWheel}
             style={{ touchAction: canInteract ? 'none' : 'auto' }}
         >
@@ -167,7 +203,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
                 <>
                     <div className={`absolute inset-0 bg-primary/10 border-2 border-dashed transition-opacity duration-300 pointer-events-none ${isDragging ? 'opacity-100 border-primary' : 'opacity-0 group-hover/frame:opacity-100 border-white/50'}`} />
                     <div className={`absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded-full flex items-center gap-1.5 pointer-events-none transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0 group-hover/frame:opacity-100'}`}>
-                        <Move size={9} /> Drag &nbsp;·&nbsp; <ZoomIn size={9} /> Scroll/Pinch
+                        <Move size={9} /> Drag to Move &nbsp;·&nbsp; <ZoomIn size={9} /> Hold Ctrl + Scroll to Zoom
                     </div>
                 </>
             )}

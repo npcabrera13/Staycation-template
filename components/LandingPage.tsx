@@ -18,7 +18,7 @@ import {
     Sparkles, X, Wifi, Shield, Star, Coffee, Home, 
     Waves, Wind, ChefHat, Car, Dumbbell, Tv, Utensils, 
     Monitor, Zap, Sun, Umbrella, Bell, Bath, Armchair, Bike, Key, Edit, Hash,
-    Layout, RotateCcw, Move, ExternalLink, Maximize, Check
+    Layout, RotateCcw, Move, ExternalLink, Maximize, Check, ZoomIn, ZoomOut
 } from 'lucide-react';
 import { COMPANY_INFO } from '../constants';
 import InlineText from './Builder/InlineText';
@@ -159,6 +159,7 @@ interface LandingPageProps {
     startEditing?: boolean;
     onEditingStarted?: () => void;
     onUpdateRoom?: (roomId: string, updates: Partial<Room>) => Promise<void>;
+    activeOnboardingStep?: string | null;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
@@ -175,6 +176,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     startEditing,
     onEditingStarted,
     onUpdateRoom,
+    activeOnboardingStep,
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -870,7 +872,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     )}
 
                     {isEditing && !isHeroAdjusting && (
-                        <div className="absolute bottom-6 right-6 z-40">
+                        <div className="absolute bottom-6 left-6 md:left-8 z-40">
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -885,7 +887,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     )}
 
                     {isEditing && isHeroAdjusting && (
-                        <div className="absolute bottom-6 right-6 z-50">
+                        <div id="hero-done-adjusting" className="absolute bottom-6 left-6 md:left-8 z-50">
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -898,6 +900,70 @@ const LandingPage: React.FC<LandingPageProps> = ({
                             </button>
                         </div>
                     )}
+
+                    {isEditing && isHeroAdjusting && (() => {
+                        const activeIndex = activeHeroSlide ?? 0;
+                        const currentScale = workingSettings.hero?.imageScales?.[activeIndex] || 1;
+                        
+                        const handleScaleUpdate = (newScale: number) => {
+                            const newScales = [...(workingSettings.hero?.imageScales || [])];
+                            for (let i = 0; i < activeIndex; i++) {
+                                if (newScales[i] === undefined) {
+                                    newScales[i] = 1;
+                                }
+                            }
+                            newScales[activeIndex] = newScale;
+                            handleSettingChange('hero', 'imageScales', newScales);
+                        };
+
+                        return (
+                            <div id="hero-zoom-slider" className="absolute bottom-6 right-6 md:right-8 z-50 hidden md:flex items-center gap-3 bg-black/85 backdrop-blur-md border border-white/15 px-4 py-2.5 rounded-full shadow-2xl animate-fade-in pointer-events-auto select-none">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newScale = Math.max(1, currentScale - 0.1);
+                                        handleScaleUpdate(parseFloat(newScale.toFixed(2)));
+                                    }}
+                                    className="p-1 rounded-full text-white/75 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                                    title="Zoom Out / Make Smaller"
+                                >
+                                    <ZoomOut size={16} />
+                                </button>
+                                
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="3"
+                                    step="0.05"
+                                    value={currentScale}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleScaleUpdate(parseFloat(parseFloat(e.target.value).toFixed(2)));
+                                    }}
+                                    className="w-24 md:w-32 accent-primary cursor-pointer bg-white/20 h-1 rounded-full outline-none transition-all hover:bg-white/30"
+                                    title="Drag to adjust image size"
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newScale = Math.min(3, currentScale + 0.1);
+                                        handleScaleUpdate(parseFloat(newScale.toFixed(2)));
+                                    }}
+                                    className="p-1 rounded-full text-white/75 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                                    title="Zoom In / Make Bigger"
+                                >
+                                    <ZoomIn size={16} />
+                                </button>
+
+                                <span className="text-[10px] font-mono font-bold bg-white/10 text-amber-400 px-2 py-0.5 rounded-md border border-white/5 tracking-wider shrink-0 select-none">
+                                    {currentScale.toFixed(2)}x
+                                </span>
+                            </div>
+                        );
+                    })()}
 
                     <div className="relative max-w-7xl mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-30 pt-20 pointer-events-none">
                         <RevealOnScroll>
@@ -1805,7 +1871,18 @@ const LandingPage: React.FC<LandingPageProps> = ({
                         </RevealOnScroll>
 
                         <RevealOnScroll delay={200}>
-                            <div className="w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative group">
+                            <div 
+                                data-onboarding-target="map-embed-container"
+                                className={`w-full h-96 md:h-[500px] rounded-3xl overflow-hidden shadow-xl border-4 border-white relative group transition-all ${
+                                    activeOnboardingStep === 'map' ? 'onboarding-highlight-glow ring-4 ring-primary' : ''
+                                }`}
+                            >
+                                {activeOnboardingStep === 'map' && (
+                                    <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 onboarding-arrow-indicator select-none pointer-events-none">
+                                        <span className="text-xs">⬇️</span>
+                                        <span>Hover over the map & search your resort location!</span>
+                                    </div>
+                                )}
                                 {isEditing && (
                                     <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-4 md:p-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
                                         <h3 className="text-white text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2">
@@ -1896,6 +1973,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     isEditing={isEditing}
                     onSettingChange={handleSettingChange}
                     onAdminEnter={onAdminEnter}
+                    activeOnboardingStep={activeOnboardingStep}
                 />
             </div>
 
@@ -1916,6 +1994,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     onRedo={handleRedo}
                     canRedo={redoStack.length > 0}
                     onAdjustHero={handleAdjustHero}
+                    activeOnboardingStep={activeOnboardingStep}
                 />
             )}
 

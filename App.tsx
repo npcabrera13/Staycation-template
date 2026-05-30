@@ -15,6 +15,7 @@ import { useLicense } from './components/LicenseProvider';
 import LandingPage from './components/LandingPage';
 import LicenseProvider from './components/LicenseProvider';
 import AdminPasscodeGate from './components/AdminPasscodeGate';
+import AdminOnboarding from './components/Admin/AdminOnboarding';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -81,6 +82,20 @@ function AppContent() {
   const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [startInGallery, setStartInGallery] = useState(false);
+  const [activeOnboardingStep, setActiveOnboardingStep] = useState<string | null>(null);
+
+  const handleOnboardingNavigate = (tab: string, targetId?: string) => {
+    navigate('/admin', { state: { activeTab: tab, scrollTarget: targetId } });
+  };
+
+  const handleEnterVisualBuilder = (targetId?: string) => {
+    setStartEditing(true);
+    if (targetId) {
+      navigate({ pathname: '/', hash: targetId });
+    } else {
+      navigate('/');
+    }
+  };
 
   // Local State
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -408,6 +423,7 @@ function AppContent() {
                 <AdminDashboard
                   bookings={bookings}
                   rooms={rooms}
+                  activeOnboardingStep={activeOnboardingStep}
                   onUpdateRoom={handleUpdateRoom}
                   onAddRoom={handleAddRoom}
                   onDeleteRoom={handleDeleteRoom}
@@ -504,6 +520,7 @@ function AppContent() {
             <LandingPage
               rooms={rooms}
               bookings={bookings}
+              activeOnboardingStep={activeOnboardingStep}
               onRoomSelect={async (room, openGallery = false) => {
                 setSelectedRoom(room);
                 setStartInGallery(openGallery);
@@ -620,6 +637,19 @@ function AppContent() {
           rooms={rooms}
         />
       </Suspense>
+
+      {/* Global Onboarding Tour Guide */}
+      {settings?.setupComplete && isAdminAuthenticated && (
+        <AdminOnboarding 
+          onNavigate={handleOnboardingNavigate} 
+          onEnterVisualBuilder={handleEnterVisualBuilder} 
+          settings={settings}
+          rooms={rooms}
+          onUpdateSettings={handleUpdateSettings}
+          onUpdateRoom={handleUpdateRoom}
+          onStepChange={setActiveOnboardingStep}
+        />
+      )}
     </div>
   );
 }

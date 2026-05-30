@@ -23,6 +23,7 @@ interface BuilderToolbarProps {
     onRedo?: () => void;
     canRedo?: boolean;
     onAdjustHero?: (index: number) => void;
+    activeOnboardingStep?: string | null;
 }
 
 const THEME_PRESETS = [
@@ -52,8 +53,18 @@ const AccordionItem: React.FC<{
     isOpen: boolean;
     onClick: () => void;
     children: React.ReactNode;
-}> = ({ title, icon: Icon, isOpen, onClick, children }) => (
-    <div className="border-b border-gray-200 dark:border-gray-800 last:border-0">
+    highlighted?: boolean;
+    targetId?: string;
+}> = ({ title, icon: Icon, isOpen, onClick, children, highlighted, targetId }) => (
+    <div className={`border-b border-gray-200 dark:border-gray-800 last:border-0 relative transition-all ${
+        highlighted ? 'onboarding-highlight-glow ring-2 ring-primary border-primary' : ''
+    }`} data-onboarding-target={targetId}>
+        {highlighted && (
+            <div className="absolute -top-3 left-4 z-20 flex items-center gap-1 bg-primary text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow border border-white/10 onboarding-arrow-indicator select-none pointer-events-none whitespace-nowrap">
+                <span>⬇️</span>
+                <span>Configure here!</span>
+            </div>
+        )}
         <button
             onClick={onClick}
             className={`w-full flex items-center justify-between p-4 text-left transition-colors ${isOpen ? 'bg-gray-50 dark:bg-gray-800/50 text-primary' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
@@ -83,10 +94,20 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
     canUndo = false,
     onRedo,
     canRedo = false,
-    onAdjustHero
+    onAdjustHero,
+    activeOnboardingStep
 }) => {
     const [openSection, setOpenSection] = useState<string | null>('theme');
     const [mobileExpanded, setMobileExpanded] = useState(false);
+
+    // Auto-expand sections in website builder when onboarding step changes!
+    useEffect(() => {
+        if (activeOnboardingStep === 'social') {
+            setOpenSection('social');
+        } else if (activeOnboardingStep === 'design') {
+            setOpenSection('theme');
+        }
+    }, [activeOnboardingStep]);
 
     if (!isEditing) {
         return (
@@ -172,6 +193,8 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     icon={PaintBucket}
                     isOpen={openSection === 'theme'}
                     onClick={() => setOpenSection(openSection === 'theme' ? null : 'theme')}
+                    highlighted={activeOnboardingStep === 'design'}
+                    targetId="theme-accordion"
                 >
                     {/* Theme Presets */}
                     <div>
@@ -449,6 +472,8 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                     icon={Share2}
                     isOpen={openSection === 'social'}
                     onClick={() => setOpenSection(openSection === 'social' ? null : 'social')}
+                    highlighted={activeOnboardingStep === 'social'}
+                    targetId="social-accordion"
                 >
                     <div className="space-y-4">
                         <p className="text-xs text-gray-400 mb-2 leading-relaxed">Toggle which icons appear in your footer. Empty links will be hidden from visitors but remain visible in the editor.</p>

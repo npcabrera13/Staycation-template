@@ -24,6 +24,7 @@ import RenewalModal from './Admin/RenewalModal';
 import { ImageUploadButton } from './UI/ImageUploadButton'; interface AdminDashboardProps {
     bookings: Booking[];
     rooms: Room[];
+    activeOnboardingStep?: string | null;
     onUpdateRoom?: (room: Room) => void;
     onAddRoom?: (room: Room) => void;
     onDeleteRoom?: (roomId: string) => void;
@@ -98,6 +99,7 @@ const HelpTooltip: React.FC<{ text: string, align?: 'center' | 'right' }> = ({ t
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
     bookings,
     rooms,
+    activeOnboardingStep,
     onUpdateRoom,
     onAddRoom,
     onDeleteRoom,
@@ -127,6 +129,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
     const [draftDepositPct, setDraftDepositPct] = useState<number | null>(null);
     const [isGlobalDepositExpanded, setIsGlobalDepositExpanded] = useState(false);
+
+    // Sync activeTab whenever route state is changed (e.g. from global onboarding guide)
+    useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+        }
+    }, [location.state?.activeTab]);
 
     const navigateToTab = (tab: 'overview' | 'calendar' | 'rooms' | 'settings', targetId?: string) => {
         setActiveTab(tab);
@@ -1455,7 +1464,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
 
                     {/* Payment Methods */}
-                    <div id="settings-payment" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div 
+                        id="settings-payment" 
+                        data-onboarding-target="payment-section"
+                        className={`bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border transition-all relative ${
+                            activeOnboardingStep === 'payment' 
+                                ? 'onboarding-highlight-glow ring-2 ring-primary border-primary' 
+                                : 'border-gray-200 dark:border-gray-700'
+                        }`}
+                    >
+                        {activeOnboardingStep === 'payment' && (
+                            <div className="absolute -top-10 left-6 z-20 flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 onboarding-arrow-indicator select-none pointer-events-none">
+                                <span className="text-xs">⬇️</span>
+                                <span>Configure your Payout details here!</span>
+                            </div>
+                        )}
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <CreditCard size={20} className="mr-2 text-primary" /> Payment Methods
                         </h3>
@@ -1514,8 +1537,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Name</label>
                                         <input
                                             type="text"
+                                            data-onboarding-target="gcash-account-name"
                                             placeholder="e.g. Juan Dela Cruz"
-                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            className={`w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all ${
+                                                activeOnboardingStep === 'payment' ? 'border-primary ring-2 ring-primary/45' : ''
+                                            }`}
                                             value={settingsForm.paymentMethods?.gcash?.accountName ?? ''}
                                             onChange={(e) => setSettingsForm({
                                                 ...settingsForm,
@@ -1530,8 +1556,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Account Number</label>
                                         <input
                                             type="text"
+                                            data-onboarding-target="gcash-account-number"
                                             placeholder="e.g. 09XX XXX XXXX"
-                                            className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                            className={`w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all ${
+                                                activeOnboardingStep === 'payment' ? 'border-primary ring-2 ring-primary/45' : ''
+                                            }`}
                                             value={settingsForm.paymentMethods?.gcash?.accountNumber ?? ''}
                                             onChange={(e) => setSettingsForm({
                                                 ...settingsForm,
@@ -2361,10 +2390,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 )}
 
 
-                {/* Admin Onboarding Tour */}
-                {settings?.setupComplete && (
-                    <AdminOnboarding onNavigate={navigateToTab} onEnterVisualBuilder={onEnterVisualBuilder} />
-                )}
+
 
 
 
@@ -2891,63 +2917,77 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             {/* Room List */}
                             <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                                {sortedRooms.map(room => (
-                                    <div
-                                        key={room.id}
-                                        draggable
-                                        onDragStart={() => handleDragStart(room.id)}
-                                        onDragOver={(e) => handleDragOver(e, room.id)}
-                                        onDrop={() => handleDrop(room.id)}
-                                        onDragEnd={handleDragEnd}
-                                        className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all overflow-hidden select-none
-                                            ${draggedRoomId === room.id ? 'opacity-40 scale-[0.98] border-primary ring-2 ring-primary/30' : ''}
-                                            ${dragOverRoomId === room.id && draggedRoomId !== room.id ? 'border-primary border-2 ring-2 ring-primary/30 shadow-lg' : ''}
-                                            ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}
-                                            ${draggedRoomId ? 'cursor-grabbing' : 'cursor-grab'}
-                                        `}
-                                    >
-                                        <div className="flex flex-row h-32 sm:h-auto">
-                                            {/* Drag handle + Image Thumb */}
-                                            <div className="w-28 sm:w-48 md:w-64 h-full relative bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-                                                {draggedRoomId && draggedRoomId !== room.id && (
-                                                    <div className="absolute inset-0 z-10 bg-primary/10 flex items-center justify-center">
-                                                        <div className="w-full border-t-2 border-dashed border-primary opacity-60" />
+                                {sortedRooms.map((room, rIdx) => {
+                                    const isFirstRoom = rIdx === 0;
+                                    const shouldGlow = activeOnboardingStep === 'rooms' && isFirstRoom;
+                                    return (
+                                        <div
+                                            key={room.id}
+                                            data-onboarding-target={isFirstRoom ? 'first-room-card' : undefined}
+                                            draggable
+                                            onDragStart={() => handleDragStart(room.id)}
+                                            onDragOver={(e) => handleDragOver(e, room.id)}
+                                            onDrop={() => handleDrop(room.id)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border transition-all overflow-hidden select-none relative
+                                                ${shouldGlow ? 'onboarding-highlight-glow ring-2 ring-primary border-primary' : ''}
+                                                ${draggedRoomId === room.id ? 'opacity-40 scale-[0.98] border-primary ring-2 ring-primary/30' : ''}
+                                                ${dragOverRoomId === room.id && draggedRoomId !== room.id ? 'border-primary border-2 ring-2 ring-primary/30 shadow-lg' : ''}
+                                                ${editingRoomId === room.id ? 'border-primary ring-1 ring-primary' : 'border-gray-200 dark:border-gray-700 hover:shadow-md'}
+                                                ${draggedRoomId ? 'cursor-grabbing' : 'cursor-grab'}
+                                            `}
+                                        >
+                                            {shouldGlow && (
+                                                <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 onboarding-arrow-indicator select-none pointer-events-none">
+                                                    <span className="text-xs">⬇️</span>
+                                                    <span>Click the Edit button to upload room photos!</span>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-row h-32 sm:h-auto">
+                                                {/* Drag handle + Image Thumb */}
+                                                <div className="w-28 sm:w-48 md:w-64 h-full relative bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                                                    {draggedRoomId && draggedRoomId !== room.id && (
+                                                        <div className="absolute inset-0 z-10 bg-primary/10 flex items-center justify-center">
+                                                            <div className="w-full border-t-2 border-dashed border-primary opacity-60" />
+                                                        </div>
+                                                    )}
+                                                    <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
+                                                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/95 dark:bg-black/80 backdrop-blur-sm px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-black shadow-md border border-white/20">
+                                                        <span className="text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
                                                     </div>
-                                                )}
-                                                <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
-                                                <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/95 dark:bg-black/80 backdrop-blur-sm px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-black shadow-md border border-white/20">
-                                                    <span className="text-gray-900 dark:text-white">₱{room.price.toLocaleString()}</span>
-                                                </div>
-                                                {/* Drag handle indicator */}
-                                                <div className="absolute bottom-1 left-1 bg-black/40 backdrop-blur-sm rounded px-1 py-0.5 flex gap-0.5">
-                                                    {[...Array(3)].map((_, i) => (
-                                                        <div key={i} className="flex flex-col gap-0.5">
-                                                            <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
-                                                            <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-1 sm:mb-2">
-                                                        <div className="min-w-0">
-                                                            <h3 className="text-sm sm:text-xl font-bold text-gray-800 dark:text-white truncate">{room.name}</h3>
-                                                            <div className="flex items-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
-                                                                <Users size={12} className="mr-1 sm:hidden" />
-                                                                <Users size={14} className="mr-1 hidden sm:block" />
-                                                                Capacity: {room.capacity} Guests
+                                                    {/* Drag handle indicator */}
+                                                    <div className="absolute bottom-1 left-1 bg-black/40 backdrop-blur-sm rounded px-1 py-0.5 flex gap-0.5">
+                                                        {[...Array(3)].map((_, i) => (
+                                                            <div key={i} className="flex flex-col gap-0.5">
+                                                                <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
+                                                                <div className="w-0.5 h-0.5 bg-white/70 rounded-full" />
                                                             </div>
-                                                        </div>
-                                                        {editingRoomId !== room.id && (
-                                                            <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
-                                                                <button
-                                                                    onClick={() => handleEditRoomClick(room)}
-                                                                    className="p-1.5 sm:p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors border border-transparent dark:border-indigo-500/20"
-                                                                    title="Edit"
-                                                                >
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
+                                                    <div>
+                                                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                                                            <div className="min-w-0">
+                                                                <h3 className="text-sm sm:text-xl font-bold text-gray-800 dark:text-white truncate">{room.name}</h3>
+                                                                <div className="flex items-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
+                                                                    <Users size={12} className="mr-1 sm:hidden" />
+                                                                    <Users size={14} className="mr-1 hidden sm:block" />
+                                                                    Capacity: {room.capacity} Guests
+                                                                </div>
+                                                            </div>
+                                                            {editingRoomId !== room.id && (
+                                                                <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
+                                                                    <button
+                                                                        onClick={() => handleEditRoomClick(room)}
+                                                                        data-onboarding-target={isFirstRoom ? 'first-room-edit' : undefined}
+                                                                        className={`p-1.5 sm:p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 rounded-lg transition-colors border border-transparent dark:border-indigo-500/20 transition-all ${
+                                                                            shouldGlow ? 'ring-2 ring-primary bg-primary/20 text-primary border-primary animate-pulse' : ''
+                                                                        }`}
+                                                                        title="Edit"
+                                                                    >
                                                                     <Edit size={14} className="sm:hidden" />
                                                                     <Edit size={18} className="hidden sm:block" />
                                                                 </button>
@@ -2983,7 +3023,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
 
                                 {rooms.length === 0 && (
                                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
@@ -3688,10 +3728,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
             )}
 
-            {/* Admin Onboarding Tour */}
-            {settings?.setupComplete && (
-                <AdminOnboarding onNavigate={navigateToTab} onEnterVisualBuilder={onEnterVisualBuilder} />
-            )}
+
         </div>
     );
 };

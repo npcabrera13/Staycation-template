@@ -11,9 +11,10 @@ interface FooterProps {
   isEditing?: boolean;
   onSettingChange?: (section: keyof Settings, key: string, value: any) => void;
   onAdminEnter?: () => void;
+  activeOnboardingStep?: string | null;
 }
 
-const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, onAdminEnter }) => {
+const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, onAdminEnter, activeOnboardingStep }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -134,14 +135,25 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                   onChange={(val) => onSettingChange?.('contact', 'email', val)}
                 />
               </li>
-              <li className="flex space-x-4 mt-4">
+              <li className="flex space-x-4 mt-4 relative">
+                {activeOnboardingStep === 'social' && (
+                  <div className="absolute -top-9 left-0 z-20 flex items-center gap-1 bg-primary text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow border border-white/10 onboarding-arrow-indicator select-none pointer-events-none whitespace-nowrap">
+                    <span>⬇️</span>
+                    <span>Click to configure social links!</span>
+                  </div>
+                )}
                 {/* Socials - Click to edit URL in edit mode */}
                 {/* Facebook */}
                 {settings?.social?.showFacebook !== false && (
                   <a
                     href={isEditing ? '#' : settings?.social?.facebook}
+                    data-onboarding-target="footer-facebook"
                     onClick={(e) => handleSocialClick(e, 'facebook')}
-                    className={`hover:text-blue-400 transition ${!settings?.social?.facebook && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    className={`hover:text-blue-400 transition ${!settings?.social?.facebook && !isEditing ? 'hidden' : ''} ${
+                      isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''
+                    } ${
+                      activeOnboardingStep === 'social' ? 'onboarding-highlight-glow ring-2 ring-primary border-primary animate-pulse' : ''
+                    }`}
                     title={isEditing ? 'Click to edit Facebook URL' : ''}
                   >
                     <Facebook />
@@ -152,8 +164,13 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                 {settings?.social?.showInstagram !== false && (
                   <a
                     href={isEditing ? '#' : settings?.social?.instagram}
+                    data-onboarding-target="footer-instagram"
                     onClick={(e) => handleSocialClick(e, 'instagram')}
-                    className={`hover:text-pink-400 transition ${!settings?.social?.instagram && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    className={`hover:text-pink-400 transition ${!settings?.social?.instagram && !isEditing ? 'hidden' : ''} ${
+                      isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''
+                    } ${
+                      activeOnboardingStep === 'social' ? 'onboarding-highlight-glow ring-2 ring-primary border-primary animate-pulse' : ''
+                    }`}
                     title={isEditing ? 'Click to edit Instagram URL' : ''}
                   >
                     <Instagram />

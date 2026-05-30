@@ -20,3 +20,99 @@ body,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Onboarding Live Highlight Glow classes */
+@keyframes onboarding-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.2);
+    border-color: rgb(59, 130, 246) !important;
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.5);
+    border-color: rgb(37, 99, 235) !important;
+  }
+}
+.onboarding-highlight-glow {
+  animation: onboarding-pulse 1.6s infinite ease-in-out !important;
+  border-radius: 12px;
+  position: relative;
+  z-index: 10;
+}
+
+@keyframes onboarding-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.onboarding-arrow-indicator {
+  animation: onboarding-arrow-bounce 1s infinite ease-in-out;
+}
+
+/* Typewriter blinking cursor */
+@keyframes typewriter-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typewriter-cursor {
+  animation: typewriter-cursor 0.8s step-end infinite;
+  color: var(--tw-ring-color, #3b82f6);
+  font-weight: 700;
+}
+
+/* Sub-step completion bounce */
+@keyframes substep-complete {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  50% { transform: scale(0.9); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.substep-complete-bounce {
+  animation: substep-complete 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Spotlight overlay fade-in */
+@keyframes spotlight-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.spotlight-overlay {
+  animation: spotlight-fade-in 0.35s ease-out forwards;
+}
+
+/* Coach mark entry from above */
+@keyframes coach-mark-enter {
+  from { transform: translateY(-12px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.coach-mark-enter {
+  animation: coach-mark-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Active sub-step row pulse */
+@keyframes substep-active-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+}
+.substep-active-pulse {
+  animation: substep-active-pulse 2s infinite ease-in-out;
+}
+
+/* Nice badge pop-in */
+@keyframes nice-badge-pop {
+  0% { transform: scale(0) translateY(10px); opacity: 0; }
+  50% { transform: scale(1.15) translateY(-2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.nice-badge-pop {
+  animation: nice-badge-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Green flash ring on phone panel */
+@keyframes green-flash-ring {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.green-flash-ring {
+  animation: green-flash-ring 0.8s ease-out;
+}
