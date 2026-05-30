@@ -62,6 +62,7 @@ const stripHtml = (html: string) => {
 
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     isAdminLocked,
     isHomepageLocked,
@@ -83,6 +84,7 @@ function AppContent() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [startInGallery, setStartInGallery] = useState(false);
   const [activeOnboardingStep, setActiveOnboardingStep] = useState<string | null>(null);
+  const [isBuilderActive, setIsBuilderActive] = useState(false);
 
   const handleOnboardingNavigate = (tab: string, targetId?: string) => {
     navigate('/admin', { state: { activeTab: tab, scrollTarget: targetId } });
@@ -547,6 +549,7 @@ function AppContent() {
               onExitAdmin={() => setIsAdminAuthenticated(false)}
               startEditing={startEditing}
               onEditingStarted={() => setStartEditing(false)}
+              onEditingChange={setIsBuilderActive}
               onUpdateRoom={async (roomId, updates) => {
                 const existingRoom = rooms.find(r => r.id === roomId);
                 if (existingRoom) {
@@ -639,7 +642,7 @@ function AppContent() {
       </Suspense>
 
       {/* Global Onboarding Tour Guide */}
-      {settings?.setupComplete && isAdminAuthenticated && (
+      {settings?.setupComplete && isAdminAuthenticated && (location.pathname === '/admin' || (location.pathname === '/' && isBuilderActive)) && (
         <AdminOnboarding 
           onNavigate={handleOnboardingNavigate} 
           onEnterVisualBuilder={handleEnterVisualBuilder} 

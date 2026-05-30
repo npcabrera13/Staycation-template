@@ -160,6 +160,7 @@ interface LandingPageProps {
     onEditingStarted?: () => void;
     onUpdateRoom?: (roomId: string, updates: Partial<Room>) => Promise<void>;
     activeOnboardingStep?: string | null;
+    onEditingChange?: (isEditing: boolean) => void;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({
@@ -177,6 +178,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     onEditingStarted,
     onUpdateRoom,
     activeOnboardingStep,
+    onEditingChange,
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -203,6 +205,13 @@ const LandingPage: React.FC<LandingPageProps> = ({
     const [activeAboutSlide, setActiveAboutSlide] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Sync editing state with parent component
+    useEffect(() => {
+        if (onEditingChange) {
+            onEditingChange(isEditing);
+        }
+    }, [isEditing, onEditingChange]);
 
     // Clear undo and redo stacks when exiting edit mode
     useEffect(() => {
