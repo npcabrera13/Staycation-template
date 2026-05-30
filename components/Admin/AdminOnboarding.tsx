@@ -768,7 +768,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
 
             {/* ── Floating Rocket Beacon ── */}
             {!isHeroAdjustingActive && (
-                <div className="fixed bottom-24 md:bottom-6 right-6 z-[120] flex flex-col items-end gap-3 pointer-events-none select-none">
+                <div className="fixed bottom-16 md:bottom-6 right-6 z-[120] flex flex-col items-end gap-2 pointer-events-none select-none">
                     {activeToast && !isOpen && (
                         <div className="pointer-events-auto animate-slide-up bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 max-w-[280px] border border-white/20 relative group overflow-hidden">
                             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -792,7 +792,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                     )}
 
                     {!activeToast && !isOpen && (
-                        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/20 px-4 py-2 flex items-center gap-2">
+                        <div className="hidden md:flex pointer-events-auto animate-fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/20 px-4 py-2 items-center gap-2">
                             <Sparkles size={13} className="text-primary shrink-0" />
                             <span className="text-xs font-bold text-secondary dark:text-white whitespace-nowrap font-sans">
                                 {allDone ? '🎉 Your site is live!' : `${remaining} setup step${remaining !== 1 ? 's' : ''} left`}
@@ -824,12 +824,12 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                             </>
                         )}
                         {!allDone && (
-                            <span className="absolute -top-1.5 -right-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-black shadow-lg animate-bounce">
+                            <span className="absolute -top-1 -right-1 z-10 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-red-500 text-white text-[8px] md:text-[9px] font-black shadow-lg animate-bounce">
                                 {remaining}
                             </span>
                         )}
-                        <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary via-blue-500 to-secondary flex items-center justify-center shadow-2xl shadow-primary/40 transition-transform duration-300 group-hover:scale-110 group-active:scale-95 ring-4 ring-white dark:ring-gray-900">
-                            <span className="text-[26px] leading-none select-none">{allDone ? '🎉' : '🚀'}</span>
+                        <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-primary via-blue-500 to-secondary flex items-center justify-center shadow-2xl shadow-primary/40 transition-transform duration-300 group-hover:scale-110 group-active:scale-95 ring-2 md:ring-4 ring-white dark:ring-gray-900">
+                            <span className="text-[20px] md:text-[26px] leading-none select-none">{allDone ? '🎉' : '🚀'}</span>
                         </div>
                     </button>
                 </div>
