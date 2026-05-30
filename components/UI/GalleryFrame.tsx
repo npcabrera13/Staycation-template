@@ -220,7 +220,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
 
             {isEditing && isTouchDevice && isRepositioning && (
                 <>
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] border-4 border-primary pointer-events-none z-[60]" />
+                    <div className="absolute inset-0 border-4 border-primary pointer-events-none z-[60]" />
                     <div className="absolute top-4 left-0 w-full flex justify-center pointer-events-none z-[70]">
                         <div className="bg-black/70 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl">
                             <ZoomIn size={12} /> Pinch to zoom, drag to move
