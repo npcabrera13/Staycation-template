@@ -806,7 +806,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                 // Toggle close — preserve step position
                                 setIsOpen(false);
                             } else {
-                                // Toggle open — resume where we left off (BUG FIX: no longer resets to -1)
+                                // Toggle open — resume where we left off
                                 setIsOpen(true);
                                 // Only go to welcome if we haven't started yet
                                 if (currentStepIdx < 0 || currentStepIdx >= steps.length) {
@@ -835,217 +835,112 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                 </div>
             )}
 
-            {/* ── Immersive Phone Setup Wizard Modal ── */}
+            {/* ── Immersive Responsive Setup Wizard Modal ── */}
             {isOpen && (
                 <>
-                    <div 
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none z-[115] animate-fade-in flex items-center justify-center p-4 pointer-events-auto md:pointer-events-none"
-                        onClick={() => setIsOpen(false)}
-                    >
-                        <div 
-                            className={`relative w-full max-w-[350px] h-[640px] md:fixed md:top-24 md:right-6 md:translate-x-0 md:translate-y-0 bg-gray-950 rounded-[48px] p-3.5 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] md:shadow-[0_20px_50px_rgba(0,0,0,0.45)] border-4 border-gray-800/80 flex flex-col justify-center animate-slide-up select-none pointer-events-auto md:scale-95 z-[120] transition-shadow duration-300 ${phoneFlash ? 'green-flash-ring' : ''}`}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Smartphone notch */}
-                            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-[130] flex items-center justify-end px-2.5 pointer-events-none border border-white/5">
+                    <div className="fixed inset-0 pointer-events-none z-[115]">
+                        <div className={`fixed bottom-4 left-4 right-4 w-auto h-auto max-h-[360px] md:max-h-none md:absolute md:fixed md:top-24 md:right-6 md:w-full md:max-w-[350px] md:h-[640px] bg-white/95 dark:bg-gray-950/95 md:bg-gray-950 rounded-3xl md:rounded-[48px] p-4 md:p-3.5 shadow-2xl md:shadow-[0_20px_50px_rgba(0,0,0,0.45)] border border-gray-200/80 dark:border-gray-800/80 md:border-4 md:border-gray-800/80 flex flex-col justify-center animate-slide-up select-none pointer-events-auto md:scale-95 z-[120] transition-shadow duration-300 ${phoneFlash ? 'green-flash-ring' : ''}`} onClick={(e) => e.stopPropagation()}>
+                            <div className="hidden md:flex absolute top-3 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-[130] items-center justify-end px-2.5 pointer-events-none border border-white/5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-900 border border-gray-950 shrink-0"></span>
                             </div>
-
-                            {/* Inner Screen Panel */}
-                            <div className="relative w-full h-full bg-white dark:bg-gray-900 rounded-[34px] overflow-hidden flex flex-col border border-white/10 shadow-inner">
-                                
-                                {/* Top mock status bar */}
-                                <div className="h-9 shrink-0 px-6 pt-3 flex justify-between items-center text-[10px] font-bold text-gray-400 dark:text-gray-500 pointer-events-none select-none z-[125]">
+                            <div className="relative w-full h-full bg-white dark:bg-gray-900 md:rounded-[34px] rounded-2xl overflow-hidden flex flex-col md:border md:border-white/10 md:shadow-inner">
+                                <button onClick={() => setIsOpen(false)} className="absolute top-2.5 right-2.5 text-gray-400 hover:text-secondary dark:hover:text-white transition-colors z-[130] p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Close Guide">
+                                    <X size={14} />
+                                </button>
+                                <div className="hidden md:flex h-9 shrink-0 px-6 pt-3 justify-between items-center text-[10px] font-bold text-gray-400 dark:text-gray-500 pointer-events-none select-none z-[125]">
                                     <span>9:41 AM 📱</span>
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 mr-6">
                                         <span>📶</span>
                                         <span>🔋 100%</span>
                                     </div>
                                 </div>
-
-                                {/* Step Progress Track */}
                                 {currentStepIdx >= 0 && currentStepIdx < steps.length && (
-                                    <div className="px-6 py-2 shrink-0 flex justify-between items-center select-none z-[125]">
-                                        <button 
-                                            onClick={goBack}
-                                            className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider"
-                                        >
+                                    <div className="px-6 pr-10 md:pr-6 py-2 shrink-0 flex justify-between items-center select-none z-[125]">
+                                        <button onClick={goBack} className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider">
                                             <ArrowLeft size={10} className="mr-0.5" /> Back
                                         </button>
                                         <div className="flex gap-1.5">
                                             {steps.map((_, sIdx) => (
-                                                <span 
-                                                    key={sIdx} 
-                                                    className={`h-1.5 rounded-full transition-all duration-300 ${sIdx === currentStepIdx ? 'w-5 bg-primary' : isStepDone(steps[sIdx].id) ? 'w-2 bg-emerald-500' : 'w-1.5 bg-gray-250 dark:bg-gray-700'}`}
-                                                />
+                                                <span key={sIdx} className={`h-1.5 rounded-full transition-all duration-300 ${sIdx === currentStepIdx ? 'w-5 bg-primary' : isStepDone(steps[sIdx].id) ? 'w-2 bg-emerald-500' : 'w-1.5 bg-gray-250 dark:bg-gray-700'}`} />
                                             ))}
                                         </div>
-                                        <button 
-                                            onClick={goNext}
-                                            className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider"
-                                        >
+                                        <button onClick={goNext} className="text-gray-400 hover:text-primary transition-colors flex items-center text-[10px] font-black uppercase tracking-wider">
                                             Skip <ArrowRight size={10} className="ml-0.5" />
                                         </button>
                                     </div>
                                 )}
-
-                                {/* Slide Content Body */}
-                                <div key={animationKey} className={`flex-1 flex flex-col justify-between p-5 overflow-y-auto ${direction === 'next' ? 'animate-slide-next' : 'animate-slide-prev'}`}>
-                                    
-                                    {/* 1. WELCOME SCREEN */}
+                                <div key={animationKey} className={`flex-1 flex flex-col justify-between p-4 md:p-5 overflow-y-auto ${direction === 'next' ? 'animate-slide-next' : 'animate-slide-prev'}`}>
                                     {currentStepIdx === -1 && (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
-                                            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-primary via-blue-500 to-indigo-600 flex items-center justify-center text-4xl shadow-2xl relative animate-phone-float mb-5 ring-4 ring-white dark:ring-gray-800">
-                                                <Rocket size={34} className="text-white" />
-                                                <div className="absolute -top-1 -right-1 flex h-4 w-4 animate-ping rounded-full bg-primary/60" />
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-2 md:py-4">
+                                            <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-[28px] bg-gradient-to-br from-primary via-blue-500 to-indigo-600 flex items-center justify-center text-2xl md:text-4xl shadow-2xl relative animate-phone-float mb-2 md:mb-5 ring-2 md:ring-4 ring-white dark:ring-gray-800 shrink-0">
+                                                <Rocket className="text-white w-6 h-6 md:w-9 md:h-9" />
+                                                <div className="absolute -top-1 -right-1 flex h-3 w-3 md:h-4 md:w-4 animate-ping rounded-full bg-primary/60" />
                                             </div>
-                                            <h3 className="text-lg font-black text-secondary dark:text-white leading-tight tracking-tight px-1 font-sans">
+                                            <h3 className="text-sm md:text-lg font-black text-secondary dark:text-white leading-tight tracking-tight px-1 font-sans">
                                                 Interactive Setup Guide!
                                             </h3>
-                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold leading-relaxed max-w-[240px] mt-3 font-sans">
-                                                I'll walk you through every single step of configuring your staycation website — from payment setup to custom branding. Just follow along!
+                                            <p className="text-[10px] md:text-[11px] text-gray-500 dark:text-gray-400 font-semibold leading-relaxed max-w-[240px] mt-1 md:mt-3 font-sans">
+                                                I'll walk you through every single step of configuring your staycation website — from payment setup to custom branding.
                                             </p>
-                                            
-                                            {/* Quick overview of what we'll cover */}
-                                            <div className="w-full mt-5 space-y-1.5 text-left">
-                                                {steps.map((step, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2 border border-gray-100 dark:border-gray-800">
-                                                        <span className="text-base">{step.emoji}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <span className="text-[10px] font-bold text-secondary dark:text-white block leading-tight">{step.title}</span>
-                                                            <span className="text-[8px] text-gray-400 font-semibold">{step.substeps.length} tasks</span>
-                                                        </div>
-                                                        {isStepDone(step.id) && step.id !== 'builder' ? (
-                                                            <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                                                        ) : (
-                                                            <Circle size={14} className="text-gray-300 dark:text-gray-600 shrink-0" />
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            <button
-                                                onClick={goNext}
-                                                className="w-full mt-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                                            >
+                                            <button onClick={goNext} className="w-full mt-3 md:mt-5 py-2.5 md:py-3 rounded-xl md:rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans shrink-0">
                                                 Let's Begin! <ArrowRight size={14} />
                                             </button>
                                         </div>
                                     )}
-
-                                    {/* 2. ACTIVE STEPS with Sub-Step Checklist */}
                                     {currentStepIdx >= 0 && currentStepIdx < steps.length && (() => {
                                         const step = steps[currentStepIdx];
                                         const done = isStepDone(step.id);
                                         const { completed, total } = getSubStepProgress(step);
                                         const progressPercent = Math.round((completed / total) * 100);
-                                        
                                         return (
-                                            <div className="flex-1 flex flex-col justify-between h-full gap-3">
-                                                <div className="space-y-3 flex-1">
-                                                    {/* Visual Preview */}
-                                                    {renderVisualMockup(step.visualType)}
-
-                                                    {/* Step Header */}
+                                            <div className="flex-1 flex flex-col justify-between h-full gap-2 md:gap-3">
+                                                <div className="space-y-2 md:space-y-3 flex-1">
                                                     <div className="text-center">
-                                                        <h3 className="text-sm font-black text-secondary dark:text-white leading-tight flex items-center justify-center gap-1.5 font-sans">
-                                                            <span className="text-lg">{step.emoji}</span>
+                                                        <h3 className="text-xs md:text-sm font-black text-secondary dark:text-white leading-tight flex items-center justify-center gap-1.5 font-sans">
+                                                            <span className="text-base md:text-lg">{step.emoji}</span>
                                                             {step.title}
-                                                            {done && step.id !== 'builder' && <CheckCircle2 size={15} className="text-emerald-500" />}
+                                                            {done && step.id !== 'builder' && <CheckCircle2 size={13} className="text-emerald-500 md:w-3.5 md:h-3.5" />}
                                                         </h3>
-                                                        <p className="text-[8px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mt-0.5 font-sans">{step.subtitle}</p>
+                                                        <p className="text-[7px] md:text-[8px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mt-0.5 font-sans">{step.subtitle}</p>
                                                     </div>
-
-                                                    {/* Sub-step Progress Bar */}
                                                     <div className="flex items-center gap-2 px-1">
-                                                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                                            <div 
-                                                                className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full transition-all duration-500 ease-out"
-                                                                style={{ width: `${progressPercent}%` }}
-                                                            />
+                                                        <div className="flex-1 h-1 md:h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
                                                         </div>
-                                                        <span className="text-[9px] font-black text-gray-400 shrink-0">{completed}/{total}</span>
+                                                        <span className="text-[8px] md:text-[9px] font-black text-gray-400 shrink-0">{completed}/{total}</span>
                                                     </div>
-
-                                                    {/* ── Interactive Sub-Step Checklist ── */}
-                                                    <div className="space-y-1.5">
+                                                    <div className="space-y-1 md:space-y-1.5">
                                                         {step.substeps.map((sub, subIdx) => {
                                                             const isSubDone = subStepValidation[sub.validationKey as keyof typeof subStepValidation];
                                                             const isActive = subIdx === activeSubStepIdx;
-                                                            
                                                             return (
-                                                                <button
-                                                                    key={sub.id}
-                                                                    onClick={() => setActiveSubStepIdx(subIdx)}
-                                                                    className={`w-full text-left rounded-xl p-2.5 border transition-all duration-300 ${
-                                                                        isActive 
-                                                                            ? 'bg-primary/5 dark:bg-primary/10 border-primary/30 substep-active-pulse' 
-                                                                            : isSubDone 
-                                                                                ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/30' 
-                                                                                : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-start gap-2">
-                                                                        {/* Status indicator */}
-                                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                                                                            isSubDone 
-                                                                                ? 'bg-emerald-500 text-white substep-complete-bounce' 
-                                                                                : isActive 
-                                                                                    ? 'bg-primary/20 border-2 border-primary' 
-                                                                                    : 'bg-gray-200 dark:bg-gray-700'
-                                                                        }`}>
-                                                                            {isSubDone ? (
-                                                                                <Check size={11} strokeWidth={3} />
-                                                                            ) : (
-                                                                                <span className="text-[8px] font-black text-gray-500 dark:text-gray-400">{sub.emoji}</span>
-                                                                            )}
+                                                                <button key={sub.id} onClick={() => setActiveSubStepIdx(subIdx)} className={`w-full text-left rounded-lg md:rounded-xl p-2 md:p-2.5 border transition-all duration-300 ${isActive ? 'bg-primary/5 dark:bg-primary/10 border-primary/30 substep-active-pulse' : isSubDone ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/30' : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800'}`}>
+                                                                    <div className="flex items-start gap-1.5 md:gap-2">
+                                                                        <div className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all ${isSubDone ? 'bg-emerald-500 text-white substep-complete-bounce' : isActive ? 'bg-primary/20 border-2 border-primary' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                                                                            {isSubDone ? <Check size={9} strokeWidth={3} className="md:w-2.5 md:h-2.5" /> : <span className="text-[7px] md:text-[8px] font-black text-gray-500 dark:text-gray-400">{sub.emoji}</span>}
                                                                         </div>
-                                                                        
                                                                         <div className="flex-1 min-w-0">
-                                                                            {/* Instruction text — typewriter for active, static for others */}
-                                                                            <div className={`text-[11px] font-bold leading-tight ${
-                                                                                isSubDone 
-                                                                                    ? 'text-emerald-600 dark:text-emerald-400 line-through opacity-70' 
-                                                                                    : isActive 
-                                                                                        ? 'text-secondary dark:text-white' 
-                                                                                        : 'text-gray-500 dark:text-gray-400'
-                                                                            }`}>
-                                                                                {isActive && !isSubDone ? (
-                                                                                    <TypewriterText text={sub.instruction} />
-                                                                                ) : (
-                                                                                    sub.instruction
-                                                                                )}
+                                                                            <div className={`text-[10px] md:text-[11px] font-bold leading-tight ${isSubDone ? 'text-emerald-600 dark:text-emerald-400 line-through opacity-70' : isActive ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                                                {isActive && !isSubDone ? <TypewriterText text={sub.instruction} /> : sub.instruction}
                                                                             </div>
-                                                                            {/* Tip text */}
-                                                                            {isActive && sub.tip && (
-                                                                                <p className="text-[9px] text-gray-400 dark:text-gray-500 font-medium mt-1 leading-snug animate-fade-in">
-                                                                                    💡 {sub.tip}
-                                                                                </p>
-                                                                            )}
+                                                                            {isActive && sub.tip && <p className="text-[8px] md:text-[9px] text-gray-400 dark:text-gray-500 font-medium mt-0.5 leading-snug animate-fade-in">💡 {sub.tip}</p>}
                                                                         </div>
                                                                     </div>
                                                                 </button>
                                                             );
                                                         })}
                                                     </div>
-
-                                                    {/* Nice! celebration badge */}
                                                     {showNiceBadge && (
                                                         <div className="flex justify-center">
-                                                            <div className="nice-badge-pop bg-gradient-to-r from-emerald-500 to-green-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-1">
-                                                                <Sparkles size={12} /> Nice work! ✨
+                                                            <div className="nice-badge-pop bg-gradient-to-r from-emerald-500 to-green-500 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg border border-white/20 flex items-center gap-1">
+                                                                <Sparkles size={10} /> Nice work! ✨
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
-
-                                                {/* Continue Button */}
-                                                <div className="shrink-0 pt-1">
-                                                    <button
-                                                        onClick={goNext}
-                                                        className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-black shadow-lg shadow-primary/10 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                                                    >
-                                                        Continue to Next Step <ChevronRight size={14} />
+                                                <div className="shrink-0 pt-0.5">
+                                                    <button onClick={goNext} className="w-full py-2 md:py-2.5 rounded-lg md:rounded-xl bg-primary hover:bg-primary-hover text-white text-[10px] md:text-xs font-black shadow-lg shadow-primary/10 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans">
+                                                        Continue to Next Step <ChevronRight size={12} className="md:w-3.5 md:h-3.5" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -1054,29 +949,29 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
 
                                     {/* 3. CELEBRATION SCREEN */}
                                     {currentStepIdx === steps.length && (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-6 h-full font-sans">
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center py-2 md:py-6 h-full font-sans">
                                             
-                                            <div className="relative w-full h-32 bg-gradient-to-br from-amber-500/10 via-emerald-500/5 to-blue-500/10 rounded-2xl flex flex-col items-center justify-center border border-emerald-500/20 overflow-hidden shadow-inner select-none mb-4 animate-phone-float">
+                                            <div className="relative w-full h-16 md:h-32 bg-gradient-to-br from-amber-500/10 via-emerald-500/5 to-blue-500/10 rounded-xl md:rounded-2xl flex flex-col items-center justify-center border border-emerald-500/20 overflow-hidden shadow-inner select-none mb-2 md:mb-4 animate-phone-float shrink-0">
                                                 <div className="absolute inset-0 flex items-center justify-center animate-rotate-sparkle pointer-events-none">
                                                     <Sparkles size={160} className="text-amber-400/15" />
                                                 </div>
-                                                <Trophy size={42} className="text-amber-500 fill-amber-500/10 drop-shadow-[0_10px_20px_rgba(245,158,11,0.25)]" />
-                                                <div className="mt-2 flex items-center gap-1.5 bg-emerald-500/15 backdrop-blur-md px-3 py-0.5 rounded-full border border-emerald-500/25">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                    <span className="text-[8px] font-black tracking-wide uppercase text-emerald-600 dark:text-emerald-400">All Set!</span>
+                                                <Trophy className="text-amber-500 fill-amber-500/10 drop-shadow-[0_10px_20px_rgba(245,158,11,0.25)] w-8 h-8 md:w-11 md:h-11" />
+                                                <div className="mt-1 md:mt-2 flex items-center gap-1 bg-emerald-500/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-emerald-500/25">
+                                                    <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    <span className="text-[7px] md:text-[8px] font-black tracking-wide uppercase text-emerald-600 dark:text-emerald-400">All Set!</span>
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-lg font-black text-secondary dark:text-white leading-tight">
+                                            <h3 className="text-sm md:text-lg font-black text-secondary dark:text-white leading-tight">
                                                 Your Website is Live!
                                             </h3>
                                             
-                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold leading-relaxed max-w-[260px] mt-2.5">
+                                            <p className="text-[10px] md:text-[11px] text-gray-500 dark:text-gray-400 font-semibold leading-relaxed max-w-[260px] mt-1 md:mt-2.5">
                                                 Congratulations! Your beautiful staycation villa is fully configured and ready to secure payouts directly to your account.
                                             </p>
 
                                             {/* Completed checklist summary */}
-                                            <div className="w-full mt-4 space-y-1">
+                                            <div className="hidden md:block w-full mt-4 space-y-1">
                                                 {steps.filter(s => s.id !== 'builder').map(step => (
                                                     <div key={step.id} className="flex items-center gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg px-3 py-1.5 border border-emerald-200/30 dark:border-emerald-800/20">
                                                         <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
@@ -1087,7 +982,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                             
                                             <button
                                                 onClick={() => setIsOpen(false)}
-                                                className="w-full mt-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1 cursor-pointer border border-white/10"
+                                                className="w-full mt-3 md:mt-5 py-2.5 md:py-3 rounded-xl md:rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1 cursor-pointer border border-white/10 shrink-0"
                                             >
                                                 Start Booking Manager 🚀
                                             </button>
@@ -1098,7 +993,7 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                             </div>
                             
                             {/* Mock home indicator */}
-                            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-800 rounded-full z-[130] pointer-events-none"></div>
+                            <div className="hidden md:block absolute bottom-5 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-800 rounded-full z-[130] pointer-events-none"></div>
                         </div>
                     </div>
                 </>
