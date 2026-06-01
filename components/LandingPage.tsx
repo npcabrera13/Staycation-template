@@ -152,6 +152,7 @@ interface LandingPageProps {
     onAdminEnter: () => void;
     onOpenMyBookings: () => void;
     isLoading: boolean;
+    isSettingsLoaded?: boolean;
     settings?: Settings;
     onUpdateSettings?: (settings: Settings) => Promise<void>; // Added for Builder
     isAdmin?: boolean;
@@ -170,6 +171,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     onAdminEnter,
     onOpenMyBookings,
     isLoading,
+    isSettingsLoaded = false,
     settings,
     onUpdateSettings,
     isAdmin = false,
@@ -688,7 +690,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 />
 
                 {/* Setup Wizard — mandatory until user changes the default name */}
-                {!isLoading && workingSettings?.siteName === 'Serenity Staycation' && onUpdateSettings && (
+                {!isLoading && isSettingsLoaded && workingSettings?.siteName === 'Serenity Staycation' && onUpdateSettings && (
                     <SetupWizard
                         settings={workingSettings}
                         rooms={rooms}

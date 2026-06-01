@@ -6,11 +6,12 @@ import { db } from '../firebaseConfig';
 interface AdminPasscodeGateProps {
     children: React.ReactNode;
     onBack: () => void;
+    onAuthenticated?: (isAuthenticated: boolean) => void;
 }
 
 const PASSCODE_LENGTH = 6;
 
-const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack }) => {
+const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack, onAuthenticated }) => {
     const [adminPasscode, setAdminPasscode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,6 +20,13 @@ const AdminPasscodeGate: React.FC<AdminPasscodeGateProps> = ({ children, onBack 
     const [error, setError] = useState('');
     const [shake, setShake] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    // Sync auth state back to parent
+    useEffect(() => {
+        if (onAuthenticated) {
+            onAuthenticated(isAuthenticated);
+        }
+    }, [isAuthenticated, onAuthenticated]);
 
     // Load admin passcode from Firestore and check cookies (localStorage)
     useEffect(() => {

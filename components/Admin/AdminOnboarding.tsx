@@ -3,9 +3,10 @@ import {
     X, CreditCard, Palette, Rocket, CheckCircle2, ArrowRight, ArrowLeft, 
     MapPin, Sparkles, Trophy, Facebook, Instagram, Phone, Mail, Building, 
     Check, Info, ChevronRight, BedDouble, ChevronLeft, Image as ImageIcon,
-    CircleDot, Circle
+    CircleDot, Circle, Volume2, VolumeX
 } from 'lucide-react';
 import { Settings, Room } from '../../types';
+import AnimatedWalkthrough from './AnimatedWalkthrough';
 
 // ─── Sub-Step Definition ────────────────────────────────────────────────────
 interface SubStep {
@@ -30,6 +31,70 @@ interface AdminOnboardingProps {
 
 // ─── Step Definitions with Rich Sub-Steps ───────────────────────────────────
 const steps = [
+    {
+        id: 'overview',
+        emoji: '📊',
+        title: 'Dashboard Overview',
+        subtitle: 'Stats & Reservations',
+        intro: 'Welcome! Your Admin Dashboard is the central control room. Let\'s see how it works.',
+        actionLabel: 'Explore Dashboard Overview ➜',
+        visualType: 'overview',
+        substeps: [
+            {
+                id: 'overview-metrics',
+                emoji: '📈',
+                instruction: 'Monitor key metrics at the top',
+                tip: 'Revenue, Occupancy, Active Guests, and Pending Bookings update in real-time as guests book.',
+                validationKey: 'overview-metrics',
+            },
+            {
+                id: 'overview-calendar',
+                emoji: '📅',
+                instruction: 'Track dates with the Booking Calendar',
+                tip: 'Tap any green block to view guest info, or yellow blocks to manage new booking requests.',
+                validationKey: 'overview-calendar',
+            },
+            {
+                id: 'overview-bookings',
+                emoji: '📋',
+                instruction: 'Manage bookings in the Recent Bookings list',
+                tip: 'Shows detailed guest profiles, checkout choices, and status changes at a glance.',
+                validationKey: 'overview-bookings',
+            }
+        ] as SubStep[]
+    },
+    {
+        id: 'deposit',
+        emoji: '🛡️',
+        title: 'Security Deposits',
+        subtitle: 'GCash & Damage Cover',
+        intro: 'Protect your property and secure reservations by setting custom security deposit rates.',
+        actionLabel: 'Go to Deposit Rules ➜',
+        visualType: 'payment',
+        substeps: [
+            {
+                id: 'deposit-why',
+                emoji: '💡',
+                instruction: 'Understand what the Deposit is for',
+                tip: 'Deposits cover cleaning fees, accidental room damages, and deter fake bookings. Guests pay this to you directly via GCash.',
+                validationKey: 'deposit-why',
+            },
+            {
+                id: 'deposit-percentage',
+                emoji: '⚙️',
+                instruction: 'Configure your Global Deposit rule',
+                tip: 'Set it as a fixed amount (e.g. ₱500) or a percentage (e.g. 50%) in the Payouts form. Guests pay just this to secure dates.',
+                validationKey: 'deposit-percentage',
+            },
+            {
+                id: 'deposit-verify',
+                emoji: '📱',
+                instruction: 'Verify guest transfer slips',
+                tip: 'After a guest books, they upload a GCash receipt. Review it on their booking card before confirming!',
+                validationKey: 'deposit-verify',
+            }
+        ] as SubStep[]
+    },
     {
         id: 'payment',
         emoji: '💰',
@@ -71,38 +136,117 @@ const steps = [
     {
         id: 'rooms',
         emoji: '📸',
-        title: 'Upload Room Photos',
-        subtitle: 'Add galleries & pricing',
-        intro: 'Time to make your rooms look stunning! Let\'s add photos and set prices.',
+        title: 'Rooms Manager',
+        subtitle: 'Add Listings & Photo Galleries',
+        intro: 'Stunning rooms with rich photo galleries and accurate pricing get booked 60% faster.',
         actionLabel: 'Go to Rooms Manager ➜',
         visualType: 'photos',
         substeps: [
             {
+                id: 'rooms-add',
+                emoji: '➕',
+                instruction: 'Tap Add Room to create a new listing',
+                tip: 'Set occupancy limits, room description, and modern amenities (e.g. Pool, WiFi).',
+                targetSelector: '[data-onboarding-target="add-room-btn"]',
+                validationKey: 'rooms-add',
+            },
+            {
                 id: 'rooms-edit-click',
-                emoji: '1️⃣',
+                emoji: '✏️',
                 instruction: 'Click the Edit button on your first room',
-                tip: 'This opens the room editor where you can customize everything',
+                tip: 'This opens the room editor where you can customize descriptions, amenities, and photos.',
                 targetSelector: '[data-onboarding-target="first-room-edit"]',
                 coachText: '👆 Click Edit to open the room editor',
                 validationKey: 'rooms-edit-click',
             },
             {
                 id: 'rooms-photo-upload',
-                emoji: '2️⃣',
-                instruction: 'Upload at least one beautiful room photo',
-                tip: 'High-quality photos increase bookings by 60%!',
+                emoji: '📸',
+                instruction: 'Upload high-quality room photos',
+                tip: 'Add multiple photos showing different angles of the bed, bathroom, and views.',
                 targetSelector: '[data-onboarding-target="first-room-card"]',
                 coachText: '📷 Add a photo to your room gallery',
                 validationKey: 'rooms-photo-upload',
             },
             {
                 id: 'rooms-price-set',
-                emoji: '3️⃣',
-                instruction: 'Set a nightly rate for your room',
-                tip: 'Research similar properties in your area for competitive pricing',
+                emoji: '💰',
+                instruction: 'Set nightly and day-use rates',
+                tip: 'Charge competitive rates for overnight stays, and set custom weekend markups if desired.',
                 targetSelector: '[data-onboarding-target="first-room-card"]',
                 coachText: '💰 Set your room\'s price per night',
                 validationKey: 'rooms-price-set',
+            }
+        ] as SubStep[]
+    },
+    {
+        id: 'passcode',
+        emoji: '🔐',
+        title: 'Admin Passcode',
+        subtitle: 'Secure Dashboard Login',
+        intro: 'Keep your booking statistics, payouts, and client contact lists secure by setting an admin passcode.',
+        actionLabel: 'Open Security Settings ➜',
+        visualType: 'security',
+        substeps: [
+            {
+                id: 'passcode-find',
+                emoji: '📂',
+                instruction: 'Scroll to the Security section in settings',
+                tip: 'Here you will find the 6-digit passcode option which controls panel access.',
+                validationKey: 'passcode-find',
+            },
+            {
+                id: 'passcode-set',
+                emoji: '🔑',
+                instruction: 'Set a custom 6-digit passcode',
+                tip: 'Replace the default code with a secure custom combination. Make sure to remember it!',
+                validationKey: 'passcode-set',
+            },
+            {
+                id: 'passcode-test',
+                emoji: '🔒',
+                instruction: 'Test the automatic logout',
+                tip: 'Logging out locks the panel with an encrypted passcode gate. Anyone visiting `/admin` must enter it to view stats.',
+                validationKey: 'passcode-test',
+            }
+        ] as SubStep[]
+    },
+    {
+        id: 'workflow',
+        emoji: '🔄',
+        title: 'Reservation Workflow',
+        subtitle: 'Manage Guest Journeys',
+        intro: 'Master the guest lifecycle workflow to deliver a perfect, stress-free hospitality experience.',
+        actionLabel: 'View Recent Bookings ➜',
+        visualType: 'workflow',
+        substeps: [
+            {
+                id: 'workflow-pending',
+                emoji: '📩',
+                instruction: '1. Guest Submits Pending Request',
+                tip: 'Bookings start as Pending. An email and dashboard alert warn you. The dates are temporarily held.',
+                validationKey: 'workflow-pending',
+            },
+            {
+                id: 'workflow-confirm',
+                emoji: '💳',
+                instruction: '2. Verify Payment & Click Confirm',
+                tip: 'Verify they paid the required deposit or full amount via GCash. Open their reservation card, check their screenshot, and click Confirm!',
+                validationKey: 'workflow-confirm',
+            },
+            {
+                id: 'workflow-checkin',
+                emoji: '🔑',
+                instruction: '3. Welcome Guest & Mark Checked-In',
+                tip: 'When guests arrive at your property, click "Check In" to update their status. Collect any remaining cash balances.',
+                validationKey: 'workflow-checkin',
+            },
+            {
+                id: 'workflow-checkout',
+                emoji: '🧹',
+                instruction: '4. Verify Room & Mark Checked-Out',
+                tip: 'Upon departure, check the room for damages. Refund their security deposit, and click "Check Out" to open the calendar dates for future guests!',
+                validationKey: 'workflow-checkout',
             }
         ] as SubStep[]
     },
@@ -348,6 +492,72 @@ const SpotlightOverlay: React.FC<{ targetSelector: string; coachText: string }> 
 // ─── Visual preview mockups ─────────────────────────────────────────────────
 const renderVisualMockup = (type: string) => {
     switch (type) {
+        case 'overview':
+            return (
+                <div className="relative w-full h-24 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner p-2 select-none animate-fade-in">
+                    <div className="w-[180px] bg-white dark:bg-gray-700 rounded-xl shadow-md border border-black/5 p-2 flex flex-col gap-1.5 scale-95 text-left">
+                        <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-600 pb-1">
+                            <span className="text-[5px] font-black uppercase text-gray-400">Occupancy & Revenue</span>
+                            <span className="text-[5px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 px-1 py-0.2 rounded">Real-Time</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            <div className="bg-gray-50 dark:bg-gray-800/60 p-1 rounded border border-gray-100 dark:border-gray-700">
+                                <div className="text-[4px] text-gray-400 font-bold">REVENUE</div>
+                                <div className="text-[7px] font-black text-secondary dark:text-white mt-0.5">₱48,500</div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800/60 p-1 rounded border border-gray-100 dark:border-gray-700">
+                                <div className="text-[4px] text-gray-400 font-bold">OCCUPANCY</div>
+                                <div className="text-[7px] font-black text-secondary dark:text-white mt-0.5">85%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'security':
+            return (
+                <div className="relative w-full h-24 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner p-2 select-none animate-fade-in">
+                    <div className="w-[140px] bg-gray-900 rounded-xl shadow-lg border border-white/10 p-2 flex flex-col items-center gap-1 scale-95 text-center">
+                        <div className="w-5 h-5 rounded bg-white/5 border border-white/10 flex items-center justify-center mt-1 animate-pulse">
+                            <span className="text-[10px] text-white">🔒</span>
+                        </div>
+                        <span className="text-[5px] font-bold text-gray-400 uppercase mt-0.5">Enter Admin Passcode</span>
+                        <div className="flex gap-1.5 mt-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" style={{ animationDelay: '0.2s' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                        </div>
+                    </div>
+                </div>
+            );
+        case 'workflow':
+            return (
+                <div className="relative w-full h-24 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner p-2 select-none animate-fade-in">
+                    <div className="w-[190px] flex items-center justify-between gap-1 scale-[0.88] translate-y-0.5">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500 flex items-center justify-center text-[10px] text-blue-500 animate-pulse">📩</div>
+                            <span className="text-[4px] font-black uppercase text-gray-500 mt-1">Pending</span>
+                        </div>
+                        <span className="text-gray-300 dark:text-gray-600 text-[8px] animate-pulse">➔</span>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500 flex items-center justify-center text-[10px] text-emerald-500">💳</div>
+                            <span className="text-[4px] font-black uppercase text-gray-500 mt-1">Confirm</span>
+                        </div>
+                        <span className="text-gray-300 dark:text-gray-600 text-[8px] animate-pulse">➔</span>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500 flex items-center justify-center text-[10px] text-indigo-500">🔑</div>
+                            <span className="text-[4px] font-black uppercase text-gray-500 mt-1">Check-in</span>
+                        </div>
+                        <span className="text-gray-300 dark:text-gray-600 text-[8px] animate-pulse">➔</span>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-6 h-6 rounded-full bg-gray-500/10 border border-gray-400 flex items-center justify-center text-[10px] text-gray-500">🧹</div>
+                            <span className="text-[4px] font-black uppercase text-gray-500 mt-1">Checkout</span>
+                        </div>
+                    </div>
+                </div>
+            );
         case 'payment':
             return (
                 <div className="relative w-full h-24 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-gray-150 dark:border-gray-700/50 overflow-hidden shadow-inner select-none animate-fade-in">
@@ -456,11 +666,126 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
     const [activeSubStepIdx, setActiveSubStepIdx] = useState<number>(0);
     const [showNiceBadge, setShowNiceBadge] = useState(false);
     const [phoneFlash, setPhoneFlash] = useState(false);
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+    const [isVideoOpen, setIsVideoOpen] = useState(false);
     
     // Micro-interactions state hooks
     const [isWiggling, setIsWiggling] = useState(false);
     const [activeToast, setActiveToast] = useState<{ stepId: string; title: string; emoji: string; } | null>(null);
     const [isHeroAdjustingActive, setIsHeroAdjustingActive] = useState(false);
+
+    // Audio tracking references (retains active audio instance without triggering double-renders)
+    const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Voice Narrator Speak function (Hybrid Audio System)
+    const speakText = useCallback((text: string, audioFile?: string) => {
+        // 1. Cancel any active client-side speech synthesis
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        
+        // 2. Pause and clear any currently active MP3 playback
+        if (activeAudioRef.current) {
+            activeAudioRef.current.pause();
+            activeAudioRef.current = null;
+        }
+
+        // Helper: Upgraded premium neural Text-to-Speech fallback
+        const speakWithFallback = (fallbackText: string) => {
+            if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+            const utterance = new SpeechSynthesisUtterance(fallbackText);
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Aggressively prioritize ultra-realistic neural and online voice engines
+            const preferredVoice = voices.find(v => {
+                const nameLower = v.name.toLowerCase();
+                const langLower = v.lang.toLowerCase();
+                return langLower.startsWith('en') && (
+                    nameLower.includes('natural') || 
+                    nameLower.includes('neural') || 
+                    nameLower.includes('online') || 
+                    nameLower.includes('google us english') || 
+                    nameLower.includes('samantha') ||
+                    nameLower.includes('zira')
+                );
+            });
+            
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            utterance.rate = 1.02; // Snappy and professional
+            utterance.pitch = 1.02;
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // 3. Play pre-generated audio file if provided, otherwise run the natural speech engine
+        if (audioFile) {
+            const audioPath = `/audio/onboarding/${audioFile}`;
+            const audio = new Audio(audioPath);
+            activeAudioRef.current = audio;
+            
+            audio.play().catch((err) => {
+                console.warn(`Premium audio ${audioFile} failed to play, falling back to speech synthesis:`, err);
+                speakWithFallback(text);
+            });
+            
+            audio.onerror = () => {
+                console.warn(`Premium audio ${audioFile} was not found, falling back to speech synthesis.`);
+                speakWithFallback(text);
+            };
+        } else {
+            speakWithFallback(text);
+        }
+    }, []);
+
+    // Clean up all audio/speech when modal is closed or component is unmounted
+    useEffect(() => {
+        return () => {
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            if (activeAudioRef.current) {
+                activeAudioRef.current.pause();
+                activeAudioRef.current = null;
+            }
+        };
+    }, [isOpen]);
+
+    // Speak welcome screen or celebration screen
+    useEffect(() => {
+        if (!voiceEnabled) {
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            if (activeAudioRef.current) {
+                activeAudioRef.current.pause();
+                activeAudioRef.current = null;
+            }
+            return;
+        }
+        if (currentStepIdx === -1) {
+            speakText("Welcome to Staycation! Let's configure your property. Click Let's Begin or Watch Video Guide to start.", "welcome.mp3");
+        } else if (currentStepIdx === steps.length) {
+            speakText("Congratulations! Your staycation website is fully set up, styled, and ready to take bookings. Great job!", "celebrate.mp3");
+        }
+    }, [currentStepIdx, voiceEnabled, speakText]);
+
+    // Speak current step and sub-step
+    useEffect(() => {
+        if (!voiceEnabled || currentStepIdx < 0 || currentStepIdx >= steps.length) return;
+        const step = steps[currentStepIdx];
+        const subStep = step.substeps[activeSubStepIdx];
+        if (subStep) {
+            const speakString = `${subStep.instruction}. ${subStep.tip || ''}`;
+            if (activeSubStepIdx === 0) {
+                // Play custom studio MP3 recording for the chapter introduction
+                speakText(speakString, `step-${currentStepIdx + 1}.mp3`);
+            } else {
+                // Play upgraded neural TTS fallback for detail substeps
+                speakText(speakString);
+            }
+        }
+    }, [currentStepIdx, activeSubStepIdx, voiceEnabled, speakText]);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const prevCompletedRef = useRef<Record<string, boolean>>({});
@@ -480,16 +805,31 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
     }, []);
 
     // ─── Sub-Step Validation Engine ─────────────────────────────────────────
+    // ─── Sub-Step Validation Engine ─────────────────────────────────────────
     const subStepValidation = useMemo(() => ({
+        'overview-metrics': true,
+        'overview-calendar': true,
+        'overview-bookings': true,
+        'deposit-why': true,
+        'deposit-percentage': !!(settings?.reservationPolicy?.depositPercentage && settings?.reservationPolicy?.depositPercentage !== 50),
+        'deposit-verify': true,
         'payment-gcash-name': !!(settings?.paymentMethods?.gcash?.accountName?.trim()),
         'payment-gcash-number': !!(settings?.paymentMethods?.gcash?.accountNumber?.trim()),
         'payment-saved': !!(
             settings?.paymentMethods?.gcash?.accountNumber?.trim() && 
             settings?.paymentMethods?.gcash?.accountName?.trim()
         ),
+        'rooms-add': true, // Instructional
         'rooms-edit-click': true, // Instructional — always pass
         'rooms-photo-upload': !!(rooms && rooms.length > 0 && rooms.some(r => r.images && r.images.length > 0)),
         'rooms-price-set': !!(rooms && rooms.length > 0 && rooms.some(r => r.price > 0)),
+        'passcode-find': true,
+        'passcode-set': true, // Instructional
+        'passcode-test': true,
+        'workflow-pending': true,
+        'workflow-confirm': true,
+        'workflow-checkin': true,
+        'workflow-checkout': true,
         'builder-text-edit': true,
         'builder-image-adjust': true,
         'builder-slide-cycle': true,
@@ -497,26 +837,28 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
         'social-panel-open': true, // Auto-opened by accordion logic
         'social-url-set': !!(
             settings?.social?.facebook && 
-            settings.social.facebook !== 'facebook.com/serenitystay' && 
-            settings.social.facebook.trim().length > 0
+            settings?.social?.facebook !== 'facebook.com/serenitystay' && 
+            settings?.social?.facebook?.trim()?.length > 0
         ),
         'map-step-1': true, // Instructional
         'map-step-2': true, // Instructional
         'map-embed-set': !!(
             settings?.map?.embedUrl && 
-            !settings.map.embedUrl.includes('El%20Nido') && 
-            settings.map.embedUrl.trim().length > 0
+            !settings?.map?.embedUrl?.includes('El%20Nido') && 
+            settings?.map?.embedUrl?.trim()?.length > 0
         ),
         'design-panel-open': true, // Auto-opened
         'design-color-set': !!(
             settings?.theme?.primaryColor && 
-            settings.theme.primaryColor !== '#1B2A4A'
+            settings?.theme?.primaryColor !== '#1B2A4A'
         ),
     }), [settings, rooms]);
 
     // ─── Step-level completion (existing logic) ─────────────────────────────
     const stepCompletionMap = useMemo(() => {
         return {
+            overview: true, // Educational — always complete
+            deposit: !!(settings?.reservationPolicy?.depositPercentage && settings?.reservationPolicy?.depositPercentage !== 50),
             payment: !!(
                 (settings?.paymentMethods?.gcash?.accountNumber?.trim() && settings?.paymentMethods?.gcash?.accountName?.trim()) ||
                 (settings?.paymentMethods?.bankTransfer?.accountNumber?.trim() && settings?.paymentMethods?.bankTransfer?.accountName?.trim() && settings?.paymentMethods?.bankTransfer?.bankName?.trim())
@@ -526,15 +868,17 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                 rooms.some(r => r.images && r.images.length > 0) &&
                 rooms.some(r => r.price > 0)
             ),
+            passcode: true, // Educational
+            workflow: true, // Educational
             builder: true,
             social: !!(
-                (settings?.social?.facebook && settings?.social?.facebook !== 'facebook.com/serenitystay' && settings?.social?.facebook.trim().length > 0) ||
-                (settings?.social?.instagram && settings?.social?.instagram !== 'instagram.com/serenitystay' && settings?.social?.instagram.trim().length > 0)
+                (settings?.social?.facebook && settings?.social?.facebook !== 'facebook.com/serenitystay' && settings?.social?.facebook?.trim()?.length > 0) ||
+                (settings?.social?.instagram && settings?.social?.instagram !== 'instagram.com/serenitystay' && settings?.social?.instagram?.trim()?.length > 0)
             ),
             map: !!(
                 settings?.map?.embedUrl && 
-                !settings?.map?.embedUrl.includes('El%20Nido') &&
-                settings.map.embedUrl.trim().length > 0
+                !settings?.map?.embedUrl?.includes('El%20Nido') &&
+                settings?.map?.embedUrl?.trim()?.length > 0
             ),
             design: !!(
                 settings?.theme?.primaryColor && 
@@ -550,14 +894,14 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
     const completedCount = useMemo(() => {
         let count = 0;
         steps.forEach(step => {
-            if (isStepDone(step.id) && step.id !== 'builder') {
+            if (isStepDone(step.id) && !['overview', 'passcode', 'workflow', 'builder'].includes(step.id)) {
                 count++;
             }
         });
         return count;
     }, [stepCompletionMap]);
 
-    const totalGoalSteps = 5;
+    const totalGoalSteps = 6;
     const remaining = Math.max(0, totalGoalSteps - completedCount);
     const allDone = completedCount >= totalGoalSteps;
 
@@ -626,20 +970,41 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
 
     // ─── Active synchronization navigations on slide change ─────────────────
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || currentStepIdx < 0 || currentStepIdx >= steps.length) return;
+        const stepId = steps[currentStepIdx].id;
 
-        if (currentStepIdx === 0) {
-            onNavigate('settings', 'settings-payment');
-        } else if (currentStepIdx === 1) {
-            onNavigate('rooms');
-        } else if (currentStepIdx === 2) {
-            if (onEnterVisualBuilder) onEnterVisualBuilder();
-        } else if (currentStepIdx === 3) {
-            if (onEnterVisualBuilder) onEnterVisualBuilder('footer');
-        } else if (currentStepIdx === 4) {
-            if (onEnterVisualBuilder) onEnterVisualBuilder('contact');
-        } else if (currentStepIdx === 5) {
-            if (onEnterVisualBuilder) onEnterVisualBuilder('theme');
+        // Navigate to the correct admin tab or visual builder based on step ID
+        switch (stepId) {
+            case 'overview':
+                onNavigate('overview');
+                break;
+            case 'deposit':
+            case 'payment':
+                onNavigate('settings', 'settings-payment');
+                break;
+            case 'rooms':
+                onNavigate('rooms');
+                break;
+            case 'passcode':
+                onNavigate('settings', 'admin-passcode-section');
+                break;
+            case 'workflow':
+                onNavigate('bookings');
+                break;
+            case 'builder':
+                if (onEnterVisualBuilder) onEnterVisualBuilder();
+                break;
+            case 'social':
+                if (onEnterVisualBuilder) onEnterVisualBuilder('footer');
+                break;
+            case 'map':
+                if (onEnterVisualBuilder) onEnterVisualBuilder('contact');
+                break;
+            case 'design':
+                if (onEnterVisualBuilder) onEnterVisualBuilder('theme');
+                break;
+            default:
+                break;
         }
     }, [currentStepIdx, isOpen]);
 
@@ -728,7 +1093,30 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
         if (step.visualType === 'social' || step.visualType === 'map' || step.visualType === 'design' || step.visualType === 'builder') {
             if (onEnterVisualBuilder) onEnterVisualBuilder(step.visualType === 'social' ? 'footer' : step.visualType === 'map' ? 'contact' : step.visualType === 'design' ? 'theme' : undefined);
         } else {
-            onNavigate(step.visualType === 'photos' ? 'rooms' : 'settings', step.visualType === 'payment' ? 'settings-payment' : undefined);
+            let tab = 'settings';
+            let targetId: string | undefined = undefined;
+
+            if (step.visualType === 'overview') {
+                tab = 'overview';
+            } else if (step.visualType === 'workflow') {
+                tab = 'bookings';
+            } else if (step.visualType === 'photos') {
+                tab = 'rooms';
+                if (step.id === 'rooms') {
+                    targetId = 'first-room-edit';
+                }
+            } else if (step.id === 'deposit') {
+                tab = 'settings';
+                targetId = 'settings-payment';
+            } else if (step.id === 'passcode') {
+                tab = 'settings';
+                targetId = 'admin-passcode-section';
+            } else if (step.id === 'payment') {
+                tab = 'settings';
+                targetId = 'settings-payment';
+            }
+
+            onNavigate(tab, targetId);
         }
     };
 
@@ -844,6 +1232,21 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-900 border border-gray-950 shrink-0"></span>
                             </div>
                             <div className="relative w-full h-full bg-white dark:bg-gray-900 md:rounded-[34px] rounded-2xl overflow-hidden flex flex-col md:border md:border-white/10 md:shadow-inner">
+                                <button 
+                                    onClick={() => setVoiceEnabled(!voiceEnabled)} 
+                                    className={`absolute top-2.5 right-9 transition-colors z-[130] p-1.5 rounded-full ${voiceEnabled ? 'text-primary hover:bg-primary/10 bg-primary/5' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                    title={voiceEnabled ? "Mute Voice Narrator" : "Enable Voice Narrator"}
+                                    aria-label="Toggle Voice Assistant"
+                                >
+                                    {voiceEnabled ? (
+                                        <div className="relative">
+                                            <Volume2 size={14} className="animate-pulse" />
+                                            <span className="absolute -inset-1 rounded-full border border-primary/40 animate-ping opacity-60 pointer-events-none" />
+                                        </div>
+                                    ) : (
+                                        <VolumeX size={14} />
+                                    )}
+                                </button>
                                 <button onClick={() => setIsOpen(false)} className="absolute top-2.5 right-2.5 text-gray-400 hover:text-secondary dark:hover:text-white transition-colors z-[130] p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Close Guide">
                                     <X size={14} />
                                 </button>
@@ -882,9 +1285,14 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                             <p className="text-[10px] md:text-[11px] text-gray-500 dark:text-gray-400 font-semibold leading-relaxed max-w-[240px] mt-1 md:mt-3 font-sans">
                                                 I'll walk you through every single step of configuring your staycation website — from payment setup to custom branding.
                                             </p>
-                                            <button onClick={goNext} className="w-full mt-3 md:mt-5 py-2.5 md:py-3 rounded-xl md:rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans shrink-0">
-                                                Let's Begin! <ArrowRight size={14} />
-                                            </button>
+                                            <div className="flex flex-col sm:flex-row gap-2 w-full mt-3 md:mt-5 shrink-0">
+                                                <button onClick={() => setIsVideoOpen(true)} className="flex-1 py-2.5 md:py-3 rounded-xl md:rounded-2xl border-2 border-primary/20 hover:border-primary/45 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans">
+                                                    📺 Watch Video Guide
+                                                </button>
+                                                <button onClick={goNext} className="flex-1 py-2.5 md:py-3 rounded-xl md:rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans">
+                                                    Let's Begin! <ArrowRight size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                     {currentStepIdx >= 0 && currentStepIdx < steps.length && (() => {
@@ -893,13 +1301,13 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                         const { completed, total } = getSubStepProgress(step);
                                         const progressPercent = Math.round((completed / total) * 100);
                                         return (
-                                            <div className="flex-1 flex flex-col justify-between h-full gap-2 md:gap-3">
+                                            <div className="flex-1 flex flex-col justify-between h-full gap-2 md:gap-3 font-sans">
                                                 <div className="space-y-2 md:space-y-3 flex-1">
                                                     <div className="text-center">
                                                         <h3 className="text-xs md:text-sm font-black text-secondary dark:text-white leading-tight flex items-center justify-center gap-1.5 font-sans">
                                                             <span className="text-base md:text-lg">{step.emoji}</span>
                                                             {step.title}
-                                                            {done && step.id !== 'builder' && <CheckCircle2 size={13} className="text-emerald-500 md:w-3.5 md:h-3.5" />}
+                                                            {done && !['overview', 'passcode', 'workflow', 'builder'].includes(step.id) && <CheckCircle2 size={13} className="text-emerald-500 md:w-3.5 md:h-3.5" />}
                                                         </h3>
                                                         <p className="text-[7px] md:text-[8px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mt-0.5 font-sans">{step.subtitle}</p>
                                                     </div>
@@ -908,6 +1316,9 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                                                             <div className="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
                                                         </div>
                                                         <span className="text-[8px] md:text-[9px] font-black text-gray-400 shrink-0">{completed}/{total}</span>
+                                                    </div>
+                                                    <div className="hidden md:block">
+                                                        {renderVisualMockup(step.visualType)}
                                                     </div>
                                                     <div className="space-y-1 md:space-y-1.5">
                                                         {step.substeps.map((sub, subIdx) => {
@@ -999,8 +1410,22 @@ const AdminOnboarding: React.FC<AdminOnboardingProps> = ({
                 </>
             )}
 
+            {/* Animated Video Walkthrough */}
+            {isVideoOpen && (
+                <AnimatedWalkthrough
+                    onClose={() => setIsVideoOpen(false)}
+                    onStartGuide={() => { setIsVideoOpen(false); goNext(); }}
+                />
+            )}
+
             {/* Custom Animations */}
             <style>{`
+                @keyframes scale-up {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .animate-scale-up { animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
                 @keyframes float {
                     0%, 100% { transform: translateY(0px) rotate(0deg); }
                     50% { transform: translateY(-5px) rotate(1deg); }

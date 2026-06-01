@@ -1882,7 +1882,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Email Passcode Section */}
-                    <div id="admin-passcode-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div id="admin-passcode-section" data-onboarding-target="passcode-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2">
                             <Shield className="mr-2 text-primary" size={20} /> Security & Notifications
                         </h3>
@@ -2823,6 +2823,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {!isAddingRoom && (
                                     <button
                                         onClick={() => setIsAddingRoom(true)}
+                                        data-onboarding-target="add-room-btn"
                                         className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
                                     >
                                         <Plus size={18} className="mr-2" /> Add Room

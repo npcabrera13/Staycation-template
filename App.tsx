@@ -104,6 +104,7 @@ function AppContent() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [settings, setSettings] = useState<Settings | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [settingsFromDb, setSettingsFromDb] = useState(false);
   const { showToast, showConfirm } = useNotification();
 
   // Initialize data from Firestore
@@ -139,6 +140,7 @@ function AppContent() {
 
         setRooms(fetchedRooms);
         setSettings(fetchedSettings);
+        setSettingsFromDb(true);
 
         // Apply theme
         if (fetchedSettings) {
@@ -419,7 +421,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col font-sans">
       <Routes>
         <Route path="/admin" element={
-          <AdminPasscodeGate onBack={() => navigate('/')}>
+          <AdminPasscodeGate onBack={() => navigate('/')} onAuthenticated={setIsAdminAuthenticated}>
             <Suspense fallback={<PageLoadingFallback />}>
               <div className="relative">
                 <AdminDashboard
@@ -543,6 +545,7 @@ function AppContent() {
               }}
               onOpenMyBookings={() => setIsMyBookingsOpen(true)}
               isLoading={isLoading}
+              isSettingsLoaded={settingsFromDb}
               settings={settings}
               isAdmin={isAdminAuthenticated}
               onUpdateSettings={handleUpdateSettings}
