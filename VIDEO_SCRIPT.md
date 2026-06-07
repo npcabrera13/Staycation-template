@@ -231,13 +231,15 @@
 
 ---
 
-## PART 5: WRAP UP (30 seconds)
+## PART 5: WRAP UP (1 minute)
 
 **📺 Show:** The homepage again  
 **🎤 Say:**
-> "And that's everything! To recap — your guests browse and book from the homepage, you manage everything from the Admin Dashboard, and you customize the look with the Visual Builder. It's all designed to be simple and easy to use."
+> "And that is a complete tour of your new staycation booking system. To recap — your guests have a clean, easy-to-use homepage where they can browse rooms and submit their bookings. You have a private, secure Admin Dashboard where you can manage dates, confirm payments, and track your business analytics. And finally, you have the Visual Builder, which gives you complete control to edit your text, images, and brand colors in real-time."  
 
-> "If you have any questions, don't hesitate to reach out. Enjoy your new booking system!"
+> "This system is designed to take the stress out of managing bookings so you can focus on giving your guests a wonderful stay."  
+
+> "If you have any questions, need custom changes, or want help configuring anything, please don't hesitate to reach out. Thank you for watching, and happy hosting!"  
 
 ---
 

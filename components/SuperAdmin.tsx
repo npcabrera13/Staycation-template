@@ -130,6 +130,10 @@ const SuperAdmin: React.FC = () => {
     const [imgbbApiKey, setImgbbApiKey] = useState('');
     const [imgbbStatus, setImgbbStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
+    // Booking System Type (Public Settings)
+    const [bookingSystemType, setBookingSystemType] = useState<'strict' | 'smart'>('strict');
+    const [bookingTypeStatus, setBookingTypeStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
     // Infrastructure & Hosting state
     interface InfraField { key: string; value: string; show?: boolean; }
     const DEFAULT_INFRA = {
@@ -241,8 +245,13 @@ const SuperAdmin: React.FC = () => {
 
             try {
                 const publicSnap = await getDoc(doc(db, 'settings', 'general'));
-                if (publicSnap.exists() && publicSnap.data().imgbb) {
-                    setImgbbApiKey(publicSnap.data().imgbb.apiKey || '');
+                if (publicSnap.exists()) {
+                    if (publicSnap.data().imgbb) {
+                        setImgbbApiKey(publicSnap.data().imgbb.apiKey || '');
+                    }
+                    if (publicSnap.data().reservationPolicy?.bookingSystemType) {
+                        setBookingSystemType(publicSnap.data().reservationPolicy.bookingSystemType);
+                    }
                 }
             } catch { }
         };
@@ -1521,10 +1530,108 @@ Cloudflare Pages requires strict raw key-value pairs. Output ONLY the final envi
                     </div>
                 )}
 
-
                 {/* ===== SETTINGS TAB ===== */}
                 {activeSection === 'settings' && (
                     <>
+                        {/* Booking Control Mode */}
+                        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
+                            <h3 className="text-md font-bold text-white mb-4 flex items-center">
+                                <Key size={18} className="mr-2 text-amber-400" />
+                                Calendar Blocking Mode
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            setBookingSystemType('strict');
+                                            setBookingTypeStatus('saving');
+                                            try {
+                                                const publicRef = doc(db, 'settings', 'general');
+                                                const snap = await getDoc(publicRef);
+                                                if (snap.exists()) {
+                                                    await updateDoc(publicRef, { 'reservationPolicy.bookingSystemType': 'strict' });
+                                                } else {
+                                                    await setDoc(publicRef, { reservationPolicy: { bookingSystemType: 'strict' } });
+                                                }
+                                                setBookingTypeStatus('saved');
+                                                setTimeout(() => setBookingTypeStatus('idle'), 3000);
+                                            } catch {
+                                                setBookingTypeStatus('idle');
+                                            }
+                                        }}
+                                        className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${bookingSystemType === 'strict'
+                                            ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <div className="flex items-center mb-1">
+                                            <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${bookingSystemType === 'strict'
+                                                ? 'border-amber-500' : 'border-gray-500'
+                                                }`}>
+                                                {bookingSystemType === 'strict' && (
+                                                    <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                                                )}
+                                            </div>
+                                            <span className="font-bold text-white text-sm">Strict Mode</span>
+                                            {bookingTypeStatus === 'saved' && bookingSystemType === 'strict' && <CheckCircle size={14} className="ml-2 text-green-400" />}
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-gray-400">Blocks dates immediately when a guest submits a request. Safest against double-booking.</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            setBookingSystemType('smart');
+                                            setBookingTypeStatus('saving');
+                                            try {
+                                                const publicRef = doc(db, 'settings', 'general');
+                                                const snap = await getDoc(publicRef);
+                                                if (snap.exists()) {
+                                                    await updateDoc(publicRef, { 'reservationPolicy.bookingSystemType': 'smart' });
+                                                } else {
+                                                    await setDoc(publicRef, { reservationPolicy: { bookingSystemType: 'smart' } });
+                                                }
+                                                setBookingTypeStatus('saved');
+                                                setTimeout(() => setBookingTypeStatus('idle'), 3000);
+                                            } catch {
+                                                setBookingTypeStatus('idle');
+                                            }
+                                        }}
+                                        className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${bookingSystemType === 'smart'
+                                            ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <div className="flex items-center mb-1">
+                                            <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${bookingSystemType === 'smart'
+                                                ? 'border-amber-500' : 'border-gray-500'
+                                                }`}>
+                                                {bookingSystemType === 'smart' && (
+                                                    <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                                                )}
+                                            </div>
+                                            <span className="font-bold text-white text-sm">Smart Mode (Troll Protection)</span>
+                                            {bookingTypeStatus === 'saved' && bookingSystemType === 'smart' && <CheckCircle size={14} className="ml-2 text-green-400" />}
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-gray-400">Only blocks dates after you manually confirm. Prevents malicious users from locking up your days.</p>
+                                    </button>
+                                </div>
+
+                                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3">
+                                    <Info className="text-amber-400 shrink-0 mt-0.5" size={18} />
+                                    <div className="text-[11px] md:text-xs text-amber-100/70">
+                                        <p className="font-bold mb-1 italic text-amber-300">Why this matters:</p>
+                                        <p className="leading-relaxed">
+                                            In <strong>Strict Mode</strong>, if a troll fills out your form, that date becomes unavailable to everyone else. In <strong>Smart Mode</strong>, the date stays open until you accept a real booking.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 mb-6">
                             <h3 className="text-md font-bold text-white mb-4 flex items-center">
                                 <Key size={18} className="mr-2 text-amber-400" />

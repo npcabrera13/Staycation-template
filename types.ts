@@ -44,6 +44,8 @@ export interface Booking {
     paymentProof?: string; // URL to the uploaded receipt image
 }
 
+export type FontPairing = 'modern' | 'tropical' | 'classic' | 'clean';
+
 export interface Settings {
     siteName: string;
     logo?: string;
@@ -106,6 +108,8 @@ export interface Settings {
         showTiktok?: boolean;
         airbnb?: string;
         showAirbnb?: boolean;
+        youtube?: string;
+        showYoutube?: boolean;
         customUrl?: string;
         customLabel?: string;
         showCustom?: boolean;

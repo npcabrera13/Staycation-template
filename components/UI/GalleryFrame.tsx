@@ -15,6 +15,7 @@ interface GalleryFrameProps {
     disableHoverEffect?: boolean;
     onRepositioningChange?: (isRepositioning: boolean) => void;
     isRepositioning?: boolean;
+    hideMobileControls?: boolean;
 }
 
 const GalleryFrame: React.FC<GalleryFrameProps> = ({
@@ -26,7 +27,8 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
     disableDecorations = false,
     disableHoverEffect = false,
     onRepositioningChange,
-    isRepositioning: externalRepositioning
+    isRepositioning: externalRepositioning,
+    hideMobileControls = false
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const isDraggingRef = useRef(false);
@@ -209,7 +211,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
             )}
 
             {/* Mobile Reposition Buttons */}
-            {isEditing && isTouchDevice && !isRepositioning && (
+            {!hideMobileControls && isEditing && isTouchDevice && !isRepositioning && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsRepositioning(true); }}
                     className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-auto shadow-xl z-[40] text-xs font-medium border border-white/20 active:scale-95 transition-transform"
@@ -218,7 +220,7 @@ const GalleryFrame: React.FC<GalleryFrameProps> = ({
                 </button>
             )}
 
-            {isEditing && isTouchDevice && isRepositioning && (
+            {!hideMobileControls && isEditing && isTouchDevice && isRepositioning && (
                 <>
                     <div className="absolute inset-0 border-4 border-primary pointer-events-none z-[60]" />
                     <div className="absolute top-4 left-0 w-full flex justify-center pointer-events-none z-[70]">

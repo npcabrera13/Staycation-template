@@ -45,6 +45,15 @@ const THEME_PRESETS = [
     { name: 'Tropical Mint', primary: '#065F46', hover: '#064E3B', secondary: '#A7F3D0' },
     { name: 'Coffee Roast', primary: '#4B2C20', hover: '#3E2723', secondary: '#D7CCC8' },
     { name: 'Berry Blast', primary: '#831843', hover: '#701a3e', secondary: '#fce7f3' },
+    { name: 'Champagne Elegance', primary: '#C19A6B', hover: '#A07D5A', secondary: '#F5F5DC' },
+    { name: 'Sunset Gold', primary: '#E5A93C', hover: '#C48A25', secondary: '#FF8C00' },
+    { name: 'Minimalist Ash', primary: '#4A4A4A', hover: '#333333', secondary: '#E5E7EB' },
+    { name: 'Deep Ocean', primary: '#003B5C', hover: '#00223E', secondary: '#00CED1' },
+    { name: 'Soft Peach', primary: '#F4A460', hover: '#D2691E', secondary: '#FFDAB9' },
+    { name: 'Neon Cyber', primary: '#00FFCC', hover: '#00D1A3', secondary: '#FF00FF' },
+    { name: 'Ruby Romance', primary: '#E0115F', hover: '#B00E4A', secondary: '#FFB3C6' },
+    { name: 'Sakura Spring', primary: '#FFB7C5', hover: '#FF9EAF', secondary: '#FFFFFF' },
+    { name: 'Olive Retreat', primary: '#556B2F', hover: '#3E4F22', secondary: '#8FBC8F' },
 ];
 
 const AccordionItem: React.FC<{
@@ -106,6 +115,8 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
             setOpenSection('social');
         } else if (activeOnboardingStep === 'design') {
             setOpenSection('theme');
+        } else if (activeOnboardingStep === 'builder') {
+            setOpenSection('hero');
         }
     }, [activeOnboardingStep]);
 
@@ -257,17 +268,30 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Global Font Family</label>
-                        <select
-                            value={settings?.theme.fontFamily || 'sans'}
-                            onChange={(e) => onUpdateSettings?.('theme', 'fontFamily', e.target.value)}
-                            className="w-full text-xs p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-pointer outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                        >
-                            <option value="sans">Sans-Serif</option>
-                            <option value="serif">Serif (Elegant)</option>
-                            <option value="mono">Monospace (Typewriter)</option>
-                        </select>
+                    {/* Typography & Fonts */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">✨ Typography & Fonts</label>
+                        <div className="space-y-2">
+                            {[
+                                { id: 'modern', name: 'Modern Luxury', desc: 'Playfair Display + Inter' },
+                                { id: 'tropical', name: 'Tropical Chill', desc: 'Outfit + Roboto' },
+                                { id: 'classic', name: 'Classic Elegance', desc: 'Cinzel + Lora' },
+                                { id: 'clean', name: 'Clean & Minimalist', desc: 'Plus Jakarta Sans' },
+                            ].map(font => (
+                                <button
+                                    key={font.id}
+                                    onClick={() => onUpdateSettings?.('theme', 'fontPairing', font.id)}
+                                    className={`w-full flex flex-col items-start p-3 rounded-lg border text-left transition-all hover:shadow-sm ${
+                                        (settings?.theme.fontPairing || 'modern') === font.id 
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                                    }`}
+                                >
+                                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{font.name}</span>
+                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{font.desc}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </AccordionItem>
 
@@ -290,8 +314,9 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                                 Slide {index + 1}
                                             </div>
                                         </div>
-                                        <div className="flex gap-1.5">
-                                            <ImageUploadButton
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex gap-1.5">
+                                                <ImageUploadButton
                                                 onUploadSuccess={(url) => {
                                                     const newImages = [...(settings?.hero.images || [settings?.hero.image || ''])];
                                                     newImages[index] = url;
@@ -300,7 +325,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                                 }}
                                                 onUploadError={(err) => console.error(err)}
                                                 className="flex-1 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-900 text-gray-750 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
-                                                buttonText="Replace"
+                                                buttonText="Replace Image"
                                             />
                                             <button
                                                 type="button"
@@ -311,8 +336,9 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                                 }}
                                                 className="flex-1 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
                                             >
-                                                <Move size={10} /> Adjust Image
+                                                <Move size={10} /> Adjust Position
                                             </button>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -320,9 +346,9 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                                     onUpdateSettings?.('hero', 'images', newImages);
                                                     if (index === 0 && newImages.length > 0) onUpdateSettings?.('hero', 'image', newImages[0]);
                                                 }}
-                                                className="py-1.5 px-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 text-red-500 border border-red-200/40 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                                className="w-full py-1.5 px-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 text-red-500 border border-red-200/40 rounded-lg text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"
                                             >
-                                                <X size={10} />
+                                                <X size={10} /> Remove Slide
                                             </button>
                                         </div>
                                     </div>
@@ -398,25 +424,6 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                         )}
                     </div>
 
-                    {/* Image Focus Point */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 flex items-center">
-                            🎯 Image Focus Point
-                            <InfoTooltip text="Controls which part of the image stays visible when cropped on different screen sizes." />
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['top', 'center', 'bottom'] as const).map(opt => (
-                                <button
-                                    key={opt}
-                                    onClick={() => onUpdateSettings?.('hero', 'imageFocusPoint', opt)}
-                                    className={`px-2 py-2 text-xs capitalize rounded border text-center transition-all ${settings?.hero.imageFocusPoint === opt || (!settings?.hero.imageFocusPoint && opt === 'center') ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
-                                >
-                                    {opt === 'top' ? '⬆️ Top' : opt === 'bottom' ? '⬇️ Bottom' : '⏺️ Center'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1 flex items-center">
                             Slide Interval: {(settings?.hero.slideInterval || 5000) / 1000}s
@@ -484,6 +491,7 @@ const BuilderToolbar: React.FC<BuilderToolbarProps> = ({
                                 { key: 'showX', label: 'X (Twitter) Icon', icon: 'x' as const },
                                 { key: 'showTiktok', label: 'TikTok Icon', icon: 'tiktok' as const },
                                 { key: 'showAirbnb', label: 'Airbnb Icon', icon: 'airbnb' as const },
+                                { key: 'showYoutube', label: 'YouTube Icon', icon: 'youtube' as const },
                                 { key: 'showCustom', label: 'Custom Link Icon', icon: 'customUrl' as const },
                             ].map(({ key, label }) => {
                                 const isCommon = key === 'showFacebook' || key === 'showInstagram' || key === 'showTiktok';

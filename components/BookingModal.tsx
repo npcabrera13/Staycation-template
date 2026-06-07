@@ -4,7 +4,8 @@ import {
     X, Wifi, Wind, Coffee, CheckCircle, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
     ChevronLeft, ChevronRight, AlertCircle, Maximize2, Phone, Users, Printer, Download, Star,
-    Info, Grid, Image as ImageIcon, Loader, Clock, Copy, AlertTriangle
+    Info, Grid, Image as ImageIcon, Loader, Clock, Copy, AlertTriangle,
+    Gamepad2, Mic, Speaker, PartyPopper, Tent, Flame, Wine, TreePine, Cat, Dog, Heart, Smile, Flower2, Snowflake, Cigarette, CigaretteOff, Sofa, Home, ShowerHead, Mountain, Trees, MapPin, RollerCoaster
 } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import { differenceInDays } from 'date-fns';
@@ -292,7 +293,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
     if (!room) return null;
 
     // Combine main image and gallery images, filtering out empty ones
-    const allImages = [room.image, ...(room.images || [])].filter(img => img && img.trim().length > 0);
+    let allImages = [room.image, ...(room.images || [])].filter(img => img && img.trim().length > 0);
+    if (allImages.length === 0) {
+        allImages = ['https://picsum.photos/800/600'];
+    }
 
     const nextImage = (e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -567,7 +571,31 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, onClose, bookings, on
         'bell': <Bell size={18} className="mr-2 text-red-400" />,
         'bath': <Bath size={18} className="mr-2 text-blue-400" />,
         'armchair': <Armchair size={18} className="mr-2 text-green-600" />,
-        'bike': <Bike size={18} className="mr-2 text-teal-600" />
+        'bike': <Bike size={18} className="mr-2 text-teal-600" />,
+        'gamepad-2': <Gamepad2 size={18} className="mr-2 text-purple-600" />,
+        'mic': <Mic size={18} className="mr-2 text-pink-600" />,
+        'speaker': <Speaker size={18} className="mr-2 text-gray-700" />,
+        'party-popper': <PartyPopper size={18} className="mr-2 text-red-500" />,
+        'roller-coaster': <RollerCoaster size={18} className="mr-2 text-indigo-500" />,
+        'tent': <Tent size={18} className="mr-2 text-green-700" />,
+        'flame': <Flame size={18} className="mr-2 text-orange-600" />,
+        'wine': <Wine size={18} className="mr-2 text-red-800" />,
+        'tree-pine': <TreePine size={18} className="mr-2 text-green-800" />,
+        'trees': <Trees size={18} className="mr-2 text-green-600" />,
+        'cat': <Cat size={18} className="mr-2 text-yellow-700" />,
+        'dog': <Dog size={18} className="mr-2 text-orange-800" />,
+        'star': <Star size={18} className="mr-2 text-yellow-500" />,
+        'heart': <Heart size={18} className="mr-2 text-red-500" />,
+        'smile': <Smile size={18} className="mr-2 text-yellow-600" />,
+        'flower-2': <Flower2 size={18} className="mr-2 text-pink-400" />,
+        'snowflake': <Snowflake size={18} className="mr-2 text-blue-300" />,
+        'cigarette': <Cigarette size={18} className="mr-2 text-gray-500" />,
+        'cigarette-off': <CigaretteOff size={18} className="mr-2 text-red-500" />,
+        'sofa': <Sofa size={18} className="mr-2 text-yellow-800" />,
+        'home': <Home size={18} className="mr-2 text-indigo-600" />,
+        'shower-head': <ShowerHead size={18} className="mr-2 text-cyan-600" />,
+        'mountain': <Mountain size={18} className="mr-2 text-gray-600" />,
+        'map-pin': <MapPin size={18} className="mr-2 text-red-600" />
     };
 
     const renderIcons = (amenity: { name: string; icon: string }, customClass?: string) => {

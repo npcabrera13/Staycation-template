@@ -33,11 +33,11 @@ const STEPS: QuickStartStep[] = [
     {
         id: 'hero-image',
         icon: Image,
-        title: 'Upload hero photos',
-        description: 'Show off your beautiful property.',
+        title: 'Upload a mobile hero photo',
+        description: 'Most clients book on their phones. Upload a stunning portrait photo!',
         tab: 'visual',
         isComplete: (s) =>
-            !!(s.hero?.image && !s.hero.image.includes('photo-1542314831-068cd1dbfeeb')),
+            !!(s.hero?.mobileImage && s.hero.mobileImage.trim() !== ''),
     },
     {
         id: 'theme',
@@ -253,6 +253,18 @@ const QuickStartGuide: React.FC<QuickStartGuideProps> = ({
                                         <p className={`text-xs mt-0.5 ${done ? 'text-green-500/70 dark:text-green-500/60' : 'text-gray-400 dark:text-gray-500'}`}>
                                             {step.description}
                                         </p>
+                                        
+                                        {/* Preview for hero image */}
+                                        {step.id === 'hero-image' && (settings.hero?.mobileImage || settings.hero?.image) && (
+                                            <div className="mt-3 h-20 w-14 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm relative group-hover:scale-105 transition-transform duration-300">
+                                                <img 
+                                                    src={settings.hero?.mobileImage || settings.hero?.image} 
+                                                    alt="Hero preview" 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Arrow */}

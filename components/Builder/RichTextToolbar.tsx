@@ -80,6 +80,7 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ onFormat, className =
                             setIsPaletteOpen(!isPaletteOpen);
                             setIsBgPaletteOpen(false);
                         }}
+                        title="Text Color"
                     >
                         <Palette size={16} />
                     </button>

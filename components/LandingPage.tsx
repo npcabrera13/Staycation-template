@@ -145,6 +145,63 @@ const RenderFeatureIcon: React.FC<{ icon?: string, index: number }> = ({ icon, i
     );
 };
 
+const cleanGoogleMapUrl = (input: string): string => {
+    let value = input.trim();
+    if (!value) return '';
+
+    // 1. If it's an <iframe> tag, extract the src attribute
+    if (value.includes('<iframe') && value.includes('src="')) {
+        const match = value.match(/src="([^"]+)"/);
+        if (match && match[1]) {
+            value = match[1];
+        }
+    }
+
+    // 1b. Decode HTML entities (&#39; → ', &amp; → &, etc.)
+    // Google Maps "Share → Embed" iframes contain these entities
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    value = textarea.value;
+
+    // 2. If it's already an embed URL, return it
+    if (value.includes('/maps/embed') || value.includes('output=embed')) {
+        return value;
+    }
+
+    // 3. Check for coordinates format: "lat, lng" (e.g. 15.3031, 120.9092)
+    const latLngRegex = /^[-+]?([1-9]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    if (latLngRegex.test(value)) {
+        return `https://maps.google.com/maps?q=${encodeURIComponent(value)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    // 4. Check for Google Maps search / query link formats
+    try {
+        if (value.includes('google.com/maps')) {
+            const urlObj = new URL(value);
+            
+            const qParam = urlObj.searchParams.get('q');
+            if (qParam) {
+                return `https://maps.google.com/maps?q=${encodeURIComponent(qParam)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+            }
+
+            if (urlObj.pathname.includes('/place/')) {
+                const parts = urlObj.pathname.split('/place/');
+                if (parts[1]) {
+                    const placeName = decodeURIComponent(parts[1].split('/')[0]).replace(/\+/g, ' ');
+                    return `https://maps.google.com/maps?q=${encodeURIComponent(placeName)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error parsing Google Maps URL:', e);
+    }
+
+    if (value.startsWith('http')) {
+        return value;
+    }
+    return `https://maps.google.com/maps?q=${encodeURIComponent(value)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+};
+
 interface LandingPageProps {
     rooms: Room[];
     bookings: Booking[];
@@ -198,7 +255,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
     }, [rooms]);
 
     // Builder State
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(!!startEditing);
+    const [isBuilderMinimized, setIsBuilderMinimized] = useState(!!startEditing);
     const [workingSettings, setWorkingSettings] = useState<Settings>(settings || DEFAULT_SETTINGS);
     const [hasChanges, setHasChanges] = useState(false);
     const [undoStack, setUndoStack] = useState<Settings[]>([]);
@@ -347,9 +405,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
         return Array.from(new Set(imgs.filter(Boolean)));
     }, [rooms, workingSettings, tempGalleryImages]);
 
-    const [isBuilderMinimized, setIsBuilderMinimized] = useState(false);
+
     const [activeIconPicker, setActiveIconPicker] = useState<number | null>(null);
     const [showMapPicker, setShowMapPicker] = useState(false);
+    const [mapPasteSuccess, setMapPasteSuccess] = useState(false);
     const [isHeroAdjusting, setIsHeroAdjusting] = useState(false);
 
     // Consolidated Gallery Images Logic
@@ -714,6 +773,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                     objectPosition={heroFocusPosition}
                                     disableDecorations={true}
                                     disableHoverEffect={true}
+                                    hideMobileControls={true}
                                 />
                             </div>
                         ) : heroValidImages.length === 1 ? (
@@ -743,6 +803,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             scale={scale}
                                             disableDecorations={true}
                                             disableHoverEffect={true}
+                                            hideMobileControls={true}
                                             onRepositioningChange={setIsHeroAdjusting}
                                             onPositionChange={(newPos) => {
                                                 const newPositions = [...(workingSettings.hero?.imagePositions || [])];
@@ -789,6 +850,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             scale={scale}
                                             disableDecorations={true}
                                             disableHoverEffect={true}
+                                            hideMobileControls={true}
                                             onRepositioningChange={setIsHeroAdjusting}
                                             onPositionChange={(newPos) => {
                                                 const newPositions = [...(workingSettings.hero?.imagePositions || [])];
@@ -1246,7 +1308,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
 
                             {isEditing && (
-                                <div className="mb-10 flex flex-wrap gap-4 justify-center md:justify-start ring-2 ring-primary/20 p-6 rounded-3xl bg-gray-50 dark:bg-gray-900/50">
+                                <div id="feature-management-box" className="mb-10 flex flex-wrap gap-4 justify-center md:justify-start ring-2 ring-primary/20 p-6 rounded-3xl bg-gray-50 dark:bg-gray-900/50">
                                     <div className="w-full mb-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Feature Management</p>
                                     </div>
@@ -1537,7 +1599,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                             {/* Manage Gallery Overlay - ONLY in Edit Mode */}
                                             {isEditing && (
                                                 <button 
-                                                    className="absolute bottom-4 right-4 z-[40]"
+                                                    className="absolute top-4 left-1/2 -translate-x-1/2 z-[40] w-max"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setTempInheritGallery(isInheriting);
@@ -1918,25 +1980,52 @@ const LandingPage: React.FC<LandingPageProps> = ({
                                                         <span className="w-full border-t border-white/10"></span>
                                                     </div>
                                                     <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
-                                                        <span className="px-2 bg-transparent text-white/30 backdrop-blur-sm">OR PASTE PRO CODE</span>
+                                                        <span className="px-2 bg-transparent text-white/30 backdrop-blur-sm">OR PASTE EMBED CODE</span>
                                                     </div>
                                                 </div>
 
-                                                <input 
-                                                    type="text" 
-                                                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
-                                                    placeholder="Paste <iframe> code from computer..."
-                                                    onChange={(e) => {
-                                                        let val = e.target.value;
-                                                        if (val.includes('<iframe') && val.includes('src="')) {
-                                                            const match = val.match(/src="([^"]+)"/);
-                                                            if (match) {
-                                                                handleSettingChange('map', 'embedUrl', match[1]);
-                                                                e.target.value = ''; // Clear after success
+                                                <div className="relative">
+                                                    <textarea 
+                                                        rows={2}
+                                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all resize-none ${
+                                                            mapPasteSuccess 
+                                                                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300 placeholder:text-emerald-300/60' 
+                                                                : 'bg-black/40 border-white/10 text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary'
+                                                        }`}
+                                                        placeholder={mapPasteSuccess ? '✓ Map updated!' : 'Paste Google Maps iframe embed code here...'}
+                                                        value=""
+                                                        onPaste={(e) => {
+                                                            e.preventDefault();
+                                                            const pasted = e.clipboardData.getData('text');
+                                                            if (!pasted) return;
+                                                            const cleaned = cleanGoogleMapUrl(pasted);
+                                                            if (cleaned && cleaned.startsWith('http')) {
+                                                                handleSettingChange('map', 'embedUrl', cleaned);
+                                                                setMapPasteSuccess(true);
+                                                                setTimeout(() => setMapPasteSuccess(false), 2500);
                                                             }
-                                                        }
-                                                    }}
-                                                />
+                                                        }}
+                                                        onChange={(e) => {
+                                                            // Fallback: also handle typed/autofilled values
+                                                            const val = e.target.value;
+                                                            if (!val) return;
+                                                            const cleaned = cleanGoogleMapUrl(val);
+                                                            if (cleaned && cleaned.startsWith('http')) {
+                                                                handleSettingChange('map', 'embedUrl', cleaned);
+                                                                setMapPasteSuccess(true);
+                                                                setTimeout(() => setMapPasteSuccess(false), 2500);
+                                                            }
+                                                        }}
+                                                    />
+                                                    {mapPasteSuccess && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 rounded-xl backdrop-blur-[2px] pointer-events-none animate-fade-in">
+                                                            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                                                                <Check size={18} className="animate-bounce" />
+                                                                Map Updated!
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -1973,6 +2062,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                     isOpen={showMapPicker}
                     onClose={() => setShowMapPicker(false)}
                     currentLocationName={workingSettings.contact?.address}
+                    currentEmbedUrl={workingSettings.map?.embedUrl}
                     onSelect={(name, embedUrl) => {
                         handleSettingChange('map', 'embedUrl', embedUrl);
                         // Also automatically update the address in the footer!

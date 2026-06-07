@@ -53,10 +53,14 @@
         var ph = localStorage.getItem('theme-primary-hover');
         var s = localStorage.getItem('theme-secondary');
         var a = localStorage.getItem('theme-accent');
+        var fh = localStorage.getItem('theme-font-heading');
+        var fb = localStorage.getItem('theme-font-body');
         if (p) document.documentElement.style.setProperty('--color-primary', p);
         if (ph) document.documentElement.style.setProperty('--color-primary-hover', ph);
         if (s) document.documentElement.style.setProperty('--color-secondary', s);
         if (a) document.documentElement.style.setProperty('--color-accent', a);
+        if (fh) document.documentElement.style.setProperty('--font-heading', fh);
+        if (fb) document.documentElement.style.setProperty('--font-body', fb);
       } catch (e) { }
     })();
   </script>
@@ -64,11 +68,11 @@
 
   <!-- Non-render-blocking Google Fonts (swap instead of blocking the page) -->
   <link rel="preload" as="style"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&family=Outfit:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
     onload="this.onload=null;this.rel='stylesheet'" />
   <noscript>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@400;700&family=Outfit:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
       rel="stylesheet">
   </noscript>
   <!-- Commented out AI Studio CDN importmap to prevent blank screen crashes in firewalled/offline environments.

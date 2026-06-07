@@ -3,7 +3,7 @@ import { Room } from '../types';
 import {
   Users, Wifi, Wind, Coffee, ArrowRight, Waves, ChefHat, Car, Dumbbell, Tv, Shield, Sparkles,
   Utensils, Monitor, Zap, Sun, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike,
-  ListPlus
+  ListPlus, Gamepad2, Mic, Speaker, PartyPopper, Tent, Flame, Wine, TreePine, Cat, Dog, Star, Heart, Smile, Flower2, Snowflake, Cigarette, CigaretteOff, Sofa, Home, ShowerHead, Mountain, Trees, MapPin, RollerCoaster
 } from 'lucide-react';
 
 interface RoomCardProps {
@@ -35,7 +35,31 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
     'bell': <Bell size={14} />,
     'bath': <Bath size={14} />,
     'armchair': <Armchair size={14} />,
-    'bike': <Bike size={14} />
+    'bike': <Bike size={14} />,
+    'gamepad-2': <Gamepad2 size={14} />,
+    'mic': <Mic size={14} />,
+    'speaker': <Speaker size={14} />,
+    'party-popper': <PartyPopper size={14} />,
+    'roller-coaster': <RollerCoaster size={14} />,
+    'tent': <Tent size={14} />,
+    'flame': <Flame size={14} />,
+    'wine': <Wine size={14} />,
+    'tree-pine': <TreePine size={14} />,
+    'trees': <Trees size={14} />,
+    'cat': <Cat size={14} />,
+    'dog': <Dog size={14} />,
+    'star': <Star size={14} />,
+    'heart': <Heart size={14} />,
+    'smile': <Smile size={14} />,
+    'flower-2': <Flower2 size={14} />,
+    'snowflake': <Snowflake size={14} />,
+    'cigarette': <Cigarette size={14} />,
+    'cigarette-off': <CigaretteOff size={14} />,
+    'sofa': <Sofa size={14} />,
+    'home': <Home size={14} />,
+    'shower-head': <ShowerHead size={14} />,
+    'mountain': <Mountain size={14} />,
+    'map-pin': <MapPin size={14} />
   };
 
   const renderIcon = (amenity: { name: string; icon: string }) => {
@@ -75,7 +99,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
         {/* Image wrapper - no zoom */}
         <div className="absolute inset-0">
           <img
-            src={room.image}
+            src={room.image || 'https://picsum.photos/800/600'}
             alt={room.name}
             loading="lazy"
             decoding="async"

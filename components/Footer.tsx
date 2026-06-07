@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Settings } from '../types';
 import { COMPANY_INFO } from '../constants'; // Fallback
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Facebook, Instagram, Mail, MapPin, Phone, X, Check, Link } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Phone, X, Check, Link, Youtube } from 'lucide-react';
 
 import InlineText from './Builder/InlineText';
 
@@ -18,10 +18,10 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [editingSocial, setEditingSocial] = useState<'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'customUrl' | null>(null);
+  const [editingSocial, setEditingSocial] = useState<'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'youtube' | 'customUrl' | null>(null);
   const [socialUrlInput, setSocialUrlInput] = useState('');
 
-  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'customUrl') => {
+  const handleSocialClick = (e: React.MouseEvent, platform: 'facebook' | 'instagram' | 'x' | 'tiktok' | 'airbnb' | 'youtube' | 'customUrl') => {
     if (isEditing && onSettingChange) {
       e.preventDefault();
       const currentUrl = settings?.social?.[platform] || '';
@@ -221,6 +221,18 @@ const Footer: React.FC<FooterProps> = ({ settings, isEditing, onSettingChange, o
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12.001 22.094c-.035 0-2.813-.257-5.908-4.29-3.267-4.26-4.275-8.498-3.003-12.607 1.094-3.535 3.99-5.157 7.021-5.18h.082l.006.002h.67l.119-.001h1.166l.004-.002.102.002h.715c3.023.023 5.927 1.645 7.021 5.18 1.272 4.109.264 8.35-3.006 12.607-3.094 4.033-5.871 4.29-5.906 4.29zm-5.4-8.067c1.164 2.872 3.843 3.513 5.4 3.58 1.558-.067 4.24-7.464 5.4-10.336-1.558-.067-4.24-.708-5.4-3.58-1.157 2.871-3.839 3.512-5.4 3.58 1.56 2.871 4.243 10.268 5.4 10.336-1.157-.068-3.84-7.465-5.4-10.336zM12 9.4c1.435 0 2.6 1.165 2.6 2.6s-1.165 2.6-2.6 2.6-2.6-1.165-2.6-2.6 1.165-2.6 2.6-2.6z" />
                     </svg>
+                  </a>
+                )}
+
+                {/* YouTube */}
+                {settings?.social?.showYoutube === true && (
+                  <a
+                    href={isEditing ? '#' : settings?.social?.youtube}
+                    onClick={(e) => handleSocialClick(e, 'youtube')}
+                    className={`hover:text-red-500 transition ${!settings?.social?.youtube && !isEditing ? 'hidden' : ''} ${isEditing ? 'cursor-edit border border-dashed border-gray-500 p-1 rounded' : ''}`}
+                    title={isEditing ? 'Click to edit YouTube URL' : ''}
+                  >
+                    <Youtube />
                   </a>
                 )}
 

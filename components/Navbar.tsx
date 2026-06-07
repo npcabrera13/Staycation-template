@@ -113,7 +113,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
     <nav className={navClasses}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center cursor-pointer select-none group relative py-1 px-2 rounded-xl transition-all min-w-0 mr-2" onClick={handleLogoClick}>
+          <div id="onboarding-logo" className="flex items-center cursor-pointer select-none group relative py-1 px-2 rounded-xl transition-all min-w-0 mr-2" onClick={handleLogoClick}>
             {/* Admin Entry Guide Tooltip */}
             {showAdminGuide && (
               <>
@@ -282,7 +282,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminAccess, onOpenMyBookings, settin
                   }}
                   className="flex-1 px-4 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <Check size={18} /> Save URL
+                  <Check size={18} /> Save
                 </button>
               </div>
               <button

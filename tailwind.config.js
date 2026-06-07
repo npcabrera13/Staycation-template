@@ -25,8 +25,8 @@ export default {
         text: '#333333',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
+        sans: ['var(--font-body)', 'Inter', 'sans-serif'],
+        serif: ['var(--font-heading)', 'Playfair Display', 'serif'],
       },
       animation: {
         'fade-in-up':    'fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',

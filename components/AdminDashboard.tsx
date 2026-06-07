@@ -9,7 +9,8 @@ import {
     LayoutDashboard, BedDouble, LogOut, Edit, Save, X, Trash2, Download, TrendingUp, Calendar, Calendar as CalendarIcon, Plus, Image as ImageIcon,
     Wifi, Wind, Coffee, Car, Dumbbell, Tv, ChefHat, Waves, Shield, Sparkles,
     Utensils, Monitor, Zap, Sun, Moon, Umbrella, Music, Briefcase, Key, Bell, Bath, Armchair, Bike, ChevronDown, PlusCircle, MinusCircle,
-    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2, Info, MapPin
+    FileText, FileSpreadsheet, File, Filter, CheckSquare, Square, Phone, Users, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle, Clock, Settings as SettingsIcon, Palette, Globe, Loader, Maximize2, Minimize2, CreditCard, Database, Copy, RefreshCw, ExternalLink, Lock, AlertTriangle, Eye, EyeOff, HelpCircle, Rocket, MessageCircle, Award, Share2, Info, MapPin,
+    Gamepad2, Mic, Speaker, PartyPopper, Tent, Flame, Wine, TreePine, Cat, Dog, Star, Heart, Smile, Flower2, Snowflake, Cigarette, CigaretteOff, Sofa, Home, ShowerHead, Mountain, Trees, RollerCoaster
 } from 'lucide-react';
 
 import { useLocation } from 'react-router-dom';
@@ -56,19 +57,30 @@ type ExportFormat = 'doc' | 'csv' | 'txt';
 const PREDEFINED_AMENITIES = [
     { name: 'Wifi', icon: 'wifi' },
     { name: 'Pool', icon: 'waves' },
-    { name: 'AC', icon: 'wind' },
+    { name: 'AC', icon: 'snowflake' },
     { name: 'Kitchen', icon: 'chef-hat' },
     { name: 'Parking', icon: 'car' },
     { name: 'Gym', icon: 'dumbbell' },
     { name: 'TV', icon: 'tv' },
     { name: 'Coffee', icon: 'coffee' },
     { name: 'Security', icon: 'shield' },
+    { name: 'Billiards', icon: 'gamepad-2' },
+    { name: 'Videoke', icon: 'mic' },
+    { name: 'Slide', icon: 'roller-coaster' },
+    { name: 'BBQ Grill', icon: 'flame' },
+    { name: 'Pet Friendly', icon: 'dog' },
+    { name: 'Garden', icon: 'tree-pine' },
+    { name: 'Bathtub', icon: 'bath' },
+    { name: 'Living Area', icon: 'sofa' },
+    { name: 'Sound System', icon: 'speaker' },
 ];
 
 const ICON_OPTIONS = [
-    'wifi', 'waves', 'wind', 'chef-hat', 'car', 'dumbbell', 'tv', 'coffee', 'shield',
+    'wifi', 'waves', 'wind', 'snowflake', 'chef-hat', 'car', 'dumbbell', 'tv', 'coffee', 'shield',
     'sparkles', 'utensils', 'monitor', 'zap', 'sun', 'umbrella', 'music', 'briefcase',
-    'key', 'bell', 'bath', 'armchair', 'bike'
+    'key', 'bell', 'bath', 'armchair', 'bike', 'gamepad-2', 'mic', 'speaker', 'party-popper', 'roller-coaster',
+    'tent', 'flame', 'wine', 'tree-pine', 'trees', 'cat', 'dog', 'star', 'heart', 'smile', 'flower-2',
+    'cigarette', 'cigarette-off', 'sofa', 'home', 'shower-head', 'mountain', 'map-pin'
 ];
 
 const startOfMonth = (date: Date) => {
@@ -95,6 +107,57 @@ const HelpTooltip: React.FC<{ text: string, align?: 'center' | 'right' }> = ({ t
         </div>
     </div>
 );
+
+const cleanGoogleMapUrl = (input: string): string => {
+    let value = input.trim();
+    if (!value) return '';
+
+    // 1. If it's an <iframe> tag, extract the src attribute
+    if (value.includes('<iframe') && value.includes('src="')) {
+        const match = value.match(/src="([^"]+)"/);
+        if (match && match[1]) {
+            value = match[1];
+        }
+    }
+
+    // 2. If it's already an embed URL, return it
+    if (value.includes('/maps/embed') || value.includes('output=embed')) {
+        return value;
+    }
+
+    // 3. Check for coordinates format: "lat, lng" (e.g. 15.3031, 120.9092)
+    const latLngRegex = /^[-+]?([1-9]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    if (latLngRegex.test(value)) {
+        return `https://maps.google.com/maps?q=${encodeURIComponent(value)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    // 4. Check for Google Maps search / query link formats
+    try {
+        if (value.includes('google.com/maps')) {
+            const urlObj = new URL(value);
+            
+            const qParam = urlObj.searchParams.get('q');
+            if (qParam) {
+                return `https://maps.google.com/maps?q=${encodeURIComponent(qParam)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+            }
+
+            if (urlObj.pathname.includes('/place/')) {
+                const parts = urlObj.pathname.split('/place/');
+                if (parts[1]) {
+                    const placeName = decodeURIComponent(parts[1].split('/')[0]).replace(/\+/g, ' ');
+                    return `https://maps.google.com/maps?q=${encodeURIComponent(placeName)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error parsing Google Maps URL:', e);
+    }
+
+    if (value.startsWith('http')) {
+        return value;
+    }
+    return `https://maps.google.com/maps?q=${encodeURIComponent(value)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+};
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
     bookings,
@@ -129,6 +192,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
     const [draftDepositPct, setDraftDepositPct] = useState<number | null>(null);
     const [isGlobalDepositExpanded, setIsGlobalDepositExpanded] = useState(false);
+    const [showAdvancedMap, setShowAdvancedMap] = useState(false);
 
     // Sync activeTab whenever route state is changed (e.g. from global onboarding guide)
     useEffect(() => {
@@ -232,7 +296,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         price: 0,
         dayUsePrice: undefined,
         capacity: 2,
-        image: 'https://picsum.photos/800/600',
+        image: '',
         images: [],
         amenities: [],
         depositAmount: undefined
@@ -505,6 +569,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             case 'wifi': return <Wifi size={16} />;
             case 'waves': return <Waves size={16} />;
             case 'wind': return <Wind size={16} />;
+            case 'snowflake': return <Snowflake size={16} />;
             case 'chef-hat': return <ChefHat size={16} />;
             case 'car': return <Car size={16} />;
             case 'dumbbell': return <Dumbbell size={16} />;
@@ -523,6 +588,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             case 'bath': return <Bath size={16} />;
             case 'armchair': return <Armchair size={16} />;
             case 'bike': return <Bike size={16} />;
+            case 'gamepad-2': return <Gamepad2 size={16} />;
+            case 'mic': return <Mic size={16} />;
+            case 'speaker': return <Speaker size={16} />;
+            case 'party-popper': return <PartyPopper size={16} />;
+            case 'roller-coaster': return <RollerCoaster size={16} />;
+            case 'tent': return <Tent size={16} />;
+            case 'flame': return <Flame size={16} />;
+            case 'wine': return <Wine size={16} />;
+            case 'tree-pine': return <TreePine size={16} />;
+            case 'trees': return <Trees size={16} />;
+            case 'cat': return <Cat size={16} />;
+            case 'dog': return <Dog size={16} />;
+            case 'star': return <Star size={16} />;
+            case 'heart': return <Heart size={16} />;
+            case 'smile': return <Smile size={16} />;
+            case 'flower-2': return <Flower2 size={16} />;
+            case 'cigarette': return <Cigarette size={16} />;
+            case 'cigarette-off': return <CigaretteOff size={16} />;
+            case 'sofa': return <Sofa size={16} />;
+            case 'home': return <Home size={16} />;
+            case 'shower-head': return <ShowerHead size={16} />;
+            case 'mountain': return <Mountain size={16} />;
+            case 'map-pin': return <MapPin size={16} />;
             default: return <Sparkles size={16} />;
         }
     };
@@ -1239,8 +1327,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {/* Side Stats Panel */}
                     <div className={`w-full xl:w-80 flex-shrink-0 flex flex-col gap-6 ${isCalendarExpanded ? 'hidden xl:flex' : ''}`}>
 
+                        {/* Loading Skeleton */}
+                        {isLoadingBookings && (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                                <div className="space-y-3">
+                                    <div className="h-24 bg-gray-100 dark:bg-gray-750 rounded-lg"></div>
+                                    <div className="h-24 bg-gray-100 dark:bg-gray-750 rounded-lg"></div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Pending Actions List */}
-                        {pendingBookings.length > 0 && (
+                        {!isLoadingBookings && pendingBookings.length > 0 && (
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-yellow-200 dark:border-yellow-900/50 overflow-hidden">
                                 <div className="bg-yellow-50 dark:bg-yellow-900/20 px-5 py-4 border-b border-yellow-100 dark:border-yellow-900/30">
                                     <h3 className="text-yellow-800 dark:text-yellow-200 font-bold flex items-center">
@@ -1300,7 +1399,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
 
                         {/* Awaiting Balance Actions List */}
-                        {(() => {
+                        {!isLoadingBookings && (() => {
                             if (awaitingPaymentBookings.length === 0) return null;
 
                             return (
@@ -1427,38 +1526,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                                 <MapPin size={20} className="mr-2 text-primary" /> Map Configuration
                             </h3>
-                            <button
-                                onClick={() => onUpdateSettings(settingsForm)}
-                                className="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-                            >
-                                Save Map
-                            </button>
+                            {showAdvancedMap && (
+                                <button
+                                    onClick={() => {
+                                        if (settingsForm) {
+                                            const cleaned = cleanGoogleMapUrl(settingsForm.map?.embedUrl || '');
+                                            const updatedSettings = {
+                                                ...settingsForm,
+                                                map: { ...settingsForm.map, embedUrl: cleaned }
+                                            };
+                                            setSettingsForm(updatedSettings);
+                                            onUpdateSettings(updatedSettings);
+                                        }
+                                    }}
+                                    className="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                                >
+                                    Save Map
+                                </button>
+                            )}
                         </div>
                         <div className="space-y-4">
-                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-3 rounded-lg flex gap-3">
-                                <div className="text-amber-500 shrink-0">
-                                    <HelpCircle size={18} />
+                            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                Embed a Google Map of your property location so guests can easily find your resort and check driving directions.
+                            </p>
+
+                            {onEnterVisualBuilder && (
+                                <button
+                                    type="button"
+                                    onClick={() => onEnterVisualBuilder('map')}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg border border-dashed border-blue-300 dark:border-blue-700/50 font-bold transition-all text-xs"
+                                >
+                                    <MapPin size={16} className="text-blue-500" />
+                                    Launch Visual Map Picker
+                                </button>
+                            )}
+
+                            <div className="pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAdvancedMap(!showAdvancedMap)}
+                                    className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
+                                >
+                                    {showAdvancedMap ? 'Hide advanced settings' : 'Show manual/advanced map settings'}
+                                </button>
+                            </div>
+
+                            {showAdvancedMap && (
+                                <div className="space-y-3 pt-3 border-t dark:border-gray-700 animate-slide-up">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                            Google Maps Embed Code or URL
+                                            <HelpTooltip text="Paste either the full Google Maps <iframe src='...'></iframe> code, or just the src URL." />
+                                        </label>
+                                        <input
+                                            className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono"
+                                            value={settingsForm.map?.embedUrl || ''}
+                                            onChange={(e) => {
+                                                setSettingsForm({ 
+                                                    ...settingsForm, 
+                                                    map: { ...settingsForm.map, embedUrl: e.target.value } 
+                                                });
+                                            }}
+                                            onBlur={(e) => {
+                                                const cleaned = cleanGoogleMapUrl(e.target.value);
+                                                setSettingsForm({ 
+                                                    ...settingsForm, 
+                                                    map: { ...settingsForm.map, embedUrl: cleaned } 
+                                                });
+                                            }}
+                                            placeholder="Paste URL, coordinates, or iframe code..."
+                                        />
+                                        <p className="mt-1.5 text-[10px] text-gray-400 leading-normal">
+                                            If you copy the embed code from Google Maps on a computer, you can paste the whole code here and the system will automatically extract the link for you.
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
-                                    <strong>Pro Tip:</strong> Use the <strong>Visual Builder</strong> on the Home Page to search for your location using our new Map Picker. It will automatically generate the correct URL and update your footer address for you.
-                                </p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Map Embed URL
-                                    <HelpTooltip text="The src URL from the Google Maps iframe code." />
-                                </label>
-                                <input
-                                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono"
-                                    value={settingsForm.map?.embedUrl || ''}
-                                    onChange={(e) => setSettingsForm({ 
-                                        ...settingsForm, 
-                                        map: { ...settingsForm.map, embedUrl: e.target.value } 
-                                    })}
-                                    placeholder="https://www.google.com/maps/embed?..."
-                                />
-                                <p className="mt-1 text-[10px] text-gray-400">Manual fallback for expert users. Paste the full 'src' attribute from your Google Maps embed code.</p>
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -1773,113 +1916,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                     </div>
 
-                    {/* Booking Control Mode */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between mb-4 border-b dark:border-gray-700 pb-2">
-                            <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center text-sm md:text-lg">
-                                <Key className="mr-2 text-primary" size={20} /> Calendar Blocking Mode
-                            </h3>
-                            <HelpTooltip text="Choose how strictly the calendar blocks dates for new guests." align="right" />
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const updatedPolicy = settingsForm?.reservationPolicy
-                                            ? { ...settingsForm.reservationPolicy, bookingSystemType: 'strict' as const }
-                                            : {
-                                                requireDeposit: true,
-                                                depositType: 'percentage' as const,
-                                                depositPercentage: 50,
-                                                fixedDepositAmount: 1000,
-                                                autoConfirmOnDeposit: false,
-                                                cancellationPolicy: '',
-                                                paymentDeadlineHours: 24,
-                                                bookingSystemType: 'strict' as const
-                                            };
-                                        const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
-                                        setSettingsForm(newSettings);
-
-                                        // Auto-save setting
-                                        if (onUpdateSettings) {
-                                            await onUpdateSettings(newSettings);
-                                            showToast("Mode set to Strict (Auto-saved)", "success");
-                                        }
-                                    }}
-                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
-                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                        : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                        }`}
-                                >
-                                    <div className="flex items-center mb-1">
-                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict'
-                                            ? 'border-primary' : 'border-gray-300'
-                                            }`}>
-                                            {(settingsForm.reservationPolicy?.bookingSystemType ?? 'strict') === 'strict' && (
-                                                <div className="w-2 h-2 bg-primary rounded-full" />
-                                            )}
-                                        </div>
-                                        <span className="font-bold text-gray-800 dark:text-white text-sm">Strict Mode</span>
-                                    </div>
-                                    <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Blocks dates immediately when a guest submits a request. Safest against double-booking.</p>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const updatedPolicy = settingsForm?.reservationPolicy
-                                            ? { ...settingsForm.reservationPolicy, bookingSystemType: 'smart' as const }
-                                            : {
-                                                requireDeposit: true,
-                                                depositType: 'percentage' as const,
-                                                depositPercentage: 50,
-                                                fixedDepositAmount: 1000,
-                                                autoConfirmOnDeposit: false,
-                                                cancellationPolicy: '',
-                                                paymentDeadlineHours: 24,
-                                                bookingSystemType: 'smart' as const
-                                            };
-                                        const newSettings = { ...settingsForm!, reservationPolicy: updatedPolicy };
-                                        setSettingsForm(newSettings);
-
-                                        // Auto-save setting
-                                        if (onUpdateSettings) {
-                                            await onUpdateSettings(newSettings);
-                                            showToast("Mode set to Smart (Auto-saved)", "success");
-                                        }
-                                    }}
-                                    className={`flex-1 p-4 rounded-xl border-2 transition-all text-left ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
-                                        ? 'border-amber-500 bg-amber-500/5 ring-1 ring-amber-500'
-                                        : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                        }`}
-                                >
-                                    <div className="flex items-center mb-1">
-                                        <div className={`w-4 min-w-[1rem] h-4 rounded-full border-2 mr-2 flex items-center justify-center ${settingsForm.reservationPolicy?.bookingSystemType === 'smart'
-                                            ? 'border-amber-500' : 'border-gray-300'
-                                            }`}>
-                                            {settingsForm.reservationPolicy?.bookingSystemType === 'smart' && (
-                                                <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                                            )}
-                                        </div>
-                                        <span className="font-bold text-gray-800 dark:text-white text-sm">Smart Mode (Troll Protection)</span>
-                                    </div>
-                                    <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Only blocks dates after you manually confirm. Prevents malicious users from locking up your days.</p>
-                                </button>
-                            </div>
-
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 p-4 rounded-xl flex gap-3">
-                                <Info className="text-blue-500 shrink-0 mt-0.5" size={18} />
-                                <div className="text-[11px] md:text-xs text-blue-700 dark:text-blue-300">
-                                    <p className="font-bold mb-1 italic">Why this matters:</p>
-                                    <p className="leading-relaxed">
-                                        In <strong>Strict Mode</strong>, if a troll fills out your form, that date becomes unavailable to everyone else. In <strong>Smart Mode</strong>, the date stays open until you accept a real booking. Don&apos;t worry—if two people try to book the same day in Smart Mode, the website will show them a warning first!
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Email Passcode Section */}
                     <div id="admin-passcode-section" data-onboarding-target="passcode-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -2595,7 +2631,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
 
                             {/* Booking List */}
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div id="recent-bookings" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                                 {/* Header Area - OPTIMIZED */}
                                 <div className="p-3 sm:p-4 md:px-6 md:py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2838,7 +2874,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 const hasDraftDeposit = draftDepositPct !== null && draftDepositPct !== currentGlobalDeposit;
 
                                 return (
-                                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg transition-all shadow-sm">
+                                    <div 
+                                        id="global-deposit-rule"
+                                        data-onboarding-target="global-deposit-rule"
+                                        className={`bg-primary/5 dark:bg-primary/10 rounded-lg transition-all shadow-sm ${
+                                            activeOnboardingStep === 'deposit' 
+                                                ? 'onboarding-highlight-glow ring-2 ring-primary border border-primary' 
+                                                : 'border border-primary/20 dark:border-primary/30'
+                                        }`}
+                                    >
                                         {/* Collapsed State / Toggle Header */}
                                         <button
                                             onClick={() => setIsGlobalDepositExpanded(!isGlobalDepositExpanded)}
@@ -3126,7 +3170,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-                                            Day Use Price (₱)
+                                            Day Use Price (₱) <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
                                             <HelpTooltip text="Optional price for daytime-only stays. Leave empty or 0 if not supported." />
                                         </label>
                                         <input
