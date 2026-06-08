@@ -133,6 +133,7 @@ export interface Settings {
         secondaryColor: string;
         accentColor?: string;
         fontFamily?: string;
+        fontPairing?: FontPairing;
     };
     paymentMethods?: {
         gcash?: {

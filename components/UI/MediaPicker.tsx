@@ -22,7 +22,7 @@ const MediaPicker: React.FC<MediaPickerProps> = ({
     const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
     // Deduplicate and filter out empty strings
-    const deduped = Array.from(new Set(images.filter(Boolean)));
+    const deduped = Array.from(new Set<string>(images.filter((img): img is string => typeof img === 'string' && img.trim() !== '')));
     const filtered = search
         ? deduped.filter(url => url.toLowerCase().includes(search.toLowerCase()))
         : deduped;
