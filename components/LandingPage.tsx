@@ -487,10 +487,19 @@ const LandingPage: React.FC<LandingPageProps> = ({
             }
             // Auto-mirror accent to primary (accent picker removed from builder)
             document.documentElement.style.setProperty('--color-accent', themeToApply.accentColor || themeToApply.primaryColor);
-            
-            // Apply font family
-            document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
-            document.body.classList.add(`font-${themeToApply.fontFamily || 'sans'}`);
+
+            // Apply heading & body fonts (supports undo/redo)
+            const fontMappings: Record<string, { heading: string, body: string }> = {
+                modern: { heading: "'Playfair Display', serif", body: "'Inter', sans-serif" },
+                tropical: { heading: "'Outfit', sans-serif", body: "'Roboto', sans-serif" },
+                classic: { heading: "'Cinzel', serif", body: "'Lora', serif" },
+                clean: { heading: "'Plus Jakarta Sans', sans-serif", body: "'Plus Jakarta Sans', sans-serif" }
+            };
+            const pairing = fontMappings[(themeToApply as any).fontPairing || 'modern'];
+            const headingFont = (themeToApply as any).headingFont || pairing.heading;
+            const bodyFont = (themeToApply as any).bodyFont || pairing.body;
+            document.documentElement.style.setProperty('--font-heading', headingFont);
+            document.documentElement.style.setProperty('--font-body', bodyFont);
         }
     }, [workingSettings.theme, settings?.theme, isEditing]);
 

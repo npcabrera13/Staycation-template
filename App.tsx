@@ -167,18 +167,20 @@ function AppContent() {
           document.documentElement.style.setProperty('--color-accent', fetchedSettings.theme.accentColor || fetchedSettings.theme.primaryColor);
           localStorage.setItem('theme-accent', fetchedSettings.theme.accentColor || fetchedSettings.theme.primaryColor);
 
-          // Apply font family
+          // Apply font family — headingFont/bodyFont take priority, fallback to fontPairing
           const fontMappings: Record<string, { heading: string, body: string }> = {
               modern: { heading: "'Playfair Display', serif", body: "'Inter', sans-serif" },
               tropical: { heading: "'Outfit', sans-serif", body: "'Roboto', sans-serif" },
               classic: { heading: "'Cinzel', serif", body: "'Lora', serif" },
               clean: { heading: "'Plus Jakarta Sans', sans-serif", body: "'Plus Jakarta Sans', sans-serif" }
           };
-          const fonts = fontMappings[fetchedSettings.theme.fontPairing || 'modern'];
-          document.documentElement.style.setProperty('--font-heading', fonts.heading);
-          document.documentElement.style.setProperty('--font-body', fonts.body);
-          localStorage.setItem('theme-font-heading', fonts.heading);
-          localStorage.setItem('theme-font-body', fonts.body);
+          const pairingFonts = fontMappings[fetchedSettings.theme.fontPairing || 'modern'];
+          const headingFont = fetchedSettings.theme.headingFont || pairingFonts.heading;
+          const bodyFont = fetchedSettings.theme.bodyFont || pairingFonts.body;
+          document.documentElement.style.setProperty('--font-heading', headingFont);
+          document.documentElement.style.setProperty('--font-body', bodyFont);
+          localStorage.setItem('theme-font-heading', headingFont);
+          localStorage.setItem('theme-font-body', bodyFont);
 
           // BRANDING MIGRATION (Clean up old 'Serenity' or 'AI' defaults if still present)
           let needsUpdate = false;
@@ -379,18 +381,20 @@ function AppContent() {
       document.documentElement.style.setProperty('--color-accent', newSettings.theme.accentColor || newSettings.theme.primaryColor);
       localStorage.setItem('theme-accent', newSettings.theme.accentColor || newSettings.theme.primaryColor);
 
-      // Apply font family
+      // Apply font family — headingFont/bodyFont take priority, fallback to fontPairing
       const fontMappings: Record<string, { heading: string, body: string }> = {
           modern: { heading: "'Playfair Display', serif", body: "'Inter', sans-serif" },
           tropical: { heading: "'Outfit', sans-serif", body: "'Roboto', sans-serif" },
           classic: { heading: "'Cinzel', serif", body: "'Lora', serif" },
           clean: { heading: "'Plus Jakarta Sans', sans-serif", body: "'Plus Jakarta Sans', sans-serif" }
       };
-      const fonts = fontMappings[newSettings.theme.fontPairing || 'modern'];
-      document.documentElement.style.setProperty('--font-heading', fonts.heading);
-      document.documentElement.style.setProperty('--font-body', fonts.body);
-      localStorage.setItem('theme-font-heading', fonts.heading);
-      localStorage.setItem('theme-font-body', fonts.body);
+      const pairingFonts = fontMappings[newSettings.theme.fontPairing || 'modern'];
+      const headingFont = newSettings.theme.headingFont || pairingFonts.heading;
+      const bodyFont = newSettings.theme.bodyFont || pairingFonts.body;
+      document.documentElement.style.setProperty('--font-heading', headingFont);
+      document.documentElement.style.setProperty('--font-body', bodyFont);
+      localStorage.setItem('theme-font-heading', headingFont);
+      localStorage.setItem('theme-font-body', bodyFont);
     } catch (e) {
       console.error(e);
       showToast("Failed to update settings", "error");

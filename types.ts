@@ -134,6 +134,8 @@ export interface Settings {
         accentColor?: string;
         fontFamily?: string;
         fontPairing?: FontPairing;
+        headingFont?: string;
+        bodyFont?: string;
     };
     paymentMethods?: {
         gcash?: {
